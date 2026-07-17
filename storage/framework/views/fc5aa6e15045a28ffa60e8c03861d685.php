@@ -17,7 +17,7 @@
 <td class="mono fwb" style="color:<?php echo e((float)$app->gwa<=1.75?'var(--gm)':((float)$app->gwa<=2.25?'var(--warn)':'var(--danger)')); ?>"><?php echo e(number_format($app->gwa,2)); ?></td>
 <td style="min-width:100px;"><div style="display:flex;align-items:center;gap:5px;"><div style="flex:1;"><div class="asb"><div class="asf <?php echo e($sc>=75?'ash':($sc>=50?'asm':'asl')); ?>" style="width:<?php echo e($sc); ?>%;"></div></div></div><span class="mono" style="font-size:11px;font-weight:700;"><?php echo e($sc); ?>%</span></div></td>
 <td><span class="badge elig-<?php echo e($el); ?>" style="font-size:10px;"><?php echo e($app->ai_eligibility??'Pending'); ?></span></td>
-<td><span class="badge <?php echo e($app->status==='Approved'?'b-s':($app->status==='Rejected'?'b-d':'b-w')); ?>"><?php echo e($app->status); ?></span></td>
+<td><span class="badge <?php echo e($app->status==='Approved' || $app->status==='Scholarship Granted'?'b-s':($app->status==='Rejected'?'b-d':'b-w')); ?>"><?php echo e($app->status); ?></span></td>
 <td class="mono" style="font-size:11px;color:var(--tm);"><?php echo e($app->created_at->format('M d, Y')); ?></td>
 <td><a href="<?php echo e(route('student.applications.show',$app->id)); ?>" class="btn btn-o btn-sm btn-ic"><i class="fas fa-eye"></i></a></td>
 </tr>

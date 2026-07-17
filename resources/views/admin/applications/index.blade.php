@@ -34,8 +34,8 @@
 <td><div style="display:flex;gap:4px;">
 <a href="{{ route('admin.applications.show',$app->id) }}" class="btn btn-o btn-sm btn-ic"><i class="fas fa-eye"></i></a>
 @if($app->status==='Pending')
-<form method="POST" action="{{ route('admin.applications.updateStatus',$app->id) }}">@csrf @method('PATCH')<input type="hidden" name="status" value="Approved"><button class="btn btn-s btn-sm btn-ic" title="Approve"><i class="fas fa-check"></i></button></form>
-<form method="POST" action="{{ route('admin.applications.updateStatus',$app->id) }}">@csrf @method('PATCH')<input type="hidden" name="status" value="Rejected"><button class="btn btn-d btn-sm btn-ic" title="Reject" onclick="return confirm('Reject this application?')"><i class="fas fa-times"></i></button></form>
+<form method="POST" action="{{ route('admin.applications.approve',$app->id) }}">@csrf @method('PATCH')<input type="hidden" name="status" value="Approved"><button class="btn btn-s btn-sm btn-ic" title="Approve"><i class="fas fa-check"></i></button></form>
+<form method="POST" action="{{ route('admin.applications.reject',$app->id) }}">@csrf @method('PATCH')<input type="hidden" name="status" value="Rejected"><button class="btn btn-d btn-sm btn-ic" title="Reject" onclick="return confirm('Reject this application?')"><i class="fas fa-times"></i></button></form>
 @endif
 </div></td>
 </tr>

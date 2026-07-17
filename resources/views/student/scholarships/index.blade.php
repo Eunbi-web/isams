@@ -172,6 +172,10 @@
                 <div style="font-size:12px;color:var(--tm);">Status: {{ $myApp->status }}</div>
             </div>
         </div>
+        @else
+            <a href="{{ route('student.apply',$sch->id) }}" class="btn btn-p" style="width:100%;justify-content:center;border-radius:14px;" onclick="event.stopPropagation();">
+                <i class="fas fa-paper-plane"></i> Apply
+            </a>
         @endif
     </div>
 </div>
@@ -179,6 +183,12 @@
 
 {{-- PH Synced detail panels --}}
 @foreach($synced as $s)
+@php
+    $myApp = auth()->user()->student ? 
+        \App\Models\ScholarshipApplication::where('scholarship_id', $s->scholarship_id ?? 0)
+            ->where('student_id', auth()->user()->student->id)
+            ->first() : null;
+@endphp
 <div class="detail-panel" id="detail-syn-{{ $s->id }}">
     <div class="detail-panel-inner">
         <button type="button" class="detail-close" onclick="closeDetail()"><i class="fas fa-times"></i> Close</button>
@@ -238,6 +248,16 @@
         <div style="background:var(--yp);border:1px solid var(--yd);border-radius:var(--rs);padding:11px 14px;font-size:13px;color:#6b4a00;margin-bottom:14px;">
             <i class="fas fa-info-circle" style="margin-right:6px;color:var(--yd);"></i>This scholarship is sourced from an official Philippine website. Visit the official site for requirements and to apply.
         </div>
+@if(!$myApp)
+        <a href="{{ route('student.apply',$s->scholarship_id ?? $s->id) }}" class="btn btn-p" style="justify-content:center;border-radius:14px;width:100%;" onclick="event.stopPropagation();">
+            <i class="fas fa-paper-plane"></i> Apply
+        </a>
+        @else
+            <div style="background:#eef6f1;border:1px solid #bfe3c7;border-radius:14px;padding:10px 12px;font-size:12px;color:var(--tm);margin-bottom:14px;">
+                <i class="fas fa-check" style="color:var(--gm);margin-right:6px;"></i>Application already submitted.
+            </div>
+        @endif
+
         <a href="{{ $s->source_url }}" target="_blank" class="btn btn-o" style="justify-content:center;border-color:#0038a8;color:#0038a8;width:100%;">
             <i class="fas fa-external-link-alt"></i> Visit Official Website
         </a>
@@ -335,4 +355,5 @@ document.getElementById('schSearch').addEventListener('input', function() {
 });
 </script>
 @endpush
+
 @endsection

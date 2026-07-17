@@ -173,6 +173,10 @@
                 <div style="font-size:12px;color:var(--tm);">Status: <?php echo e($myApp->status); ?></div>
             </div>
         </div>
+        <?php else: ?>
+            <a href="<?php echo e(route('student.apply',$sch->id)); ?>" class="btn btn-p" style="width:100%;justify-content:center;border-radius:14px;" onclick="event.stopPropagation();">
+                <i class="fas fa-paper-plane"></i> Apply
+            </a>
         <?php endif; ?>
     </div>
 </div>
@@ -180,6 +184,12 @@
 
 
 <?php $__currentLoopData = $synced; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $s): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+<?php
+    $myApp = auth()->user()->student ? 
+        \App\Models\ScholarshipApplication::where('scholarship_id', $s->scholarship_id ?? 0)
+            ->where('student_id', auth()->user()->student->id)
+            ->first() : null;
+?>
 <div class="detail-panel" id="detail-syn-<?php echo e($s->id); ?>">
     <div class="detail-panel-inner">
         <button type="button" class="detail-close" onclick="closeDetail()"><i class="fas fa-times"></i> Close</button>
@@ -240,6 +250,16 @@
         <div style="background:var(--yp);border:1px solid var(--yd);border-radius:var(--rs);padding:11px 14px;font-size:13px;color:#6b4a00;margin-bottom:14px;">
             <i class="fas fa-info-circle" style="margin-right:6px;color:var(--yd);"></i>This scholarship is sourced from an official Philippine website. Visit the official site for requirements and to apply.
         </div>
+<?php if(!$myApp): ?>
+        <a href="<?php echo e(route('student.apply',$s->scholarship_id ?? $s->id)); ?>" class="btn btn-p" style="justify-content:center;border-radius:14px;width:100%;" onclick="event.stopPropagation();">
+            <i class="fas fa-paper-plane"></i> Apply
+        </a>
+        <?php else: ?>
+            <div style="background:#eef6f1;border:1px solid #bfe3c7;border-radius:14px;padding:10px 12px;font-size:12px;color:var(--tm);margin-bottom:14px;">
+                <i class="fas fa-check" style="color:var(--gm);margin-right:6px;"></i>Application already submitted.
+            </div>
+        <?php endif; ?>
+
         <a href="<?php echo e($s->source_url); ?>" target="_blank" class="btn btn-o" style="justify-content:center;border-color:#0038a8;color:#0038a8;width:100%;">
             <i class="fas fa-external-link-alt"></i> Visit Official Website
         </a>
@@ -337,5 +357,7 @@ document.getElementById('schSearch').addEventListener('input', function() {
 });
 </script>
 <?php $__env->stopPush(); ?>
+
 <?php $__env->stopSection(); ?>
+
 <?php echo $__env->make('student.layouts.app', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?><?php /**PATH C:\Users\Acer\Herd\isams\resources\views/student/scholarships/index.blade.php ENDPATH**/ ?>

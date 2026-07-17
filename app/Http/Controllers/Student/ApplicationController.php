@@ -21,7 +21,8 @@ class ApplicationController extends Controller {
         $app->has_failing    = $request->boolean('has_failing');
         $app->has_discipline = $request->boolean('has_discipline');
         $app->income_bracket = $request->input('income_bracket','below_200');
-        $app->scholarship    = Scholarship::find($data['scholarship_id']);
+        $app->scholarship_id = $data['scholarship_id'];
+
         $aiCtrl = new AiController();
         $result = $aiCtrl->evaluate($app);
         $app->ai_score=$result['score']; $app->ai_eligibility=$result['eligibility']; $app->ai_tag=$result['tag']; $app->ai_reasoning=$result['reasoning']; $app->ai_run_at=now(); $app->status='Pending';

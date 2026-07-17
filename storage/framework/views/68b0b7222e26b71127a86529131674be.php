@@ -33,8 +33,8 @@
 <td><div style="display:flex;gap:4px;">
 <a href="<?php echo e(route('admin.applications.show',$app->id)); ?>" class="btn btn-o btn-sm btn-ic"><i class="fas fa-eye"></i></a>
 <?php if($app->status==='Pending'): ?>
-<form method="POST" action="<?php echo e(route('admin.applications.updateStatus',$app->id)); ?>"><?php echo csrf_field(); ?> <?php echo method_field('PATCH'); ?><input type="hidden" name="status" value="Approved"><button class="btn btn-s btn-sm btn-ic" title="Approve"><i class="fas fa-check"></i></button></form>
-<form method="POST" action="<?php echo e(route('admin.applications.updateStatus',$app->id)); ?>"><?php echo csrf_field(); ?> <?php echo method_field('PATCH'); ?><input type="hidden" name="status" value="Rejected"><button class="btn btn-d btn-sm btn-ic" title="Reject" onclick="return confirm('Reject this application?')"><i class="fas fa-times"></i></button></form>
+<form method="POST" action="<?php echo e(route('admin.applications.approve',$app->id)); ?>"><?php echo csrf_field(); ?> <?php echo method_field('PATCH'); ?><input type="hidden" name="status" value="Approved"><button class="btn btn-s btn-sm btn-ic" title="Approve"><i class="fas fa-check"></i></button></form>
+<form method="POST" action="<?php echo e(route('admin.applications.reject',$app->id)); ?>"><?php echo csrf_field(); ?> <?php echo method_field('PATCH'); ?><input type="hidden" name="status" value="Rejected"><button class="btn btn-d btn-sm btn-ic" title="Reject" onclick="return confirm('Reject this application?')"><i class="fas fa-times"></i></button></form>
 <?php endif; ?>
 </div></td>
 </tr>

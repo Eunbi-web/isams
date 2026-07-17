@@ -5,6 +5,7 @@ use App\Models\{ScholarshipApplication,Student,Scholarship};
 use Illuminate\Http\Request;
 class ApplicationController extends Controller {
     public function index(Request $r) {
+
         $applications = ScholarshipApplication::with(['student','scholarship'])
             ->when($r->search,fn($q,$s)=>$q->whereHas('student',fn($sq)=>$sq->where('first_name','like',"%$s%")->orWhere('last_name','like',"%$s%")))
             ->when($r->status,fn($q,$s)=>$q->where('status',$s))
@@ -30,6 +31,21 @@ class ApplicationController extends Controller {
     public function edit(ScholarshipApplication $application) { $students=Student::orderBy('last_name')->get(); $scholarships=Scholarship::all(); return view('admin.applications.edit',compact('application','students','scholarships')); }
     public function update(Request $r, ScholarshipApplication $application) { $application->update($r->only(['status','remarks'])); return redirect()->route('admin.applications.show',$application)->with('success','Updated!'); }
     public function destroy(ScholarshipApplication $application) { $application->delete(); return redirect()->route('admin.applications.index')->with('success','Deleted.'); }
-    public function updateStatus(Request $r, ScholarshipApplication $application) { $application->update(['status'=>$r->status]); return back()->with('success',"Status updated to {$r->status}!"); }
-    public function bulkApprove() { $count=ScholarshipApplication::where('ai_eligibility','Eligible')->where('status','Pending')->update(['status'=>'Approved']); return back()->with('success',"{$count} eligible applications approved!"); }
+    public function updateStatus(Request $r, ScholarshipApplication $application) {
+        $newStatus = $r->status;
+        // Accepted by admin => student sees "Scholarship granted" in their My Applications
+        if ($newStatus === 'Approved') {
+            $newStatus = 'Scholarship Granted';
+        }
+        $application->update(['status' => $newStatus]);
+        return back()->with('success', "Status updated to {$newStatus}!");
+    }
+
+    public function bulkApprove() {
+        $count = ScholarshipApplication::where('ai_eligibility','Eligible')
+            ->where('status','Pending')
+            ->update(['status'=>'Scholarship Granted']);
+        return back()->with('success',"{$count} eligible applications approved!");
+    }
+
 }

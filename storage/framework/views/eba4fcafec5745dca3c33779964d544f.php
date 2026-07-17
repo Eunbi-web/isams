@@ -1,0 +1,37 @@
+<?php $__env->startSection('title','Apply'); ?>
+<?php $__env->startSection('page-title','Apply for Scholarship'); ?>
+<?php $__env->startSection('page-sub','<?php echo e($scholarship->name ?? "Scholarship"); ?>'); ?>
+<?php $__env->startSection('content'); ?>
+<div style="max-width:700px;">
+<div style="margin-bottom:14px;"><a href="<?php echo e(route('student.scholarships')); ?>" class="btn btn-o btn-sm"><i class="fas fa-arrow-left"></i> Back</a></div>
+<div class="card an mb3"><div class="ch"><div class="si y" style="width:40px;height:40px;font-size:16px;border-radius:10px;flex-shrink:0;"><i class="fas fa-award"></i></div><div><h2><?php echo e($scholarship->name); ?></h2><div class="tm" style="font-size:12px;"><?php echo e($scholarship->type); ?> — <?php echo e($scholarship->benefits); ?></div></div></div></div>
+<form method="POST" action="<?php echo e(route('student.applications.store')); ?>"><?php echo csrf_field(); ?>
+<input type="hidden" name="scholarship_id" value="<?php echo e($scholarship->id); ?>">
+<div class="card an mb3"><div class="ch"><i class="fas fa-robot" style="color:var(--yd);"></i><h2>Academic Information</h2><span style="font-size:12px;color:var(--tm);margin-left:6px;">Used for AI evaluation</span></div><div class="cb">
+<div class="g2">
+<div class="fg"><label class="fl">Current GWA <span style="color:var(--danger);">*</span></label><input type="number" name="gwa" class="fc mono" step="0.01" min="1.00" max="5.00" placeholder="1.75" required value="<?php echo e(auth()->user()->student?->gwa); ?>"></div>
+<div class="fg"><label class="fl">Enrollment Type <span style="color:var(--danger);">*</span></label><select name="enrollment_type" class="fc" required><option value="Regular" <?php echo e((auth()->user()->student?->enrollment_type)==='Regular'?'selected':''); ?>>Regular</option><option value="Irregular" <?php echo e((auth()->user()->student?->enrollment_type)==='Irregular'?'selected':''); ?>>Irregular</option></select></div>
+</div>
+<div class="g2">
+<div class="fg"><label class="fl">Income Bracket</label><select name="income_bracket" class="fc"><option value="below_200">Below ₱200,000/year</option><option value="200_400">₱200,000–₱400,000/year</option><option value="above_400">Above ₱400,000/year</option></select></div>
+<div></div>
+</div>
+<div class="g2">
+<label style="display:flex;align-items:center;gap:8px;padding:11px 13px;border:1.5px solid var(--bd);border-radius:var(--rs);cursor:pointer;"><input type="checkbox" name="has_failing" value="1" style="accent-color:var(--g);"><span style="font-size:13px;">Has failing grades last semester</span></label>
+<label style="display:flex;align-items:center;gap:8px;padding:11px 13px;border:1.5px solid var(--bd);border-radius:var(--rs);cursor:pointer;"><input type="checkbox" name="has_discipline" value="1" style="accent-color:var(--g);"><span style="font-size:13px;">Has active discipline case</span></label>
+</div>
+</div></div>
+<div class="card an mb3"><div class="ch"><i class="fas fa-pen" style="color:var(--gm);"></i><h2>Application Details</h2></div><div class="cb">
+<div class="fg"><label class="fl">Why are you applying? (Optional)</label><textarea name="essay" class="fc" rows="4" placeholder="Briefly describe your need for this scholarship and how it will help you..."></textarea></div>
+<div class="fg"><label class="fl">Additional Notes</label><textarea name="remarks" class="fc" rows="2" placeholder="Any additional information..."></textarea></div>
+</div></div>
+<div class="alert al-ai an" style="font-size:12px;"><i class="fas fa-robot"></i><span><strong>AI Note:</strong> Your application will be automatically evaluated by our AI engine upon submission. You will receive your AI eligibility score and reasoning instantly.</span></div>
+<div style="display:flex;gap:10px;margin-top:14px;">
+<button type="submit" class="btn btn-p"><i class="fas fa-paper-plane"></i> Submit Application</button>
+<a href="<?php echo e(route('student.scholarships')); ?>" class="btn btn-o">Cancel</a>
+</div>
+</form>
+</div>
+<?php $__env->stopSection(); ?>
+
+<?php echo $__env->make('student.layouts.app', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?><?php /**PATH C:\Users\Acer\Herd\isams\resources\views/student/applications/apply.blade.php ENDPATH**/ ?>
