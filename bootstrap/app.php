@@ -18,20 +18,26 @@ $app = Application::configure(basePath: dirname(__DIR__))
     ->withExceptions(function (Exceptions $exceptions) {})
     ->create();
 
-/*
-|--------------------------------------------------------------------------
-| Vercel writable storage
-|--------------------------------------------------------------------------
-*/
-
 if (isset($_ENV['VERCEL']) || isset($_SERVER['VERCEL'])) {
-    $tmpStorage = '/tmp/laravel';
+    $storage = '/tmp/laravel';
 
-    if (!is_dir($tmpStorage)) {
-        mkdir($tmpStorage, 0755, true);
+    $directories = [
+        $storage,
+        $storage . '/framework',
+        $storage . '/framework/cache',
+        $storage . '/framework/cache/data',
+        $storage . '/framework/sessions',
+        $storage . '/framework/views',
+        $storage . '/logs',
+    ];
+
+    foreach ($directories as $directory) {
+        if (!is_dir($directory)) {
+            mkdir($directory, 0755, true);
+        }
     }
 
-    $app->useStoragePath($tmpStorage);
+    $app->useStoragePath($storage);
 }
 
 return $app;
