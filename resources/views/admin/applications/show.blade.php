@@ -12,7 +12,7 @@
 </div>
 <div class="g2 mt3">
 <div class="card an"><div class="ch"><i class="fas fa-file-alt" style="color:var(--gm);"></i><h2>Details</h2><div class="ch-acts"><span class="badge {{ $application->status==='Approved'?'b-s':($application->status==='Rejected'?'b-d':'b-w') }}">{{ $application->status }}</span></div></div><div class="cb">
-@foreach([['GWA',number_format($application->gwa??0,2)],['Enrollment',$application->enrollment_type],['Failing',$application->has_failing?'Yes':'No'],['Discipline',$application->has_discipline?'Yes':'No'],['Income',$application->income_bracket],['Filed',$application->created_at->format('M d, Y')]] as $d)
+@foreach([['GWA',number_format($application->gwa??0,2)],['Enrollment',$application->enrollment_type],['Year Level',$application->year_level??'—'],['Academic Load',$application->academic_load??'—'],['Academic Honors',$application->academic_honors??'—'],['Application Type',$application->application_type??'—'],['Parent Employment',$application->parent_employment_status??'—'],['Siblings in College',$application->siblings_in_college??'0'],['Failing',$application->has_failing?'Yes':'No'],['Discipline',$application->has_discipline?'Yes':'No'],['Income',$application->income_bracket],['Filed',$application->created_at->format('M d, Y')]] as $d)
 <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--bd);font-size:13px;"><span class="tm">{{ $d[0] }}</span><span class="fws">{{ $d[1] }}</span></div>
 @endforeach
 </div></div>

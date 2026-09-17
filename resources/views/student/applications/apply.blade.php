@@ -15,6 +15,18 @@
 </div>
 <div class="g2">
 <div class="fg"><label class="fl">Income Bracket</label><select name="income_bracket" class="fc"><option value="below_200">Below ₱200,000/year</option><option value="200_400">₱200,000–₱400,000/year</option><option value="above_400">Above ₱400,000/year</option></select></div>
+<div class="fg"><label class="fl">Year Level <span style="color:var(--danger);">*</span></label><select name="year_level" class="fc" required><option value="">Select Year Level</option><option value="1st Year">1st Year</option><option value="2nd Year">2nd Year</option><option value="3rd Year">3rd Year</option><option value="4th Year">4th Year</option></select></div>
+</div>
+<div class="g2">
+<div class="fg"><label class="fl">Academic Load <span style="color:var(--danger);">*</span></label><select name="academic_load" class="fc" required><option value="">Select Academic Load</option><option value="Full Load">Full Load</option><option value="Part Load">Part Load</option></select></div>
+<div class="fg"><label class="fl">Academic Honors</label><input type="text" name="academic_honors" class="fc" placeholder="e.g. Dean's Lister, President's Lister"></div>
+</div>
+<div class="g2">
+<div class="fg"><label class="fl">Application Type <span style="color:var(--danger);">*</span></label><select name="application_type" class="fc" required><option value="">Select Type</option><option value="New Applicant">New Applicant</option><option value="Renewal">Renewal</option></select></div>
+<div class="fg"><label class="fl">Parent/Guardian Employment Status</label><input type="text" name="parent_employment_status" class="fc" placeholder="e.g. Employed, Self-employed, Unemployed"></div>
+</div>
+<div class="g2">
+<div class="fg"><label class="fl">Siblings in College</label><input type="number" name="siblings_in_college" class="fc mono" min="0" max="20" placeholder="0" value="0"></div>
 <div></div>
 </div>
 <div class="g2">

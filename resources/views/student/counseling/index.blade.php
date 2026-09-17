@@ -6,8 +6,19 @@
 <div class="alert al-i an"><i class="fas fa-info-circle"></i><span><strong>Auto-Queue:</strong> All counseling requests are automatically accepted and queued. No requests are declined.</span></div>
 <div class="g2" style="align-items:start;">
 <div class="card an"><div class="ch"><i class="fas fa-plus-circle" style="color:var(--gm);"></i><h2>Request Counseling Session</h2></div><div class="cb">
-<form method="POST" action="{{ route('student.counseling.store') }}">@csrf
-<div class="fg"><label class="fl">Type of Concern <span style="color:var(--danger);">*</span></label><select name="concern_type" class="fc" required><option value="">Select concern type...</option>@foreach(['Academic Stress','Personal Issue','Career Guidance','Mental Health / Anxiety','Family Concern','Financial Stress','Relationship Issue','General Wellness'] as $type)<option value="{{ $type }}">{{ $type }}</option>@endforeach</select></div>
+<form method="POST" action="{{ route('student.counseling.store') }}" id="counselingForm">@csrf
+<div class="fg"><label class="fl">Type of Concern <span style="color:var(--danger);">*</span></label>
+<select name="concern_type" id="concern_type" class="fc" required onchange="toggleOtherConcern(this)">
+    <option value="">Select concern type...</option>
+    @foreach(['Academic Stress','Personal Issue','Career Guidance','Mental Health / Anxiety','Family Concern','Financial Stress','Relationship Issue','General Wellness'] as $type)
+    <option value="{{ $type }}">{{ $type }}</option>
+    @endforeach
+    <option value="Other Concern">Other Concern</option>
+</select>
+<div id="other_concern_wrapper" style="display:none;margin-top:7px;">
+    <input type="text" name="other_concern_text" id="other_concern_text" class="fc" placeholder="Please specify your concern...">
+</div>
+</div>
 <div class="fg"><label class="fl">Priority Level</label><div style="display:grid;grid-template-columns:repeat(3,1fr);gap:7px;">@foreach([['Normal','fas fa-circle'],['Medium','fas fa-exclamation'],['Urgent','fas fa-exclamation-triangle']] as $p)<label style="display:flex;align-items:center;gap:6px;padding:8px 10px;border:1.5px solid var(--bd);border-radius:var(--rs);cursor:pointer;font-size:13px;"><input type="radio" name="priority" value="{{ $p[0] }}" {{ $p[0]==='Normal'?'checked':'' }} style="accent-color:var(--g);"><i class="{{ $p[1] }}" style="font-size:11px;"></i> {{ $p[0] }}</label>@endforeach</div></div>
 <div class="fg"><label class="fl">Preferred Date <span style="font-size:11px;color:var(--tm);font-weight:400;">(optional)</span></label><input type="date" name="preferred_date" class="fc" min="{{ date('Y-m-d',strtotime('+1 day')) }}"></div>
 <div class="fg"><label class="fl">Preferred Time</label><select name="preferred_time" class="fc"><option value="">No preference</option><option>8:00 AM – 9:00 AM</option><option>9:00 AM – 10:00 AM</option><option>10:00 AM – 11:00 AM</option><option>1:00 PM – 2:00 PM</option><option>2:00 PM – 3:00 PM</option><option>3:00 PM – 4:00 PM</option></select></div>
@@ -38,3 +49,40 @@
 </div>
 </div>
 @endsection
+
+@push('scripts')
+<script>
+function toggleOtherConcern(select) {
+    const wrapper = document.getElementById('other_concern_wrapper');
+    const textInput = document.getElementById('other_concern_text');
+    if (select.value === 'Other Concern') {
+        wrapper.style.display = 'block';
+        textInput.setAttribute('required', 'required');
+    } else {
+        wrapper.style.display = 'none';
+        textInput.removeAttribute('required');
+    }
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('counselingForm');
+    const select = document.getElementById('concern_type');
+    const textInput = document.getElementById('other_concern_text');
+
+    form.addEventListener('submit', function(e) {
+        if (select.value === 'Other Concern') {
+            const customText = textInput.value.trim();
+            if (!customText) {
+                e.preventDefault();
+                textInput.focus();
+                textInput.style.borderColor = 'var(--danger)';
+                alert('Please specify your concern.');
+                return;
+            }
+            // Replace the select value with the custom text before submission
+            select.value = customText;
+        }
+    });
+});
+</script>
+@endpush

@@ -294,5 +294,6 @@ document.addEventListener('click',e=>{if(e.target.classList.contains('mo'))e.tar
 })();
 </script><?php echo $__env->yieldPushContent('scripts'); ?>
 <script src="<?php echo e(asset('js/isams-ajax.js')); ?>"></script>
+<?php echo $__env->make('chatbot.chatbot-widget', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?>
 </body></html>
 <?php /**PATH C:\Users\Acer\Herd\isams\resources\views/student/layouts/app.blade.php ENDPATH**/ ?>

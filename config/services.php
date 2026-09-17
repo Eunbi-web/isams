@@ -29,4 +29,8 @@ return [
         'key' => env('GEMINI_API_KEY', ''),
     ],
 
+    'groq' => [
+        'key' => env('GROQ_API_KEY', ''),
+    ],
+
 ];

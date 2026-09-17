@@ -14,6 +14,9 @@ Route::middleware('guest')->group(function () {
 });
 Route::post('/logout', [AuthController::class,'logout'])->name('logout');
 
+// ISAAC Chatbot (available on all portals, auth required)
+Route::post('/chatbot/ask', [App\Http\Controllers\ChatbotController::class, 'ask'])->middleware('auth')->name('chatbot.ask');
+
 // Theme toggle (AJAX): system/light/dark
 Route::post('/settings/theme', function(\Illuminate\Http\Request $r) {
     $user = auth()->user();

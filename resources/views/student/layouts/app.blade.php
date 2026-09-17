@@ -294,4 +294,5 @@ document.addEventListener('click',e=>{if(e.target.classList.contains('mo'))e.tar
 })();
 </script>@stack('scripts')
 <script src="{{ asset('js/isams-ajax.js') }}"></script>
+@include('chatbot.chatbot-widget')
 </body></html>

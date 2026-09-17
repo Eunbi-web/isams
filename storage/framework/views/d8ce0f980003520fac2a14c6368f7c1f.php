@@ -1,9 +1,9 @@
 <!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<link rel="icon" type="image/x-icon" href="{{ asset('favicon.ico') }}">
-<link rel="icon" type="image/png" sizes="32x32" href="{{ asset('favicon-32x32.png') }}">
-<link rel="icon" type="image/png" sizes="16x16" href="{{ asset('favicon-16x16.png') }}">
-<link rel="apple-touch-icon" sizes="180x180" href="{{ asset('favicon-180x180.png') }}">
-<meta name="csrf-token" content="{{ csrf_token() }}"><title>ISAMS Super Admin — @yield('title','Dashboard')</title>
+<link rel="icon" type="image/x-icon" href="<?php echo e(asset('favicon.ico')); ?>">
+<link rel="icon" type="image/png" sizes="32x32" href="<?php echo e(asset('favicon-32x32.png')); ?>">
+<link rel="icon" type="image/png" sizes="16x16" href="<?php echo e(asset('favicon-16x16.png')); ?>">
+<link rel="apple-touch-icon" sizes="180x180" href="<?php echo e(asset('favicon-180x180.png')); ?>">
+<meta name="csrf-token" content="<?php echo e(csrf_token()); ?>"><title>ISAMS Super Admin — <?php echo $__env->yieldContent('title','Dashboard'); ?></title>
 <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 <style>
@@ -100,38 +100,38 @@ select.fc option{background:var(--card);}
 .d1{animation-delay:.05s}.d2{animation-delay:.1s}.d3{animation-delay:.15s}
 ::-webkit-scrollbar{width:5px;height:5px;}::-webkit-scrollbar-track{background:var(--card);}::-webkit-scrollbar-thumb{background:var(--bd);border-radius:10px;}
 @media(max-width:900px){.sidebar{transform:translateX(-100%)}.sidebar.open{transform:translateX(0)}.main{margin-left:0}.mob-toggle{display:flex}.g2,.g3{grid-template-columns:1fr}}
-</style>@stack('styles')</head>
+</style><?php echo $__env->yieldPushContent('styles'); ?></head>
 <body data-theme="light">
 <aside class="sidebar" id="sidebar">
-<div class="sb-brand"><div class="sb-logo"><div class="sb-icon"><img src="{{ asset('images/SCC_NEW_LOGO.png') }}" alt="Logo"></div><div><div class="sb-name">ISAMS</div><div class="sb-sub">⚡ Super Admin</div></div></div></div>
+<div class="sb-brand"><div class="sb-logo"><div class="sb-icon"><img src="<?php echo e(asset('images/SCC_NEW_LOGO.png')); ?>" alt="Logo"></div><div><div class="sb-name">ISAMS</div><div class="sb-sub">⚡ Super Admin</div></div></div></div>
 <div class="sa-badge"><div class="sa-dot"></div><span>Super Admin Panel</span><span class="sa-v">v2.1</span></div>
 <div class="sb-sec"><div class="sb-lbl">Overview</div>
-<a href="{{ route('superadmin.dashboard') }}" class="nav-a {{ request()->routeIs('superadmin.dashboard')?'active':'' }}"><i class="fas fa-th-large"></i> Dashboard</a>
-<a href="{{ route('superadmin.monitoring') }}" class="nav-a {{ request()->routeIs('superadmin.monitoring')?'active':'' }}"><i class="fas fa-chart-line"></i> Live Monitoring<span class="nav-badge">LIVE</span></a></div>
+<a href="<?php echo e(route('superadmin.dashboard')); ?>" class="nav-a <?php echo e(request()->routeIs('superadmin.dashboard')?'active':''); ?>"><i class="fas fa-th-large"></i> Dashboard</a>
+<a href="<?php echo e(route('superadmin.monitoring')); ?>" class="nav-a <?php echo e(request()->routeIs('superadmin.monitoring')?'active':''); ?>"><i class="fas fa-chart-line"></i> Live Monitoring<span class="nav-badge">LIVE</span></a></div>
 <div class="sb-sec"><div class="sb-lbl">User Management</div>
-<a href="{{ route('superadmin.users.index') }}" class="nav-a {{ request()->routeIs('superadmin.users.*')?'active':'' }}"><i class="fas fa-users"></i> All Users</a>
-<a href="{{ route('superadmin.users.create') }}" class="nav-a {{ request()->routeIs('superadmin.users.create')?'active':'' }}"><i class="fas fa-user-plus"></i> Create User</a></div>
+<a href="<?php echo e(route('superadmin.users.index')); ?>" class="nav-a <?php echo e(request()->routeIs('superadmin.users.*')?'active':''); ?>"><i class="fas fa-users"></i> All Users</a>
+<a href="<?php echo e(route('superadmin.users.create')); ?>" class="nav-a <?php echo e(request()->routeIs('superadmin.users.create')?'active':''); ?>"><i class="fas fa-user-plus"></i> Create User</a></div>
 <div class="sb-sec"><div class="sb-lbl">Logs & Audit</div>
-<a href="{{ route('superadmin.logs') }}" class="nav-a {{ request()->routeIs('superadmin.logs')?'active':'' }}"><i class="fas fa-history"></i> Login Logs</a>
-<a href="{{ route('superadmin.logs') }}?status=failed" class="nav-a"><i class="fas fa-exclamation-triangle"></i> Failed Logins<span class="nav-badge r">!</span></a></div>
+<a href="<?php echo e(route('superadmin.logs')); ?>" class="nav-a <?php echo e(request()->routeIs('superadmin.logs')?'active':''); ?>"><i class="fas fa-history"></i> Login Logs</a>
+<a href="<?php echo e(route('superadmin.logs')); ?>?status=failed" class="nav-a"><i class="fas fa-exclamation-triangle"></i> Failed Logins<span class="nav-badge r">!</span></a></div>
 <div class="sb-sec"><div class="sb-lbl">System</div>
-<a href="{{ route('admin.dashboard') }}" class="nav-a" target="_blank"><i class="fas fa-external-link-alt"></i> Admin Panel</a>
-<a href="{{ route('superadmin.settings') }}" class="nav-a {{ request()->routeIs('superadmin.settings')?'active':'' }}"><i class="fas fa-cog"></i> Settings</a></div>
-<div class="sb-footer"><div class="user-card"><div class="u-av">{{ strtoupper(substr(auth()->user()->name??'S',0,1)) }}</div><div><div class="u-name">{{ auth()->user()->name??'Super Admin' }}</div><div class="u-role">⚡ SUPER ADMIN</div></div><a href="{{ route('logout') }}" class="u-out" onclick="event.preventDefault();document.getElementById('salf').submit();" title="Logout"><i class="fas fa-sign-out-alt"></i></a></div><form id="salf" action="{{ route('logout') }}" method="POST" style="display:none;">@csrf</form></div>
+<a href="<?php echo e(route('admin.dashboard')); ?>" class="nav-a" target="_blank"><i class="fas fa-external-link-alt"></i> Admin Panel</a>
+<a href="<?php echo e(route('superadmin.settings')); ?>" class="nav-a <?php echo e(request()->routeIs('superadmin.settings')?'active':''); ?>"><i class="fas fa-cog"></i> Settings</a></div>
+<div class="sb-footer"><div class="user-card"><div class="u-av"><?php echo e(strtoupper(substr(auth()->user()->name??'S',0,1))); ?></div><div><div class="u-name"><?php echo e(auth()->user()->name??'Super Admin'); ?></div><div class="u-role">⚡ SUPER ADMIN</div></div><a href="<?php echo e(route('logout')); ?>" class="u-out" onclick="event.preventDefault();document.getElementById('salf').submit();" title="Logout"><i class="fas fa-sign-out-alt"></i></a></div><form id="salf" action="<?php echo e(route('logout')); ?>" method="POST" style="display:none;"><?php echo csrf_field(); ?></form></div>
 </aside>
 <div class="main">
-<div class="tp-right"><span class="sa-chip"><img src="{{ asset('images/SCC_NEW_LOGO.png') }}" alt="Logo">Super Admin</span>
+<div class="tp-right"><span class="sa-chip"><img src="<?php echo e(asset('images/SCC_NEW_LOGO.png')); ?>" alt="Logo">Super Admin</span>
 
-{{-- Theme toggle (System → Light → Dark) --}}
-@include('components.theme-toggle')
 
-<a href="{{ route('superadmin.logs') }}" class="tp-btn"><i class="fas fa-history"></i></a><a href="{{ route('superadmin.settings') }}" class="tp-btn"><i class="fas fa-cog"></i></a></div></header>
+<?php echo $__env->make('components.theme-toggle', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?>
+
+<a href="<?php echo e(route('superadmin.logs')); ?>" class="tp-btn"><i class="fas fa-history"></i></a><a href="<?php echo e(route('superadmin.settings')); ?>" class="tp-btn"><i class="fas fa-cog"></i></a></div></header>
 
 <div class="page">
-@if(session('success'))<div class="alert al-s an"><i class="fas fa-check-circle"></i> {{ session('success') }}</div>@endif
-@if(session('error'))<div class="alert al-d an"><i class="fas fa-exclamation-circle"></i> {{ session('error') }}</div>@endif
-@if(session('info'))<div class="alert al-y an"><i class="fas fa-info-circle"></i> {{ session('info') }}</div>@endif
-@yield('content')
+<?php if(session('success')): ?><div class="alert al-s an"><i class="fas fa-check-circle"></i> <?php echo e(session('success')); ?></div><?php endif; ?>
+<?php if(session('error')): ?><div class="alert al-d an"><i class="fas fa-exclamation-circle"></i> <?php echo e(session('error')); ?></div><?php endif; ?>
+<?php if(session('info')): ?><div class="alert al-y an"><i class="fas fa-info-circle"></i> <?php echo e(session('info')); ?></div><?php endif; ?>
+<?php echo $__env->yieldContent('content'); ?>
 </div></div>
 <script>
 const sbToggle=document.getElementById('sbToggle'),sidebar=document.getElementById('sidebar');
@@ -147,7 +147,7 @@ document.addEventListener('click',e=>{if(e.target.classList.contains('mo'))e.tar
     var body=document.body;
     if(!body) return;
 
-    var savedTheme=@json(auth()->user()->theme ?? 'system');
+    var savedTheme=<?php echo json_encode(auth()->user()->theme ?? 'system', 15, 512) ?>;
     var resolved=savedTheme;
     if(savedTheme==='system'){
         var pDark=window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches;
@@ -184,7 +184,7 @@ document.addEventListener('click',e=>{if(e.target.classList.contains('mo'))e.tar
             setIcon();
 
             var csrf=document.querySelector('meta[name="csrf-token"]').getAttribute('content');
-            fetch('{{ route('settings.theme.update') }}',{
+            fetch('<?php echo e(route('settings.theme.update')); ?>',{
                 method:'POST',
                 headers:{
                     'Content-Type':'application/json',
@@ -196,8 +196,8 @@ document.addEventListener('click',e=>{if(e.target.classList.contains('mo'))e.tar
         });
     }
 })();
-</script>@stack('scripts')
+</script><?php echo $__env->yieldPushContent('scripts'); ?>
 
-<script src="{{ asset('js/isams-ajax.js') }}"></script>
-@include('chatbot.chatbot-widget')
-</body></html>
+<script src="<?php echo e(asset('js/isams-ajax.js')); ?>"></script>
+<?php echo $__env->make('chatbot.chatbot-widget', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?>
+</body></html><?php /**PATH C:\Users\Acer\Herd\isams\resources\views/superadmin/layouts/app.blade.php ENDPATH**/ ?>

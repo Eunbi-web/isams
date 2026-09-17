@@ -14,13 +14,14 @@ class ApplicationController extends Controller {
     public function store(Request $request) {
         $student = auth()->user()->student;
         if (!$student) return back()->with('error','Student profile not found.');
-        $data = $request->validate(['scholarship_id'=>'required|exists:scholarships,id','gwa'=>'required|numeric|min:1|max:5','enrollment_type'=>'required|string','has_failing'=>'nullable','has_discipline'=>'nullable','income_bracket'=>'nullable|string','essay'=>'nullable|string','remarks'=>'nullable|string']);
+        $data = $request->validate(['scholarship_id'=>'required|exists:scholarships,id','gwa'=>'required|numeric|min:1|max:5','enrollment_type'=>'required|string','year_level'=>'required|string','academic_load'=>'required|string','application_type'=>'required|string','academic_honors'=>'nullable|string','parent_employment_status'=>'nullable|string','siblings_in_college'=>'nullable|integer|min:0|max:20','has_failing'=>'nullable','has_discipline'=>'nullable','income_bracket'=>'nullable|string','essay'=>'nullable|string','remarks'=>'nullable|string']);
         if (ScholarshipApplication::where('student_id',$student->id)->where('scholarship_id',$data['scholarship_id'])->exists()) return back()->with('error','You have already applied for this scholarship.');
         $app = new ScholarshipApplication($data);
         $app->student_id     = $student->id;
         $app->has_failing    = $request->boolean('has_failing');
         $app->has_discipline = $request->boolean('has_discipline');
         $app->income_bracket = $request->input('income_bracket','below_200');
+        $app->siblings_in_college = $request->input('siblings_in_college',0);
         $app->scholarship_id = $data['scholarship_id'];
 
         $aiCtrl = new AiController();

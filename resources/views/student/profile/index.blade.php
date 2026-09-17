@@ -3,9 +3,9 @@
 @section('page-title','My Profile')
 @section('page-sub','Manage your account information')
 @section('content')
-<div class="g2 an" style="max-width:860px;align-items:start;">
-<div>
-<div class="card mb3"><div class="ch"><i class="fas fa-user-circle" style="color:var(--gm);"></i><h2>Profile</h2></div><div class="cb" style="text-align:center;">
+<div class="g2 an" style="width:100%;align-items:stretch;">
+<div style="display:flex;flex-direction:column;">
+<div class="card mb3" style="flex:1;"><div class="ch"><i class="fas fa-user-circle" style="color:var(--gm);"></i><h2>Profile</h2></div><div class="cb" style="text-align:center;">
 <div style="width:70px;height:70px;border-radius:50%;background:linear-gradient(135deg,var(--g),var(--gm));display:inline-flex;align-items:center;justify-content:center;font-family:'Sora',sans-serif;font-size:26px;font-weight:800;color:#fff;margin-bottom:10px;">{{ strtoupper(substr(auth()->user()->name??'S',0,1)) }}</div>
 <div style="font-family:'Sora',sans-serif;font-size:17px;font-weight:700;color:var(--g);">{{ auth()->user()->name??'Student' }}</div>
 <div class="tm" style="font-size:13px;">{{ auth()->user()->email }}</div>
@@ -17,10 +17,11 @@
 @endforeach</div>
 </div></div>
 </div>
-<div class="card"><div class="ch"><i class="fas fa-lock" style="color:var(--gm);"></i><h2>Account Settings</h2></div><div class="cb">
+<div style="display:flex;flex-direction:column;">
+<div class="card" style="flex:1;"><div class="ch"><i class="fas fa-lock" style="color:var(--gm);"></i><h2>Account Settings</h2></div><div class="cb">
 <form method="POST" action="{{ route('student.profile.update') }}">@csrf
-<div class="fg"><label class="fl">Full Name</label><input type="text" name="name" class="fc" value="{{ auth()->user()->name }}"></div>
-<div class="fg"><label class="fl">Email Address</label><input type="email" name="email" class="fc" value="{{ auth()->user()->email }}"></div>
+<div class="fg"><label class="fl">Full Name</label><div class="fc" style="background:var(--bg);color:var(--tm);cursor:not-allowed;display:flex;align-items:center;padding:9px 13px;border:1.5px solid var(--bd);border-radius:var(--rs);font-size:13px;font-weight:500;">{{ auth()->user()->name }}</div></div>
+<div class="fg"><label class="fl">Email Address</label><div class="fc" style="background:var(--bg);color:var(--tm);cursor:not-allowed;display:flex;align-items:center;padding:9px 13px;border:1.5px solid var(--bd);border-radius:var(--rs);font-size:13px;font-weight:500;">{{ auth()->user()->email }}</div></div>
 <hr style="border:none;border-top:1px solid var(--bd);margin:16px 0;">
 <div style="font-size:13px;font-weight:700;color:var(--g);margin-bottom:12px;">Change Password</div>
 <div class="fg"><label class="fl">New Password</label><input type="password" name="password" class="fc" placeholder="Leave blank to keep current"></div>
