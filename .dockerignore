@@ -1,0 +1,10 @@
+.git
+.github
+node_modules
+vendor
+.env
+.env.*
+public/storage
+public/hot
+storage/*.key
+*.zip
