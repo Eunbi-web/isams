@@ -1,4 +1,4 @@
-FROM php:8.2-apache
+FROM php:8.4-apache
 
 # System libraries + PHP extensions needed by Laravel and PostgreSQL
 RUN apt-get update && apt-get install -y --no-install-recommends \
