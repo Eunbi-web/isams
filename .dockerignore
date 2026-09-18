@@ -4,6 +4,7 @@ node_modules
 vendor
 .env
 .env.*
+bootstrap/cache/*.php
 public/storage
 public/hot
 storage/*.key
