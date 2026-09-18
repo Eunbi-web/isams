@@ -25,9 +25,9 @@ RUN composer install --no-dev --no-interaction --no-scripts --prefer-dist --opti
 
 COPY . .
 
-RUN chown -R www-data:www-data storage bootstrap/cache \
-    && sed -ri -e 's!/var/www/html!/var/www/html/public!g' /etc/apache2/sites-available/000-default.conf \
-    && printf '<Directory /var/www/html/public>\n    AllowOverride All\n    Require all granted\n</Directory>\n' >> /etc/apache2/apache2.conf
+RUN chown -R www-data:www-data storage bootstrap/cache
+
+COPY docker/vhost.conf /etc/apache2/sites-available/000-default.conf
 
 COPY docker/start.sh /usr/local/bin/start.sh
 RUN chmod +x /usr/local/bin/start.sh
