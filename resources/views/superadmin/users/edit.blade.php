@@ -26,14 +26,17 @@
 </div></div>
 
 <div class="card an mb3"><div class="ch"><i class="fas fa-shield-alt" style="color:var(--y);"></i><h2>Role Assignment</h2></div><div class="cb">
-<div class="alert al-y" style="margin-bottom:14px;font-size:12px;"><i class="fas fa-exclamation-triangle"></i><span>Current role: <strong>{{ ucfirst($user->role) }}</strong>. Changing role will change what portals this user can access.</span></div>
-<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px;">
-@foreach([['student','Student','fas fa-user-graduate'],['officer','Officer','fas fa-user-tie'],['admin','Admin','fas fa-user-shield'],['superadmin','Super Admin','fas fa-crown']] as $role)
-<label style="display:flex;align-items:center;gap:10px;padding:11px;border:2px solid {{ old('role',$user->role)===$role[0]?'var(--y)':'var(--bd)' }};border-radius:var(--rs);cursor:pointer;transition:all .2s;background:var(--card2);">
-<input type="radio" name="role" value="{{ $role[0] }}" {{ old('role',$user->role)===$role[0]?'checked':'' }} style="accent-color:var(--y);" onchange="document.querySelectorAll('.rol').forEach(l=>l.closest('label').style.borderColor='var(--bd)');this.closest('label').style.borderColor='var(--y)'">
-<i class="{{ $role[2] }}" style="color:var(--y);font-size:14px;"></i><span class="fws rol" style="color:#fff;font-size:13px;">{{ $role[1] }}</span>
-</label>
-@endforeach
+<div class="fg">
+<label class="fl">Role <span style="color:var(--danger)">*</span></label>
+<select name="role" class="fc" required>
+<option value="superadmin" {{ old('role',$user->role)==='superadmin'?'selected':'' }}>Super Administrator</option>
+<option value="admin" {{ old('role',$user->role)==='admin'?'selected':'' }}>Admin — Scholarship Officer</option>
+<option value="officer" {{ old('role',$user->role)==='officer'?'selected':'' }}>Officer — Scholarship Staff</option>
+<option value="counselor" {{ old('role',$user->role)==='counselor'?'selected':'' }}>Counselor — Guidance Counseling Staff</option>
+<option value="student" {{ old('role',$user->role)==='student'?'selected':'' }}>Student</option>
+</select>
+@error('role')<div style="color:var(--danger);font-size:12px;margin-bottom:10px;">{{ $message }}</div>@enderror
+<div style="font-size:12px;color:var(--tm);margin-top:6px;">Counselor accounts will have access to the Guidance Counseling Portal only — they cannot access Scholarship or Admin features.</div>
 </div>
 </div></div>
 

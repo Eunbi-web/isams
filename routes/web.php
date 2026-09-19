@@ -1,7 +1,8 @@
 <?php
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
-use App\Http\Controllers\Admin\{DashboardController as AdminDash, ScholarshipController as AdminScholarship, ApplicationController as AdminApp, AiController as AdminAi, StudentController as AdminStudent, ReportController as AdminReport, AnnouncementController as AdminAnn, NotificationController as AdminNotif, SettingsController as AdminSettings, CounselingController as AdminCounseling, ScraperController as AdminScraper};
+use App\Http\Controllers\Admin\{DashboardController as AdminDash, ScholarshipController as AdminScholarship, ApplicationController as AdminApp, AiController as AdminAi, StudentController as AdminStudent, ReportController as AdminReport, AnnouncementController as AdminAnn, NotificationController as AdminNotif, SettingsController as AdminSettings, ScraperController as AdminScraper};
+use App\Http\Controllers\Counselor\{DashboardController as CounselorDash, CounselingController as CounselorCounseling, AnnouncementController as CounselorAnn, DisciplineController as CounselorDiscipline, NotificationController as CounselorNotif, SettingsController as CounselorSettings};
 use App\Http\Controllers\Student\{DashboardController as StudentDash, ScholarshipController as StudentScholarship, ApplicationController as StudentApp, EligibilityController as StudentEligibility, CounselingController as StudentCounseling, AnnouncementController as StudentAnn, NotificationController as StudentNotif, ProfileController as StudentProfile};
 use App\Http\Controllers\SuperAdmin\{DashboardController as SADash, UserController as SAUser, LogController as SALog, MonitoringController as SAMonitor};
 
@@ -112,6 +113,7 @@ Route::middleware(['auth','role:admin,officer'])->prefix('admin')->name('admin.'
     Route::get('reports', [AdminReport::class,'index'])->name('reports.index');
     Route::get('reports/download/{type}', [AdminReport::class,'download'])->name('reports.download');
 
+    // Announcements (Admin) — Counseling remains exclusively in the Counselor Portal
     Route::resource('announcements', AdminAnn::class);
 
     Route::get('notifications', [AdminNotif::class,'index'])->name('notifications.index');
@@ -124,15 +126,37 @@ Route::middleware(['auth','role:admin,officer'])->prefix('admin')->name('admin.'
     Route::get('notifications/dropdown',  [AdminNotif::class,'dropdown'])->name('notifications.dropdown');
     Route::post('notifications/mark-all', [AdminNotif::class,'markAllRead'])->name('notifications.mark-all');
 
-    Route::get('counseling', [AdminCounseling::class,'index'])->name('counseling.index');
-    Route::post('counseling/{counseling}/schedule', [AdminCounseling::class,'schedule'])->name('counseling.schedule');
-    Route::post('counseling/{counseling}/complete', [AdminCounseling::class,'complete'])->name('counseling.complete');
-
     // Discipline Records (Admin)
     Route::get('discipline', [\App\Http\Controllers\Admin\DisciplineAdminController::class,'index'])->name('discipline.index');
     Route::get('discipline/create', [\App\Http\Controllers\Admin\DisciplineAdminController::class,'create'])->name('discipline.create');
     Route::post('discipline', [\App\Http\Controllers\Admin\DisciplineAdminController::class,'store'])->name('discipline.store');
     Route::post('discipline/lookup-edp', [\App\Http\Controllers\Admin\DisciplineAdminController::class,'lookupEdp'])->name('discipline.lookup-edp');
+});
+
+// COUNSELOR — Guidance Counseling Portal
+Route::middleware(['auth','role:counselor'])->prefix('counselor')->name('counselor.')->group(function () {
+    Route::get('dashboard', [CounselorDash::class,'index'])->name('dashboard');
+
+    Route::get('counseling', [CounselorCounseling::class,'index'])->name('counseling.index');
+    Route::post('counseling/{counseling}/schedule', [CounselorCounseling::class,'schedule'])->name('counseling.schedule');
+    Route::post('counseling/{counseling}/complete', [CounselorCounseling::class,'complete'])->name('counseling.complete');
+    Route::delete('counseling/{counseling}', [CounselorCounseling::class,'destroy'])->name('counseling.destroy');
+
+    Route::get('announcements', [CounselorAnn::class,'index'])->name('announcements');
+
+    Route::get('discipline', [CounselorDiscipline::class,'index'])->name('discipline.index');
+    Route::post('discipline', [CounselorDiscipline::class,'store'])->name('discipline.store');
+    Route::put('discipline/{record}', [CounselorDiscipline::class,'update'])->name('discipline.update');
+    Route::delete('discipline/{record}', [CounselorDiscipline::class,'destroy'])->name('discipline.destroy');
+    Route::patch('discipline/{record}/status', [CounselorDiscipline::class,'updateStatus'])->name('discipline.status');
+
+    Route::get('notifications', [CounselorNotif::class,'index'])->name('notifications');
+    Route::get('notifications/dropdown', [CounselorNotif::class,'dropdown'])->name('notifications.dropdown');
+    Route::post('notifications/mark-all', [CounselorNotif::class,'markAllRead'])->name('notifications.mark-all');
+    Route::patch('notifications/{id}', [CounselorNotif::class,'markRead'])->name('notifications.read');
+
+    Route::get('settings', [CounselorSettings::class,'index'])->name('settings');
+    Route::post('settings', [CounselorSettings::class,'update'])->name('settings.update');
 });
 
 // STUDENT

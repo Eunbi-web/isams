@@ -11,7 +11,7 @@ class UserController extends Controller {
     }
     public function create() { return view('superadmin.users.create'); }
     public function store(Request $r) {
-        $data=$r->validate(['name'=>'required|string|max:200','email'=>'required|email|unique:users_all','password'=>'required|min:8|confirmed','role'=>'required|in:superadmin,admin,officer,student','department'=>'nullable|string|max:200']);
+        $data=$r->validate(['name'=>'required|string|max:200','email'=>'required|email|unique:users_all','password'=>'required|min:8|confirmed','role'=>'required|in:superadmin,admin,officer,counselor,student','department'=>'nullable|string|max:200']);
         $data['password']=Hash::make($data['password']); $data['is_active']=true;
         $user=User::create($data);
         if ($data['role']==='student'&&$r->filled('student_id')) {
@@ -22,7 +22,7 @@ class UserController extends Controller {
     }
     public function edit(User $user) { return view('superadmin.users.edit',compact('user')); }
     public function update(Request $r, User $user) {
-        $data=$r->validate(['name'=>'required|string|max:200','email'=>'required|email|unique:users_all,email,'.$user->id,'role'=>'required|in:superadmin,admin,officer,student','department'=>'nullable|string|max:200','is_active'=>'nullable']);
+        $data=$r->validate(['name'=>'required|string|max:200','email'=>'required|email|unique:users_all,email,'.$user->id,'role'=>'required|in:superadmin,admin,officer,counselor,student','department'=>'nullable|string|max:200','is_active'=>'nullable']);
         if ($r->filled('password')) { $r->validate(['password'=>'min:8|confirmed']); $data['password']=Hash::make($r->password); }
         $data['is_active']=$r->boolean('is_active',true);
         $user->update($data);

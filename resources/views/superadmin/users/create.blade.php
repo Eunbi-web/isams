@@ -19,18 +19,18 @@
 </div></div>
 
 <div class="card an mb3"><div class="ch"><i class="fas fa-shield-alt" style="color:var(--y);"></i><h2>Assign Role</h2></div><div class="cb">
-<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-bottom:14px;">
-@foreach([['student','Student','fas fa-user-graduate','Can browse scholarships, apply, check AI eligibility, request counseling.'],['officer','Officer','fas fa-user-tie','Can manage applications, run AI filter, schedule counseling sessions.'],['admin','Admin','fas fa-user-shield','Full access to scholarship management, reports, announcements.'],['superadmin','Super Admin','fas fa-crown','Full system access including user management and monitoring.']] as $role)
-<label style="display:flex;align-items:flex-start;gap:12px;padding:13px;border:2px solid {{ old('role','student')===$role[0]?'var(--y)':'var(--bd)' }};border-radius:var(--rs);cursor:pointer;transition:all .2s;background:var(--card2);"
-onmouseover="this.style.borderColor='var(--y)'" onmouseout="if(!this.querySelector('input').checked)this.style.borderColor='var(--bd)'">
-<input type="radio" name="role" value="{{ $role[0] }}" {{ old('role','student')===$role[0]?'checked':'' }} style="margin-top:3px;accent-color:var(--y);"
-onchange="document.querySelectorAll('.rl-l').forEach(l=>l.closest('label').style.borderColor='var(--bd)');this.closest('label').style.borderColor='var(--y)';toggleStudent('{{ $role[0] }}')">
-<div><div style="display:flex;align-items:center;gap:8px;margin-bottom:5px;"><i class="{{ $role[2] }}" style="color:var(--y);font-size:16px;"></i><span class="fws rl-l" style="color:#fff;font-size:14px;">{{ $role[1] }}</span></div>
-<div style="font-size:12px;color:var(--tm);line-height:1.4;">{{ $role[3] }}</div></div>
-</label>
-@endforeach
-</div>
+<div class="fg">
+<label class="fl">Role <span style="color:var(--danger)">*</span></label>
+<select name="role" class="fc" required onchange="toggleStudent(this.value)">
+<option value="superadmin" {{ old('role')==='superadmin'?'selected':'' }}>Super Administrator</option>
+<option value="admin" {{ old('role')==='admin'?'selected':'' }}>Admin — Scholarship Officer</option>
+<option value="officer" {{ old('role')==='officer'?'selected':'' }}>Officer — Scholarship Staff</option>
+<option value="counselor" {{ old('role')==='counselor'?'selected':'' }}>Counselor — Guidance Counseling Staff</option>
+<option value="student" {{ old('role','student')==='student'?'selected':'' }}>Student</option>
+</select>
 @error('role')<div style="color:var(--danger);font-size:12px;margin-bottom:10px;">{{ $message }}</div>@enderror
+<div style="font-size:12px;color:var(--tm);margin-top:6px;">Counselor accounts will have access to the Guidance Counseling Portal only — they cannot access Scholarship or Admin features.</div>
+</div>
 </div></div>
 
 <div class="card an mb3" id="studentFields" style="{{ old('role','student')==='student'?'':'display:none;' }}">
@@ -55,7 +55,7 @@ onchange="document.querySelectorAll('.rl-l').forEach(l=>l.closest('label').style
 @push('scripts')
 <script>
 function toggleStudent(role){document.getElementById('studentFields').style.display=role==='student'?'':'none';}
-document.addEventListener('DOMContentLoaded',()=>{const c=document.querySelector('[name=role]:checked');if(c)toggleStudent(c.value);});
+document.addEventListener('DOMContentLoaded',()=>{const c=document.querySelector('select[name=role]');if(c)toggleStudent(c.value);});
 </script>
 @endpush
 @endsection

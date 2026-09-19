@@ -32,9 +32,7 @@
 <form method="POST" action="{{ route('admin.ai.run') }}">@csrf<button class="btn btn-ac btn-sm"><i class="fas fa-play"></i> Run AI Scan</button></form>
 <a href="{{ route('admin.scholarships.create') }}" class="btn btn-o btn-sm"><i class="fas fa-award"></i> Add Program</a>
 <a href="{{ route('admin.students.create') }}" class="btn btn-o btn-sm"><i class="fas fa-user-plus"></i> Add Student</a>
-<a href="{{ route('admin.counseling.index') }}" class="btn btn-o btn-sm"><i class="fas fa-heart"></i> Counseling Queue</a>
 <a href="{{ route('admin.reports.index') }}" class="btn btn-ac btn-sm"><i class="fas fa-chart-bar"></i> Reports</a>
-<a href="{{ route('admin.announcements.create') }}" class="btn btn-o btn-sm"><i class="fas fa-bullhorn"></i> Announce</a>
 </div></div>
 </div>
 <div class="card an">

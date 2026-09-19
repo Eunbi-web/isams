@@ -3,7 +3,7 @@
 <link rel="icon" type="image/png" sizes="32x32" href="{{ asset('favicon-32x32.png') }}">
 <link rel="icon" type="image/png" sizes="16x16" href="{{ asset('favicon-16x16.png') }}">
 <link rel="apple-touch-icon" sizes="180x180" href="{{ asset('favicon-180x180.png') }}">
-<meta name="csrf-token" content="{{ csrf_token() }}"><title>ISAMS Admin — @yield('title','Dashboard')</title>
+<meta name="csrf-token" content="{{ csrf_token() }}"><title>ISAMS Counselor — @yield('title','Dashboard')</title>
 <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 <style>
@@ -76,9 +76,7 @@ tbody tr{transition:background .15s;}tbody tr:hover{background:#f8fdf8;}
 tbody td{padding:11px 13px;font-size:13px;border-bottom:1px solid var(--bd);}tbody tr:last-child td{border-bottom:none;}
 .badge{display:inline-flex;align-items:center;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:700;}
 .b-s{background:#d0f0d8;color:#0d6624;}.b-d{background:#fde8e6;color:var(--danger);}.b-w{background:#fef3cd;color:#a07c00;}.b-i{background:#e0f3f8;color:var(--info);}.b-p{background:var(--gp);color:var(--g);}.b-y{background:var(--yp);color:var(--yd);}.b-gray{background:#eef1f5;color:#5a7a60;}
-.elig-el{background:#d0f0d8;color:#0d6624;border:1px solid #a0d8b0;}.elig-rv{background:var(--yp);color:var(--yd);border:1px solid #f0d060;}.elig-no{background:#fde8e6;color:var(--danger);border:1px solid #f0b0a0;}
 .tag{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:20px;font-size:10px;font-weight:700;text-transform:uppercase;}
-.tag-renewal{background:#d0f0d8;color:#0d6624;}.tag-needs{background:var(--yp);color:var(--yd);}.tag-disq{background:#fde8e6;color:var(--danger);}
 .btn{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:var(--rs);font-size:13px;font-weight:600;cursor:pointer;border:none;text-decoration:none;transition:all .2s;font-family:inherit;}
 .btn-p{background:var(--g);color:#fff;}.btn-p:hover{background:var(--gm);}
 .btn-ac{background:var(--y);color:#0d3318;}.btn-ac:hover{background:#f7d84a;}
@@ -124,31 +122,25 @@ body[data-theme="light"]{--bg:#f2f7f3;--card:#fff;--sb:#0d3318;--st:#90c8a0;--tx
 @keyframes notifSpin{to{transform:rotate(360deg);}}
 </style>@stack('styles')</head>
 <body data-theme="light">
-<aside class="sidebar" id="sidebar">
-<div class="sb-brand"><div class="sb-logo"><div class="sb-icon"><img src="{{ asset('images/DSA_logo.png') }}" alt="Logo"></div><div><div class="sb-name">ISAMS</div><div class="sb-sub">Admin Portal</div></div></div></div>
+<aside class="sidebar" id="sidebar" style="background:#0a1f2e;">
+<div class="sb-brand"><div class="sb-logo"><div class="sb-icon"><img src="{{ asset('images/DSA_logo.png') }}" alt="Logo"></div><div><div class="sb-name">ISAMS</div><div class="sb-sub" style="color:#90b8c8;">Counselor Portal</div></div></div></div>
 <div class="ai-pill-sb"><div class="ai-dot"></div><span>AI Engine Active</span><span class="ai-v">v2.1</span></div>
 <div class="sb-sec"><div class="sb-lbl">Main</div>
-<a href="{{ route('admin.dashboard') }}" class="nav-a {{ request()->routeIs('admin.dashboard')?'active':'' }}"><i class="fas fa-th-large"></i> Dashboard</a></div>
-<div class="sb-sec"><div class="sb-lbl">Scholarship</div>
-<a href="{{ route('admin.scholarships.index') }}" class="nav-a {{ request()->routeIs('admin.scholarships*')?'active':'' }}"><i class="fas fa-award"></i> Programs</a>
-<a href="{{ route('admin.scraper.index') }}" class="nav-a {{ request()->routeIs('admin.scraper*')?'active':'' }}"><i class="fas fa-flag"></i> PH Scholarship Sync<span class="nav-badge ph">PH</span></a>
-<a href="{{ route('admin.applications.index') }}" class="nav-a {{ request()->routeIs('admin.applications*')?'active':'' }}"><i class="fas fa-file-alt"></i> Applications</a>
-<a href="{{ route('admin.ai.index') }}" class="nav-a {{ request()->routeIs('admin.ai*')?'active':'' }}"><i class="fas fa-robot"></i> AI Filter<span class="nav-badge">AI</span></a>
-<a href="{{ route('admin.students.index') }}" class="nav-a {{ request()->routeIs('admin.students*')?'active':'' }}"><i class="fas fa-users"></i> Students</a>
-<a href="{{ route('admin.reports.index') }}" class="nav-a {{ request()->routeIs('admin.reports*')?'active':'' }}"><i class="fas fa-chart-bar"></i> Reports</a></div>
+<a href="{{ route('counselor.dashboard') }}" class="nav-a {{ request()->routeIs('counselor.dashboard')?'active':'' }}" style="color:#90b8c8;{{ request()->routeIs('counselor.dashboard')?'background:#1a4a6b;color:#f0c020;':'' }}" onmouseover="this.style.background='#1a4a6b';this.style.color='#fff'" onmouseout="if(!this.classList.contains('active')){this.style.background='';this.style.color='#90b8c8'}"><i class="fas fa-th-large"></i> Dashboard</a></div>
 <div class="sb-sec"><div class="sb-lbl">Services</div>
-<a href="{{ route('admin.announcements.index') }}" class="nav-a {{ request()->routeIs('admin.announcements*')?'active':'' }}"><i class="fas fa-bullhorn"></i> Announcements</a>
-<a href="{{ route('admin.discipline.index') }}" class="nav-a {{ request()->routeIs('admin.discipline*')?'active':'' }}"><i class="fas fa-gavel"></i> Discipline Records</a></div>
+<a href="{{ route('counselor.counseling.index') }}" class="nav-a {{ request()->routeIs('counselor.counseling*')?'active':'' }}" style="color:#90b8c8;{{ request()->routeIs('counselor.counseling*')?'background:#1a4a6b;color:#f0c020;':'' }}" onmouseover="this.style.background='#1a4a6b';this.style.color='#fff'" onmouseout="if(!this.classList.contains('active')){this.style.background='';this.style.color='#90b8c8'}"><i class="fas fa-comments"></i> Counseling Sessions</a>
+<a href="{{ route('counselor.announcements') }}" class="nav-a {{ request()->routeIs('counselor.announcements')?'active':'' }}" style="color:#90b8c8;{{ request()->routeIs('counselor.announcements')?'background:#1a4a6b;color:#f0c020;':'' }}" onmouseover="this.style.background='#1a4a6b';this.style.color='#fff'" onmouseout="if(!this.classList.contains('active')){this.style.background='';this.style.color='#90b8c8'}"><i class="fas fa-bullhorn"></i> Announcements</a>
+<a href="{{ route('counselor.discipline.index') }}" class="nav-a {{ request()->routeIs('counselor.discipline*')?'active':'' }}" style="color:#90b8c8;{{ request()->routeIs('counselor.discipline*')?'background:#1a4a6b;color:#f0c020;':'' }}" onmouseover="this.style.background='#1a4a6b';this.style.color='#fff'" onmouseout="if(!this.classList.contains('active')){this.style.background='';this.style.color='#90b8c8'}"><i class="fas fa-gavel"></i> Discipline Records<span class="nav-badge">NEW</span></a></div>
 <div class="sb-sec"><div class="sb-lbl">Account</div>
-{{-- Notifications removed from sidebar — now in topbar bell icon --}}
-<a href="{{ route('admin.settings.index') }}" class="nav-a {{ request()->routeIs('admin.settings*')?'active':'' }}"><i class="fas fa-cog"></i> Settings</a></div>
-<div class="sb-footer"><div class="user-card"><div class="u-av">{{ strtoupper(substr(auth()->user()->name??'A',0,1)) }}</div><div><div class="u-name">{{ explode(' ',auth()->user()->name??'Admin')[0] }}</div><div class="u-role">{{ ucfirst(auth()->user()->role??'admin') }}</div></div><a href="{{ route('logout') }}" class="u-out" onclick="event.preventDefault();document.getElementById('alf').submit();" title="Logout"><i class="fas fa-sign-out-alt"></i></a></div><form id="alf" action="{{ route('logout') }}" method="POST" style="display:none;">@csrf</form></div>
+<a href="{{ route('counselor.notifications') }}" class="nav-a {{ request()->routeIs('counselor.notifications')?'active':'' }}" style="color:#90b8c8;{{ request()->routeIs('counselor.notifications')?'background:#1a4a6b;color:#f0c020;':'' }}" onmouseover="this.style.background='#1a4a6b';this.style.color='#fff'" onmouseout="if(!this.classList.contains('active')){this.style.background='';this.style.color='#90b8c8'}"><i class="fas fa-bell"></i> Notifications</a>
+<a href="{{ route('counselor.settings') }}" class="nav-a {{ request()->routeIs('counselor.settings*')?'active':'' }}" style="color:#90b8c8;{{ request()->routeIs('counselor.settings*')?'background:#1a4a6b;color:#f0c020;':'' }}" onmouseover="this.style.background='#1a4a6b';this.style.color='#fff'" onmouseout="if(!this.classList.contains('active')){this.style.background='';this.style.color='#90b8c8'}"><i class="fas fa-cog"></i> Settings</a></div>
+<div class="sb-footer"><div class="user-card"><div class="u-av">{{ strtoupper(substr(auth()->user()->name??'C',0,1)) }}</div><div><div class="u-name">{{ explode(' ',auth()->user()->name??'Counselor')[0] }}</div><div class="u-role" style="color:#90b8c8;">{{ ucfirst(auth()->user()->role??'counselor') }}</div></div><a href="{{ route('logout') }}" class="u-out" onclick="event.preventDefault();document.getElementById('clf').submit();" title="Logout"><i class="fas fa-sign-out-alt"></i></a></div><form id="clf" action="{{ route('logout') }}" method="POST" style="display:none;">@csrf</form></div>
 </aside>
 <div class="main">
 @yield('ai-bar')
 <header class="topbar">
 <button class="mob-toggle" id="sbToggle"><i class="fas fa-bars"></i></button>
-<div><div class="tp-title">@yield('page-title','Dashboard')</div><div class="tp-sub">@yield('page-sub','ISAMS — Integrated Student Affairs Management System')</div></div>
+<div><div class="tp-title">@yield('page-title','Dashboard')</div><div class="tp-sub">@yield('page-sub','Guidance Counseling Staff Portal')</div></div>
 <div class="tp-right">
 <span class="school-chip"><img src="{{ asset('images/DSA_logo.png') }}" alt="Logo">ISAMS</span>
 
@@ -156,44 +148,43 @@ body[data-theme="light"]{--bg:#f2f7f3;--card:#fff;--sb:#0d3318;--st:#90c8a0;--tx
 @include('components.theme-toggle')
 
 {{-- NOTIFICATION DROPDOWN --}}
-<div class="notif-wrapper" id="adminNotifWrapper" style="position:relative;">
+<div class="notif-wrapper" id="counselorNotifWrapper" style="position:relative;">
 
-    <button type="button" id="adminNotifBtn" onclick="toggleAdminNotif()"
+    <button type="button" id="counselorNotifBtn" onclick="toggleCounselorNotif()"
         style="position:relative;background:var(--bg);border:1.5px solid var(--bd);border-radius:var(--rs);width:37px;height:37px;display:flex;align-items:center;justify-content:center;color:var(--tm);cursor:pointer;transition:all .2s;"
         onmouseover="this.style.background='var(--g)';this.style.color='#fff';this.style.borderColor='var(--g)'"
         onmouseout="this.style.background='var(--bg)';this.style.color='var(--tm)';this.style.borderColor='var(--bd)'">
         <i class="fas fa-bell" style="font-size:15px;"></i>
-        <span id="adminNotifBadge" style="display:none;position:absolute;top:3px;right:3px;width:16px;height:16px;background:var(--danger);color:#fff;border-radius:50%;font-size:9px;font-weight:800;align-items:center;justify-content:center;border:2px solid #fff;line-height:1;"></span>
+        <span id="counselorNotifBadge" style="display:none;position:absolute;top:3px;right:3px;width:16px;height:16px;background:var(--danger);color:#fff;border-radius:50%;font-size:9px;font-weight:800;align-items:center;justify-content:center;border:2px solid #fff;line-height:1;"></span>
     </button>
-    <div id="adminNotifDropdown" style="display:none;position:absolute;top:calc(100% + 10px);right:0;width:360px;background:#fff;border:1.5px solid var(--bd);border-radius:14px;box-shadow:0 12px 40px rgba(0,0,0,.14);z-index:9990;overflow:hidden;">
+    <div id="counselorNotifDropdown" style="display:none;position:absolute;top:calc(100% + 10px);right:0;width:360px;background:#fff;border:1.5px solid var(--bd);border-radius:14px;box-shadow:0 12px 40px rgba(0,0,0,.14);z-index:9990;overflow:hidden;">
         <div style="padding:13px 18px;border-bottom:1px solid var(--bd);display:flex;align-items:center;justify-content:space-between;background:var(--bg);">
             <div style="font-size:14px;font-weight:700;color:var(--tx);">Notifications</div>
             <div style="display:flex;align-items:center;gap:8px;">
-                <span id="adminNotifUnread" style="font-size:11px;color:var(--tm);"></span>
-                <button type="button" onclick="adminMarkAll()" id="adminMarkAllBtn" style="display:none;background:none;border:1px solid var(--bd);border-radius:7px;padding:3px 10px;font-size:11px;color:var(--gm);cursor:pointer;font-weight:600;">Mark all read</button>
+                <span id="counselorNotifUnread" style="font-size:11px;color:var(--tm);"></span>
+                <button type="button" onclick="counselorMarkAll()" id="counselorMarkAllBtn" style="display:none;background:none;border:1px solid var(--bd);border-radius:7px;padding:3px 10px;font-size:11px;color:var(--gm);cursor:pointer;font-weight:600;">Mark all read</button>
             </div>
         </div>
-        <div id="adminNotifLoading" style="padding:24px;text-align:center;color:var(--tm);font-size:13px;">
+        <div id="counselorNotifLoading" style="padding:24px;text-align:center;color:var(--tm);font-size:13px;">
             <div style="display:inline-flex;align-items:center;gap:8px;"><div style="width:14px;height:14px;border:2px solid var(--gm);border-top-color:transparent;border-radius:50%;animation:notifSpin .7s linear infinite;"></div>Loading...</div>
         </div>
-        <div id="adminNotifList" style="display:none;max-height:380px;overflow-y:auto;"></div>
-        <div id="adminNotifEmpty" style="display:none;padding:30px 20px;text-align:center;">
+        <div id="counselorNotifList" style="display:none;max-height:380px;overflow-y:auto;"></div>
+        <div id="counselorNotifEmpty" style="display:none;padding:30px 20px;text-align:center;">
             <i class="fas fa-bell-slash" style="font-size:28px;color:var(--bd);margin-bottom:10px;display:block;"></i>
             <div style="font-size:13px;color:var(--tm);">No notifications yet</div>
         </div>
         <div style="padding:11px 18px;border-top:1px solid var(--bd);background:var(--bg);text-align:center;">
-            <a href="{{ route('admin.notifications.index') }}" style="font-size:12px;color:var(--gm);font-weight:600;text-decoration:none;">View all notifications <i class="fas fa-arrow-right" style="margin-left:3px;font-size:10px;"></i></a>
+            <a href="{{ route('counselor.notifications') }}" style="font-size:12px;color:var(--gm);font-weight:600;text-decoration:none;">View all notifications <i class="fas fa-arrow-right" style="margin-left:3px;font-size:10px;"></i></a>
         </div>
     </div>
 </div>
 
-<a href="{{ route('admin.settings.index') }}" class="tp-btn"><i class="fas fa-cog"></i></a>
+<a href="{{ route('counselor.settings') }}" class="tp-btn"><i class="fas fa-cog"></i></a>
 </div>
 </header>
 <div class="page">
 @if(session('success'))<div class="alert al-s an"><i class="fas fa-check-circle"></i> {{ session('success') }}</div>@endif
 @if(session('error'))<div class="alert al-d an"><i class="fas fa-exclamation-circle"></i> {{ session('error') }}</div>@endif
-@if(session('ai'))<div class="alert al-ai an"><i class="fas fa-robot"></i> {{ session('ai') }}</div>@endif
 @yield('content')
 </div></div>
 <script>
@@ -205,11 +196,11 @@ function openModal(id){document.getElementById(id).classList.add('open');}
 function closeModal(id){document.getElementById(id).classList.remove('open');}
 document.addEventListener('click',e=>{if(e.target.classList.contains('mo'))e.target.classList.remove('open');});
 
-// ── Admin Notification Dropdown ──────────────────────────────────────────────
+// ── Counselor Notification Dropdown ─────────────────────────────────────────
 (function(){
-    var DROPDOWN_URL = '{{ route("admin.notifications.dropdown") }}';
-    var MARK_ALL_URL = '{{ route("admin.notifications.mark-all") }}';
-    var MARK_READ_BASE = '{{ url("admin/notifications") }}';
+    var DROPDOWN_URL = '{{ route("counselor.notifications.dropdown") }}';
+    var MARK_ALL_URL = '{{ route("counselor.notifications.mark-all") }}';
+    var MARK_READ_BASE = '{{ url("counselor/notifications") }}';
     var CSRF = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
     var open = false, loaded = false;
 
@@ -224,13 +215,13 @@ document.addEventListener('click',e=>{if(e.target.classList.contains('mo'))e.tar
         fetch(DROPDOWN_URL,{headers:{'X-Requested-With':'XMLHttpRequest','Accept':'application/json'}})
         .then(function(r){return r.json();})
         .then(function(data){
-            document.getElementById('adminNotifLoading').style.display='none';
+            document.getElementById('counselorNotifLoading').style.display='none';
             var notifs=data.notifications||[], unread=data.unread||0;
-            var badge=document.getElementById('adminNotifBadge');
-            var ul=document.getElementById('adminNotifUnread');
-            var mb=document.getElementById('adminMarkAllBtn');
-            var list=document.getElementById('adminNotifList');
-            var empty=document.getElementById('adminNotifEmpty');
+            var badge=document.getElementById('counselorNotifBadge');
+            var ul=document.getElementById('counselorNotifUnread');
+            var mb=document.getElementById('counselorMarkAllBtn');
+            var list=document.getElementById('counselorNotifList');
+            var empty=document.getElementById('counselorNotifEmpty');
             if(unread>0){badge.style.display='flex';badge.textContent=unread>99?'99+':unread;ul.textContent=unread+' unread';mb.style.display='block';}
             else{badge.style.display='none';ul.textContent='All read';mb.style.display='none';}
             if(notifs.length===0){empty.style.display='block';list.style.display='none';loaded=true;return;}
@@ -239,7 +230,7 @@ document.addEventListener('click',e=>{if(e.target.classList.contains('mo'))e.tar
                 var cfg=iconCfg(n.type), isNew=!n.read;
                 var el=document.createElement('div');
                 el.className='notif-item'+(isNew?' unread':'');
-                el.onclick=function(){markOne(n.id,this);};
+                el.onclick=function(){counselorMarkOne(n.id,this);};
                 el.innerHTML='<div class="notif-icon" style="background:'+cfg.bg+';color:'+cfg.c+';"><i class="'+cfg.i+'"></i></div>'
                 +'<div style="flex:1;min-width:0;">'
                 +'<div style="font-size:13px;font-weight:'+(isNew?'700':'500')+';color:var(--tx);line-height:1.4;margin-bottom:2px;">'+esc(n.title||'Notification')+'</div>'
@@ -249,10 +240,10 @@ document.addEventListener('click',e=>{if(e.target.classList.contains('mo'))e.tar
                 list.appendChild(el);
             });
             loaded=true;
-        }).catch(function(){document.getElementById('adminNotifLoading').style.display='none';});
+        }).catch(function(){document.getElementById('counselorNotifLoading').style.display='none';});
     }
 
-    function markOne(id, el){
+    function counselorMarkOne(id, el){
         fetch(MARK_READ_BASE+'/'+id,{method:'POST',headers:{'X-CSRF-TOKEN':CSRF,'X-Requested-With':'XMLHttpRequest','Content-Type':'application/json'},body:JSON.stringify({_method:'PATCH'})})
         .then(function(){
             if(el){
@@ -261,29 +252,29 @@ document.addEventListener('click',e=>{if(e.target.classList.contains('mo'))e.tar
                 if(title)title.style.fontWeight='500';
                 var dot=el.querySelector('[style*="border-radius:50%;display:inline-block"]');
                 if(dot)dot.remove();
-                var badge=document.getElementById('adminNotifBadge');
+                var badge=document.getElementById('counselorNotifBadge');
                 var cur=parseInt(badge.textContent)||0;
                 if(cur>1){badge.textContent=cur-1;}
-                else{badge.style.display='none';document.getElementById('adminMarkAllBtn').style.display='none';document.getElementById('adminNotifUnread').textContent='All read';}
+                else{badge.style.display='none';document.getElementById('counselorMarkAllBtn').style.display='none';document.getElementById('counselorNotifUnread').textContent='All read';}
             }
         });
     }
 
-    window.adminMarkAll=function(){
+    window.counselorMarkAll=function(){
         fetch(MARK_ALL_URL,{method:'POST',headers:{'X-CSRF-TOKEN':CSRF,'X-Requested-With':'XMLHttpRequest','Content-Type':'application/json'},body:JSON.stringify({})})
-        .then(function(){loaded=false;document.getElementById('adminNotifLoading').style.display='block';document.getElementById('adminNotifList').style.display='none';load();});
+        .then(function(){loaded=false;document.getElementById('counselorNotifLoading').style.display='block';document.getElementById('counselorNotifList').style.display='none';load();});
     };
 
-    window.toggleAdminNotif=function(){
-        var dd=document.getElementById('adminNotifDropdown');
+    window.toggleCounselorNotif=function(){
+        var dd=document.getElementById('counselorNotifDropdown');
         open=!open;dd.style.display=open?'block':'none';
         if(open&&!loaded)load();
     };
 
     document.addEventListener('click',function(e){
         if(!open)return;
-        var w=document.getElementById('adminNotifWrapper');
-        if(w&&!w.contains(e.target)){document.getElementById('adminNotifDropdown').style.display='none';open=false;}
+        var w=document.getElementById('counselorNotifWrapper');
+        if(w&&!w.contains(e.target)){document.getElementById('counselorNotifDropdown').style.display='none';open=false;}
     });
 
     setInterval(function(){
@@ -291,7 +282,7 @@ document.addEventListener('click',e=>{if(e.target.classList.contains('mo'))e.tar
         fetch(DROPDOWN_URL,{headers:{'X-Requested-With':'XMLHttpRequest','Accept':'application/json'}})
         .then(function(r){return r.json();})
         .then(function(data){
-            var badge=document.getElementById('adminNotifBadge');
+            var badge=document.getElementById('counselorNotifBadge');
             var u=data.unread||0;
             if(u>0){badge.style.display='flex';badge.textContent=u>99?'99+':u;}
             else{badge.style.display='none';}

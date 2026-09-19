@@ -12,6 +12,7 @@ class RoleMiddleware {
         return match($user->role) {
             'superadmin'       => redirect()->route('superadmin.dashboard')->with('error','Access denied.'),
             'admin','officer'  => redirect()->route('admin.dashboard')->with('error','Access denied.'),
+            'counselor'        => redirect()->route('counselor.dashboard')->with('error','Access denied.'),
             'student'          => redirect()->route('student.dashboard')->with('error','Access denied.'),
             default            => redirect()->route('login'),
         };

@@ -25,6 +25,7 @@ class AuthController extends Controller {
             return match($user->role) {
                 'superadmin'       => redirect()->route('superadmin.dashboard'),
                 'admin','officer'  => redirect()->route('admin.dashboard'),
+                'counselor'        => redirect()->route('counselor.dashboard'),
                 'student'          => redirect()->route('student.dashboard'),
                 default            => redirect('/'),
             };
