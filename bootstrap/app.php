@@ -14,6 +14,9 @@ $app = Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'role' => \App\Http\Middleware\RoleMiddleware::class
         ]);
+        // Trust the platform proxy (Vercel/Render/Docker) so https is
+        // detected from X-Forwarded-Proto and generated URLs stay https.
+        $middleware->trustProxies(at: '*');
     })
     ->withExceptions(function (Exceptions $exceptions) {})
     ->create();
