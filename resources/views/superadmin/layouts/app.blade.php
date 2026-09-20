@@ -99,7 +99,9 @@ select.fc option{background:var(--card);}
 @keyframes fadeUp{from{opacity:0;transform:translateY(13px)}to{opacity:1;transform:translateY(0)}}
 .d1{animation-delay:.05s}.d2{animation-delay:.1s}.d3{animation-delay:.15s}
 ::-webkit-scrollbar{width:5px;height:5px;}::-webkit-scrollbar-track{background:var(--card);}::-webkit-scrollbar-thumb{background:var(--bd);border-radius:10px;}
-@media(max-width:900px){.sidebar{transform:translateX(-100%)}.sidebar.open{transform:translateX(0)}.main{margin-left:0}.mob-toggle{display:flex}.g2,.g3{grid-template-columns:1fr}}
+@media(max-width:900px){.sidebar{transform:translateX(-100%)}.sidebar.open{transform:translateX(0)}.main{margin-left:0}.mob-toggle{display:flex}.g2,.g3{grid-template-columns:1fr}.topbar{padding:0 14px;gap:10px}.page{padding:14px}.tp-sub{display:none}}
+.sb-backdrop{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:99;backdrop-filter:blur(2px);}
+.sb-backdrop.open{display:block;}
 </style>@stack('styles')</head>
 <body data-theme="light">
 <aside class="sidebar" id="sidebar">
@@ -119,7 +121,11 @@ select.fc option{background:var(--card);}
 <a href="{{ route('superadmin.settings') }}" class="nav-a {{ request()->routeIs('superadmin.settings')?'active':'' }}"><i class="fas fa-cog"></i> Settings</a></div>
 <div class="sb-footer"><div class="user-card"><div class="u-av">{{ strtoupper(substr(auth()->user()->name??'S',0,1)) }}</div><div><div class="u-name">{{ auth()->user()->name??'Super Admin' }}</div><div class="u-role">⚡ SUPER ADMIN</div></div><a href="{{ route('logout') }}" class="u-out" onclick="event.preventDefault();document.getElementById('salf').submit();" title="Logout"><i class="fas fa-sign-out-alt"></i></a></div><form id="salf" action="{{ route('logout') }}" method="POST" style="display:none;">@csrf</form></div>
 </aside>
+<div class="sb-backdrop" id="sbBackdrop"></div>
 <div class="main">
+<header class="topbar">
+<button class="mob-toggle" id="sbToggle"><i class="fas fa-bars"></i></button>
+<div><div class="tp-title">@yield('page-title','Dashboard')</div><div class="tp-sub">@yield('page-sub','ISAMS Super Admin Portal')</div></div>
 <div class="tp-right"><span class="sa-chip"><img src="{{ asset('images/SCC_NEW_LOGO.png') }}" alt="Logo">Super Admin</span>
 
 {{-- Theme toggle (System → Light → Dark) --}}
@@ -134,9 +140,12 @@ select.fc option{background:var(--card);}
 @yield('content')
 </div></div>
 <script>
-const sbToggle=document.getElementById('sbToggle'),sidebar=document.getElementById('sidebar');
-sbToggle.addEventListener('click',()=>sidebar.classList.toggle('open'));
-function chk(){if(window.innerWidth<=900)sbToggle.style.display='flex';else{sbToggle.style.display='none';sidebar.classList.remove('open');}}
+const sbToggle=document.getElementById('sbToggle'),sidebar=document.getElementById('sidebar'),sbBackdrop=document.getElementById('sbBackdrop');
+function sbSet(open){sidebar.classList.toggle('open',open);if(sbBackdrop)sbBackdrop.classList.toggle('open',open);document.body.style.overflow=(open&&window.innerWidth<=900)?'hidden':'';}
+sbToggle.addEventListener('click',()=>sbSet(!sidebar.classList.contains('open')));
+if(sbBackdrop)sbBackdrop.addEventListener('click',()=>sbSet(false));
+sidebar.querySelectorAll('a').forEach(a=>a.addEventListener('click',()=>{if(window.innerWidth<=900)sbSet(false);}));
+function chk(){if(window.innerWidth<=900)sbToggle.style.display='flex';else{sbToggle.style.display='none';sbSet(false);}}
 chk();window.addEventListener('resize',chk);
 function openModal(id){document.getElementById(id).classList.add('open');}
 function closeModal(id){document.getElementById(id).classList.remove('open');}

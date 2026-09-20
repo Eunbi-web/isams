@@ -106,7 +106,10 @@ tbody td{padding:11px 13px;font-size:13px;border-bottom:1px solid var(--bd);}tbo
 @keyframes fadeUp{from{opacity:0;transform:translateY(13px)}to{opacity:1;transform:translateY(0)}}
 .d1{animation-delay:.05s}.d2{animation-delay:.1s}.d3{animation-delay:.15s}
 ::-webkit-scrollbar{width:6px;height:6px;}::-webkit-scrollbar-thumb{background:#b0d0b8;border-radius:10px;}
-@media(max-width:900px){.sidebar{transform:translateX(-100%)}.sidebar.open{transform:translateX(0)}.main{margin-left:0}.mob-toggle{display:flex}.g2,.g3{grid-template-columns:1fr}}
+@media(max-width:900px){.sidebar{transform:translateX(-100%)}.sidebar.open{transform:translateX(0)}.main{margin-left:0}.mob-toggle{display:flex}.g2,.g3{grid-template-columns:1fr}.topbar{padding:0 14px;gap:10px}.page{padding:14px}.tp-sub{display:none}.ai-bar{padding:8px 14px}}
+.sb-backdrop{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:99;backdrop-filter:blur(2px);}
+.sb-backdrop.open{display:block;}
+@media(max-width:520px){.notif-wrapper div[id$="NotifDropdown"],#counselorNotifDropdown{width:calc(100vw - 20px)!important;}}
 /* Theme overrides (light/dark) */
 body[data-theme="dark"]{--bg:#0b1220;--card:#0f1a2d;--sb:#081022;--st:#9fb3c8;--tm:#dbe8f5;--tm2:#6f8aa7;--bd:rgba(160,190,220,0.22);--shadow:0 8px 30px rgba(0,0,0,0.35);}
 body[data-theme="light"]{--bg:#f2f7f3;--card:#fff;--sb:#0d3318;--st:#90c8a0;--tx:#1a2e1a;--tm:#5a7a60;--bd:#cde0d0;--shadow:0 2px 12px rgba(26,107,47,.09);}
@@ -136,6 +139,7 @@ body[data-theme="light"]{--bg:#f2f7f3;--card:#fff;--sb:#0d3318;--st:#90c8a0;--tx
 <a href="{{ route('counselor.settings') }}" class="nav-a {{ request()->routeIs('counselor.settings*')?'active':'' }}" style="color:#90b8c8;{{ request()->routeIs('counselor.settings*')?'background:#1a4a6b;color:#f0c020;':'' }}" onmouseover="this.style.background='#1a4a6b';this.style.color='#fff'" onmouseout="if(!this.classList.contains('active')){this.style.background='';this.style.color='#90b8c8'}"><i class="fas fa-cog"></i> Settings</a></div>
 <div class="sb-footer"><div class="user-card"><div class="u-av">{{ strtoupper(substr(auth()->user()->name??'C',0,1)) }}</div><div><div class="u-name">{{ explode(' ',auth()->user()->name??'Counselor')[0] }}</div><div class="u-role" style="color:#90b8c8;">{{ ucfirst(auth()->user()->role??'counselor') }}</div></div><a href="{{ route('logout') }}" class="u-out" onclick="event.preventDefault();document.getElementById('clf').submit();" title="Logout"><i class="fas fa-sign-out-alt"></i></a></div><form id="clf" action="{{ route('logout') }}" method="POST" style="display:none;">@csrf</form></div>
 </aside>
+<div class="sb-backdrop" id="sbBackdrop"></div>
 <div class="main">
 @yield('ai-bar')
 <header class="topbar">
@@ -188,9 +192,12 @@ body[data-theme="light"]{--bg:#f2f7f3;--card:#fff;--sb:#0d3318;--st:#90c8a0;--tx
 @yield('content')
 </div></div>
 <script>
-const sbToggle=document.getElementById('sbToggle'),sidebar=document.getElementById('sidebar');
-sbToggle.addEventListener('click',()=>sidebar.classList.toggle('open'));
-function chk(){if(window.innerWidth<=900)sbToggle.style.display='flex';else{sbToggle.style.display='none';sidebar.classList.remove('open');}}
+const sbToggle=document.getElementById('sbToggle'),sidebar=document.getElementById('sidebar'),sbBackdrop=document.getElementById('sbBackdrop');
+function sbSet(open){sidebar.classList.toggle('open',open);if(sbBackdrop)sbBackdrop.classList.toggle('open',open);document.body.style.overflow=(open&&window.innerWidth<=900)?'hidden':'';}
+sbToggle.addEventListener('click',()=>sbSet(!sidebar.classList.contains('open')));
+if(sbBackdrop)sbBackdrop.addEventListener('click',()=>sbSet(false));
+sidebar.querySelectorAll('a').forEach(a=>a.addEventListener('click',()=>{if(window.innerWidth<=900)sbSet(false);}));
+function chk(){if(window.innerWidth<=900)sbToggle.style.display='flex';else{sbToggle.style.display='none';sbSet(false);}}
 chk();window.addEventListener('resize',chk);
 function openModal(id){document.getElementById(id).classList.add('open');}
 function closeModal(id){document.getElementById(id).classList.remove('open');}

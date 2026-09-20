@@ -3,7 +3,7 @@
 <link rel="icon" type="image/png" sizes="32x32" href="<?php echo e(asset('favicon-32x32.png')); ?>">
 <link rel="icon" type="image/png" sizes="16x16" href="<?php echo e(asset('favicon-16x16.png')); ?>">
 <link rel="apple-touch-icon" sizes="180x180" href="<?php echo e(asset('favicon-180x180.png')); ?>">
-<meta name="csrf-token" content="<?php echo e(csrf_token()); ?>"><title>ISAMS Counselor — <?php echo $__env->yieldContent('title','Dashboard'); ?></title>
+<meta name="csrf-token" content="<?php echo e(csrf_token()); ?>"><title>ISAMS Student — <?php echo $__env->yieldContent('title','Portal'); ?></title>
 <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 <style>
@@ -28,7 +28,7 @@
 .nav-a:hover{background:var(--sh);color:#fff;}
 .nav-a.active{background:var(--sh);color:var(--y);}
 .nav-badge{margin-left:auto;background:var(--y);color:#0d3318;font-size:10px;font-weight:800;padding:2px 7px;border-radius:20px;line-height:1.4;}
-.nav-badge.g{background:var(--gm);color:#fff;}.nav-badge.b{background:var(--info);color:#fff;}.nav-badge.ph{background:#0038a8;color:#fff;}
+.nav-badge.g{background:var(--gm);color:#fff;}
 .sb-footer{margin-top:auto;padding:13px 10px;border-top:1px solid rgba(255,255,255,.07);}
 .user-card{display:flex;align-items:center;gap:9px;padding:9px 10px;background:rgba(255,255,255,.05);border-radius:var(--rs);}
 .u-av{width:34px;height:34px;background:linear-gradient(135deg,var(--y),var(--yd));border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px;color:#0d3318;}
@@ -37,11 +37,6 @@
 .u-out{margin-left:auto;color:var(--st);text-decoration:none;font-size:14px;transition:color .2s;}
 .u-out:hover{color:var(--danger);}
 .main{margin-left:262px;flex:1;display:flex;flex-direction:column;min-height:100vh;}
-.ai-bar{background:linear-gradient(135deg,#0d3318,#1a6b2f);padding:8px 26px;display:flex;align-items:center;gap:16px;flex-wrap:wrap;}
-.ai-bar-label{display:flex;align-items:center;gap:7px;font-size:12px;color:rgba(255,255,255,.8);font-weight:600;}
-.ai-bar-stats{display:flex;gap:14px;flex-wrap:wrap;}
-.ai-stat{font-size:12px;color:rgba(255,255,255,.65);}
-.ai-stat strong{color:var(--y);}
 .topbar{background:var(--card);border-bottom:2.5px solid var(--y);padding:0 26px;height:62px;display:flex;align-items:center;gap:14px;position:sticky;top:0;z-index:90;box-shadow:0 2px 10px rgba(26,107,47,.07);}
 .tp-title{font-family:'Sora',sans-serif;font-size:17px;font-weight:700;color:var(--g);}
 .tp-sub{font-size:11px;color:var(--tm);}
@@ -58,29 +53,43 @@
 .ch-acts{margin-left:auto;display:flex;gap:8px;}
 .cb{padding:20px;}
 .sg{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:14px;margin-bottom:20px;}
-.sc{background:var(--card);border-radius:var(--r);border:1px solid var(--bd);padding:16px 18px;box-shadow:var(--shadow);display:flex;align-items:center;gap:13px;transition:transform .2s,box-shadow .2s;}
-.sc:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(26,107,47,.12);}
+.sc{background:var(--card);border-radius:var(--r);border:1px solid var(--bd);padding:16px 18px;box-shadow:var(--shadow);display:flex;align-items:center;gap:13px;transition:transform .2s;}
+.sc:hover{transform:translateY(-2px);}
 .si{width:48px;height:48px;border-radius:13px;display:flex;align-items:center;justify-content:center;font-size:19px;flex-shrink:0;}
 .si.g{background:var(--gp);color:var(--gm);}.si.y{background:var(--yp);color:var(--yd);}.si.r{background:#fde8e6;color:var(--danger);}.si.t{background:#e0f3f8;color:var(--info);}.si.o{background:#fef3cd;color:var(--warn);}.si.dg{background:#d0f0d8;color:#0d6624;}
 .sv .lbl{font-size:11px;color:var(--tm);font-weight:600;text-transform:uppercase;letter-spacing:.5px;}
 .sv .val{font-family:'Sora',sans-serif;font-size:26px;font-weight:800;color:var(--g);line-height:1.1;}
-.sv .chg{font-size:11px;color:#1a7a4a;margin-top:1px;}.sv .chg.dn{color:var(--danger);}
+.sv .chg{font-size:11px;color:#1a7a4a;margin-top:1px;}
+.elig-banner{border-radius:var(--r);padding:20px 24px;display:flex;align-items:center;gap:18px;margin-bottom:18px;}
+.elig-banner.eligible{background:linear-gradient(135deg,#0d5c24,#1a6b2f);border:1px solid var(--gm);}
+.elig-banner.review{background:linear-gradient(135deg,#6b4a00,#a07c00);border:1px solid var(--y);}
+.elig-banner.not{background:linear-gradient(135deg,#7a1a14,var(--danger));border:1px solid #e87070;}
+.elig-icon{width:60px;height:60px;border-radius:16px;display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0;background:rgba(255,255,255,.15);}
+.elig-title{font-family:'Sora',sans-serif;font-size:20px;font-weight:800;color:#fff;}
+.elig-sub{font-size:13px;color:rgba(255,255,255,.75);margin-top:3px;}
+.chance-circle{width:70px;height:70px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,.15);flex-shrink:0;margin-left:auto;text-align:center;}
+.chance-val{font-family:'JetBrains Mono',monospace;font-size:18px;font-weight:800;color:#fff;}
+.chance-lbl{font-size:9px;color:rgba(255,255,255,.6);}
+.tag{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:20px;font-size:10px;font-weight:700;text-transform:uppercase;}
+.tag-renewal{background:#d0f0d8;color:#0d6624;}.tag-needs{background:var(--yp);color:var(--yd);}.tag-disq{background:#fde8e6;color:var(--danger);}.tag-open{background:var(--gp);color:var(--g);}.tag-closing{background:var(--yp);color:var(--yd);}.tag-queue{background:#e0f3f8;color:var(--info);}
 .asb{height:7px;border-radius:10px;background:#eee;overflow:hidden;}
 .asf{height:100%;border-radius:10px;transition:width .8s;}
 .ash{background:linear-gradient(90deg,var(--gm),var(--y));}.asm{background:linear-gradient(90deg,var(--warn),var(--y));}.asl{background:linear-gradient(90deg,var(--danger),#e87070);}
 .slot-bar{height:9px;background:#e8f0ea;border-radius:9px;overflow:hidden;margin:8px 0;}
-.slot-fill{height:100%;border-radius:9px;}
-.tw{overflow-x:auto;}table{width:100%;border-collapse:collapse;}
+.slot-fill{height:100%;border-radius:9px;transition:width .8s;}
+.sch-card{background:var(--card);border-radius:var(--r);border:1px solid var(--bd);box-shadow:var(--shadow);overflow:hidden;transition:all .2s;}
+.sch-card:hover{transform:translateY(-3px);box-shadow:0 10px 28px rgba(26,107,47,.14);}
+.tw{overflow-x:auto;}
+table{width:100%;border-collapse:collapse;}
 thead th{background:#f3f8f4;padding:9px 13px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.7px;color:var(--tm);text-align:left;border-bottom:2px solid var(--bd);}
 tbody tr{transition:background .15s;}tbody tr:hover{background:#f8fdf8;}
 tbody td{padding:11px 13px;font-size:13px;border-bottom:1px solid var(--bd);}tbody tr:last-child td{border-bottom:none;}
 .badge{display:inline-flex;align-items:center;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:700;}
 .b-s{background:#d0f0d8;color:#0d6624;}.b-d{background:#fde8e6;color:var(--danger);}.b-w{background:#fef3cd;color:#a07c00;}.b-i{background:#e0f3f8;color:var(--info);}.b-p{background:var(--gp);color:var(--g);}.b-y{background:var(--yp);color:var(--yd);}.b-gray{background:#eef1f5;color:#5a7a60;}
-.tag{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:20px;font-size:10px;font-weight:700;text-transform:uppercase;}
+.elig-el{background:#d0f0d8;color:#0d6624;border:1px solid #a0d8b0;}.elig-rv{background:var(--yp);color:var(--yd);border:1px solid #f0d060;}.elig-no{background:#fde8e6;color:var(--danger);border:1px solid #f0b0a0;}
 .btn{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:var(--rs);font-size:13px;font-weight:600;cursor:pointer;border:none;text-decoration:none;transition:all .2s;font-family:inherit;}
 .btn-p{background:var(--g);color:#fff;}.btn-p:hover{background:var(--gm);}
-.btn-ac{background:var(--y);color:#0d3318;}.btn-ac:hover{background:#f7d84a;}
-.btn-s{background:#1a7a4a;color:#fff;}.btn-d{background:var(--danger);color:#fff;}
+.btn-ac{background:var(--y);color:#0d3318;}
 .btn-o{background:transparent;border:1.5px solid var(--bd);color:var(--tm);}.btn-o:hover{border-color:var(--g);color:var(--g);background:var(--gp);}
 .btn-ai{background:linear-gradient(135deg,var(--g),var(--gm));color:var(--y);border:1px solid rgba(240,192,32,.4);font-weight:700;}
 .btn-sm{padding:5px 12px;font-size:12px;}.btn-ic{padding:6px 9px;}
@@ -101,18 +110,16 @@ tbody td{padding:11px 13px;font-size:13px;border-bottom:1px solid var(--bd);}tbo
 .mt3{margin-top:18px;}.mb3{margin-bottom:18px;}.mb2{margin-bottom:12px;}
 .tm{color:var(--tm);}.fwb{font-weight:700;}.fws{font-weight:600;}.mono{font-family:'JetBrains Mono',monospace;}
 .av{border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-weight:700;color:var(--g);flex-shrink:0;}
-.av-s{width:30px;height:30px;font-size:12px;background:var(--gp);}.av-m{width:38px;height:38px;font-size:14px;background:var(--gp);}
+.av-s{width:30px;height:30px;font-size:12px;background:var(--gp);}
 .an{animation:fadeUp .35s ease both;}
 @keyframes fadeUp{from{opacity:0;transform:translateY(13px)}to{opacity:1;transform:translateY(0)}}
 .d1{animation-delay:.05s}.d2{animation-delay:.1s}.d3{animation-delay:.15s}
 ::-webkit-scrollbar{width:6px;height:6px;}::-webkit-scrollbar-thumb{background:#b0d0b8;border-radius:10px;}
-@media(max-width:900px){.sidebar{transform:translateX(-100%)}.sidebar.open{transform:translateX(0)}.main{margin-left:0}.mob-toggle{display:flex}.g2,.g3{grid-template-columns:1fr}}
-/* Theme overrides (light/dark) */
-body[data-theme="dark"]{--bg:#0b1220;--card:#0f1a2d;--sb:#081022;--st:#9fb3c8;--tm:#dbe8f5;--tm2:#6f8aa7;--bd:rgba(160,190,220,0.22);--shadow:0 8px 30px rgba(0,0,0,0.35);}
-body[data-theme="light"]{--bg:#f2f7f3;--card:#fff;--sb:#0d3318;--st:#90c8a0;--tx:#1a2e1a;--tm:#5a7a60;--bd:#cde0d0;--shadow:0 2px 12px rgba(26,107,47,.09);}
-
+@media(max-width:900px){.sidebar{transform:translateX(-100%)}.sidebar.open{transform:translateX(0)}.main{margin-left:0}.mob-toggle{display:flex}.g2,.g3{grid-template-columns:1fr}.topbar{padding:0 14px;gap:10px}.page{padding:14px}.tp-sub{display:none}}
+.sb-backdrop{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:99;backdrop-filter:blur(2px);}
+.sb-backdrop.open{display:block;}
+@media(max-width:520px){.notif-wrapper div[id$="NotifDropdown"],#studentNotifDropdown{width:calc(100vw - 20px)!important;}}
 /* ── Notification Dropdown ── */
-.notif-wrapper{position:relative;}
 .notif-item{padding:13px 18px;border-bottom:1px solid var(--bd);display:flex;align-items:flex-start;gap:11px;cursor:pointer;transition:background .15s;}
 .notif-item:hover{background:var(--bg);}
 .notif-item.unread{background:#f0faf2;}
@@ -121,86 +128,88 @@ body[data-theme="light"]{--bg:#f2f7f3;--card:#fff;--sb:#0d3318;--st:#90c8a0;--tx
 .notif-icon{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0;}
 @keyframes notifSpin{to{transform:rotate(360deg);}}
 </style><?php echo $__env->yieldPushContent('styles'); ?></head>
-<body data-theme="light">
-<aside class="sidebar" id="sidebar" style="background:#0a1f2e;">
-<div class="sb-brand"><div class="sb-logo"><div class="sb-icon"><img src="<?php echo e(asset('images/DSA_logo.png')); ?>" alt="Logo"></div><div><div class="sb-name">ISAMS</div><div class="sb-sub" style="color:#90b8c8;">Counselor Portal</div></div></div></div>
+<body>
+<aside class="sidebar" id="sidebar">
+<div class="sb-brand"><div class="sb-logo"><div class="sb-icon"><img src="<?php echo e(asset('images/SCC_NEW_LOGO.png')); ?>" alt="Logo"></div><div><div class="sb-name">ISAMS</div><div class="sb-sub">Student Portal</div></div></div></div>
 <div class="ai-pill-sb"><div class="ai-dot"></div><span>AI Engine Active</span><span class="ai-v">v2.1</span></div>
 <div class="sb-sec"><div class="sb-lbl">Main</div>
-<a href="<?php echo e(route('counselor.dashboard')); ?>" class="nav-a <?php echo e(request()->routeIs('counselor.dashboard')?'active':''); ?>" style="color:#90b8c8;<?php echo e(request()->routeIs('counselor.dashboard')?'background:#1a4a6b;color:#f0c020;':''); ?>" onmouseover="this.style.background='#1a4a6b';this.style.color='#fff'" onmouseout="if(!this.classList.contains('active')){this.style.background='';this.style.color='#90b8c8'}"><i class="fas fa-th-large"></i> Dashboard</a></div>
+<a href="<?php echo e(route('student.dashboard')); ?>" class="nav-a <?php echo e(request()->routeIs('student.dashboard')?'active':''); ?>"><i class="fas fa-th-large"></i> Dashboard</a></div>
+<div class="sb-sec"><div class="sb-lbl">Scholarship</div>
+<a href="<?php echo e(route('student.scholarships')); ?>" class="nav-a <?php echo e(request()->routeIs('student.scholarships*')?'active':''); ?>"><i class="fas fa-award"></i> Scholarships</a>
+<a href="<?php echo e(route('student.applications')); ?>" class="nav-a <?php echo e(request()->routeIs('student.applications*')?'active':''); ?>"><i class="fas fa-file-alt"></i> My Applications</a>
+<a href="<?php echo e(route('student.eligibility')); ?>" class="nav-a <?php echo e(request()->routeIs('student.eligibility*')?'active':''); ?>"><i class="fas fa-robot"></i> AI Eligibility<span class="nav-badge">AI</span></a></div>
 <div class="sb-sec"><div class="sb-lbl">Services</div>
-<a href="<?php echo e(route('counselor.counseling.index')); ?>" class="nav-a <?php echo e(request()->routeIs('counselor.counseling*')?'active':''); ?>" style="color:#90b8c8;<?php echo e(request()->routeIs('counselor.counseling*')?'background:#1a4a6b;color:#f0c020;':''); ?>" onmouseover="this.style.background='#1a4a6b';this.style.color='#fff'" onmouseout="if(!this.classList.contains('active')){this.style.background='';this.style.color='#90b8c8'}"><i class="fas fa-comments"></i> Counseling Sessions</a>
-<a href="<?php echo e(route('counselor.announcements')); ?>" class="nav-a <?php echo e(request()->routeIs('counselor.announcements')?'active':''); ?>" style="color:#90b8c8;<?php echo e(request()->routeIs('counselor.announcements')?'background:#1a4a6b;color:#f0c020;':''); ?>" onmouseover="this.style.background='#1a4a6b';this.style.color='#fff'" onmouseout="if(!this.classList.contains('active')){this.style.background='';this.style.color='#90b8c8'}"><i class="fas fa-bullhorn"></i> Announcements</a>
-<a href="<?php echo e(route('counselor.discipline.index')); ?>" class="nav-a <?php echo e(request()->routeIs('counselor.discipline*')?'active':''); ?>" style="color:#90b8c8;<?php echo e(request()->routeIs('counselor.discipline*')?'background:#1a4a6b;color:#f0c020;':''); ?>" onmouseover="this.style.background='#1a4a6b';this.style.color='#fff'" onmouseout="if(!this.classList.contains('active')){this.style.background='';this.style.color='#90b8c8'}"><i class="fas fa-gavel"></i> Discipline Records<span class="nav-badge">NEW</span></a></div>
+<a href="<?php echo e(route('student.counseling.index')); ?>" class="nav-a <?php echo e(request()->routeIs('student.counseling*')?'active':''); ?>"><i class="fas fa-heart"></i> Counseling</a>
+<a href="<?php echo e(route('student.announcements')); ?>" class="nav-a <?php echo e(request()->routeIs('student.announcements*')?'active':''); ?>"><i class="fas fa-bullhorn"></i> Announcements</a></div>
 <div class="sb-sec"><div class="sb-lbl">Account</div>
-<a href="<?php echo e(route('counselor.notifications')); ?>" class="nav-a <?php echo e(request()->routeIs('counselor.notifications')?'active':''); ?>" style="color:#90b8c8;<?php echo e(request()->routeIs('counselor.notifications')?'background:#1a4a6b;color:#f0c020;':''); ?>" onmouseover="this.style.background='#1a4a6b';this.style.color='#fff'" onmouseout="if(!this.classList.contains('active')){this.style.background='';this.style.color='#90b8c8'}"><i class="fas fa-bell"></i> Notifications</a>
-<a href="<?php echo e(route('counselor.settings')); ?>" class="nav-a <?php echo e(request()->routeIs('counselor.settings*')?'active':''); ?>" style="color:#90b8c8;<?php echo e(request()->routeIs('counselor.settings*')?'background:#1a4a6b;color:#f0c020;':''); ?>" onmouseover="this.style.background='#1a4a6b';this.style.color='#fff'" onmouseout="if(!this.classList.contains('active')){this.style.background='';this.style.color='#90b8c8'}"><i class="fas fa-cog"></i> Settings</a></div>
-<div class="sb-footer"><div class="user-card"><div class="u-av"><?php echo e(strtoupper(substr(auth()->user()->name??'C',0,1))); ?></div><div><div class="u-name"><?php echo e(explode(' ',auth()->user()->name??'Counselor')[0]); ?></div><div class="u-role" style="color:#90b8c8;"><?php echo e(ucfirst(auth()->user()->role??'counselor')); ?></div></div><a href="<?php echo e(route('logout')); ?>" class="u-out" onclick="event.preventDefault();document.getElementById('clf').submit();" title="Logout"><i class="fas fa-sign-out-alt"></i></a></div><form id="clf" action="<?php echo e(route('logout')); ?>" method="POST" style="display:none;"><?php echo csrf_field(); ?></form></div>
+
+<a href="<?php echo e(route('student.profile')); ?>" class="nav-a <?php echo e(request()->routeIs('student.profile*')?'active':''); ?>"><i class="fas fa-user-circle"></i> My Profile</a></div>
+<div class="sb-footer"><div class="user-card"><div class="u-av"><?php echo e(strtoupper(substr(auth()->user()->name??'S',0,1))); ?></div><div><div class="u-name"><?php echo e(explode(' ',auth()->user()->name??'Student')[0]); ?></div><div class="u-role">Student</div></div><a href="<?php echo e(route('logout')); ?>" class="u-out" onclick="event.preventDefault();document.getElementById('slf').submit();" title="Logout"><i class="fas fa-sign-out-alt"></i></a></div><form id="slf" action="<?php echo e(route('logout')); ?>" method="POST" style="display:none;"><?php echo csrf_field(); ?></form></div>
 </aside>
+<div class="sb-backdrop" id="sbBackdrop"></div>
 <div class="main">
-<?php echo $__env->yieldContent('ai-bar'); ?>
 <header class="topbar">
 <button class="mob-toggle" id="sbToggle"><i class="fas fa-bars"></i></button>
-<div><div class="tp-title"><?php echo $__env->yieldContent('page-title','Dashboard'); ?></div><div class="tp-sub"><?php echo $__env->yieldContent('page-sub','Guidance Counseling Staff Portal'); ?></div></div>
+<div><div class="tp-title"><?php echo $__env->yieldContent('page-title','Dashboard'); ?></div><div class="tp-sub"><?php echo $__env->yieldContent('page-sub','ISAMS Student Portal'); ?></div></div>
 <div class="tp-right">
-<span class="school-chip"><img src="<?php echo e(asset('images/DSA_logo.png')); ?>" alt="Logo">ISAMS</span>
+<span class="school-chip"><img src="<?php echo e(asset('images/SCC_NEW_LOGO.png')); ?>" alt="Logo">ISAMS</span>
 
 
-<?php echo $__env->make('components.theme-toggle', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?>
-
-
-<div class="notif-wrapper" id="counselorNotifWrapper" style="position:relative;">
-
-    <button type="button" id="counselorNotifBtn" onclick="toggleCounselorNotif()"
+<div id="studentNotifWrapper" style="position:relative;">
+    <button type="button" id="studentNotifBtn" onclick="toggleStudentNotif()"
         style="position:relative;background:var(--bg);border:1.5px solid var(--bd);border-radius:var(--rs);width:37px;height:37px;display:flex;align-items:center;justify-content:center;color:var(--tm);cursor:pointer;transition:all .2s;"
         onmouseover="this.style.background='var(--g)';this.style.color='#fff';this.style.borderColor='var(--g)'"
         onmouseout="this.style.background='var(--bg)';this.style.color='var(--tm)';this.style.borderColor='var(--bd)'">
         <i class="fas fa-bell" style="font-size:15px;"></i>
-        <span id="counselorNotifBadge" style="display:none;position:absolute;top:3px;right:3px;width:16px;height:16px;background:var(--danger);color:#fff;border-radius:50%;font-size:9px;font-weight:800;align-items:center;justify-content:center;border:2px solid #fff;line-height:1;"></span>
+        <span id="studentNotifBadge" style="display:none;position:absolute;top:3px;right:3px;width:16px;height:16px;background:var(--danger);color:#fff;border-radius:50%;font-size:9px;font-weight:800;align-items:center;justify-content:center;border:2px solid #fff;line-height:1;"></span>
     </button>
-    <div id="counselorNotifDropdown" style="display:none;position:absolute;top:calc(100% + 10px);right:0;width:360px;background:#fff;border:1.5px solid var(--bd);border-radius:14px;box-shadow:0 12px 40px rgba(0,0,0,.14);z-index:9990;overflow:hidden;">
+    <div id="studentNotifDropdown" style="display:none;position:absolute;top:calc(100% + 10px);right:0;width:360px;background:#fff;border:1.5px solid var(--bd);border-radius:14px;box-shadow:0 12px 40px rgba(0,0,0,.14);z-index:9990;overflow:hidden;">
         <div style="padding:13px 18px;border-bottom:1px solid var(--bd);display:flex;align-items:center;justify-content:space-between;background:var(--bg);">
             <div style="font-size:14px;font-weight:700;color:var(--tx);">Notifications</div>
             <div style="display:flex;align-items:center;gap:8px;">
-                <span id="counselorNotifUnread" style="font-size:11px;color:var(--tm);"></span>
-                <button type="button" onclick="counselorMarkAll()" id="counselorMarkAllBtn" style="display:none;background:none;border:1px solid var(--bd);border-radius:7px;padding:3px 10px;font-size:11px;color:var(--gm);cursor:pointer;font-weight:600;">Mark all read</button>
+                <span id="studentNotifUnread" style="font-size:11px;color:var(--tm);"></span>
+                <button type="button" onclick="studentMarkAll()" id="studentMarkAllBtn" style="display:none;background:none;border:1px solid var(--bd);border-radius:7px;padding:3px 10px;font-size:11px;color:var(--gm);cursor:pointer;font-weight:600;">Mark all read</button>
             </div>
         </div>
-        <div id="counselorNotifLoading" style="padding:24px;text-align:center;color:var(--tm);font-size:13px;">
+        <div id="studentNotifLoading" style="padding:24px;text-align:center;color:var(--tm);font-size:13px;">
             <div style="display:inline-flex;align-items:center;gap:8px;"><div style="width:14px;height:14px;border:2px solid var(--gm);border-top-color:transparent;border-radius:50%;animation:notifSpin .7s linear infinite;"></div>Loading...</div>
         </div>
-        <div id="counselorNotifList" style="display:none;max-height:380px;overflow-y:auto;"></div>
-        <div id="counselorNotifEmpty" style="display:none;padding:30px 20px;text-align:center;">
+        <div id="studentNotifList" style="display:none;max-height:380px;overflow-y:auto;"></div>
+        <div id="studentNotifEmpty" style="display:none;padding:30px 20px;text-align:center;">
             <i class="fas fa-bell-slash" style="font-size:28px;color:var(--bd);margin-bottom:10px;display:block;"></i>
             <div style="font-size:13px;color:var(--tm);">No notifications yet</div>
         </div>
         <div style="padding:11px 18px;border-top:1px solid var(--bd);background:var(--bg);text-align:center;">
-            <a href="<?php echo e(route('counselor.notifications')); ?>" style="font-size:12px;color:var(--gm);font-weight:600;text-decoration:none;">View all notifications <i class="fas fa-arrow-right" style="margin-left:3px;font-size:10px;"></i></a>
+            <a href="<?php echo e(route('student.notifications')); ?>" style="font-size:12px;color:var(--gm);font-weight:600;text-decoration:none;">View all notifications <i class="fas fa-arrow-right" style="margin-left:3px;font-size:10px;"></i></a>
         </div>
     </div>
 </div>
 
-<a href="<?php echo e(route('counselor.settings')); ?>" class="tp-btn"><i class="fas fa-cog"></i></a>
 </div>
 </header>
 <div class="page">
 <?php if(session('success')): ?><div class="alert al-s an"><i class="fas fa-check-circle"></i> <?php echo e(session('success')); ?></div><?php endif; ?>
 <?php if(session('error')): ?><div class="alert al-d an"><i class="fas fa-exclamation-circle"></i> <?php echo e(session('error')); ?></div><?php endif; ?>
+<?php if(session('ai')): ?><div class="alert al-ai an"><i class="fas fa-robot"></i> <?php echo e(session('ai')); ?></div><?php endif; ?>
 <?php echo $__env->yieldContent('content'); ?>
 </div></div>
 <script>
-const sbToggle=document.getElementById('sbToggle'),sidebar=document.getElementById('sidebar');
-sbToggle.addEventListener('click',()=>sidebar.classList.toggle('open'));
-function chk(){if(window.innerWidth<=900)sbToggle.style.display='flex';else{sbToggle.style.display='none';sidebar.classList.remove('open');}}
+const sbToggle=document.getElementById('sbToggle'),sidebar=document.getElementById('sidebar'),sbBackdrop=document.getElementById('sbBackdrop');
+function sbSet(open){sidebar.classList.toggle('open',open);if(sbBackdrop)sbBackdrop.classList.toggle('open',open);document.body.style.overflow=(open&&window.innerWidth<=900)?'hidden':'';}
+sbToggle.addEventListener('click',()=>sbSet(!sidebar.classList.contains('open')));
+if(sbBackdrop)sbBackdrop.addEventListener('click',()=>sbSet(false));
+sidebar.querySelectorAll('a').forEach(a=>a.addEventListener('click',()=>{if(window.innerWidth<=900)sbSet(false);}));
+function chk(){if(window.innerWidth<=900)sbToggle.style.display='flex';else{sbToggle.style.display='none';sbSet(false);}}
 chk();window.addEventListener('resize',chk);
 function openModal(id){document.getElementById(id).classList.add('open');}
 function closeModal(id){document.getElementById(id).classList.remove('open');}
 document.addEventListener('click',e=>{if(e.target.classList.contains('mo'))e.target.classList.remove('open');});
 
-// ── Counselor Notification Dropdown ─────────────────────────────────────────
+// ── Student Notification Dropdown ────────────────────────────────────────────
 (function(){
-    var DROPDOWN_URL = '<?php echo e(route("counselor.notifications.dropdown")); ?>';
-    var MARK_ALL_URL = '<?php echo e(route("counselor.notifications.mark-all")); ?>';
-    var MARK_READ_BASE = '<?php echo e(url("counselor/notifications")); ?>';
+    var DROPDOWN_URL   = '<?php echo e(route("student.notifications.dropdown")); ?>';
+    var MARK_ALL_URL   = '<?php echo e(route("student.notifications.mark-all")); ?>';
+    var MARK_READ_BASE = '<?php echo e(url("student/notifications")); ?>';
     var CSRF = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
     var open = false, loaded = false;
 
@@ -215,13 +224,13 @@ document.addEventListener('click',e=>{if(e.target.classList.contains('mo'))e.tar
         fetch(DROPDOWN_URL,{headers:{'X-Requested-With':'XMLHttpRequest','Accept':'application/json'}})
         .then(function(r){return r.json();})
         .then(function(data){
-            document.getElementById('counselorNotifLoading').style.display='none';
+            document.getElementById('studentNotifLoading').style.display='none';
             var notifs=data.notifications||[], unread=data.unread||0;
-            var badge=document.getElementById('counselorNotifBadge');
-            var ul=document.getElementById('counselorNotifUnread');
-            var mb=document.getElementById('counselorMarkAllBtn');
-            var list=document.getElementById('counselorNotifList');
-            var empty=document.getElementById('counselorNotifEmpty');
+            var badge=document.getElementById('studentNotifBadge');
+            var ul=document.getElementById('studentNotifUnread');
+            var mb=document.getElementById('studentMarkAllBtn');
+            var list=document.getElementById('studentNotifList');
+            var empty=document.getElementById('studentNotifEmpty');
             if(unread>0){badge.style.display='flex';badge.textContent=unread>99?'99+':unread;ul.textContent=unread+' unread';mb.style.display='block';}
             else{badge.style.display='none';ul.textContent='All read';mb.style.display='none';}
             if(notifs.length===0){empty.style.display='block';list.style.display='none';loaded=true;return;}
@@ -230,7 +239,7 @@ document.addEventListener('click',e=>{if(e.target.classList.contains('mo'))e.tar
                 var cfg=iconCfg(n.type), isNew=!n.read;
                 var el=document.createElement('div');
                 el.className='notif-item'+(isNew?' unread':'');
-                el.onclick=function(){counselorMarkOne(n.id,this);};
+                el.onclick=function(){markOne(n.id,this);};
                 el.innerHTML='<div class="notif-icon" style="background:'+cfg.bg+';color:'+cfg.c+';"><i class="'+cfg.i+'"></i></div>'
                 +'<div style="flex:1;min-width:0;">'
                 +'<div style="font-size:13px;font-weight:'+(isNew?'700':'500')+';color:var(--tx);line-height:1.4;margin-bottom:2px;">'+esc(n.title||'Notification')+'</div>'
@@ -240,10 +249,10 @@ document.addEventListener('click',e=>{if(e.target.classList.contains('mo'))e.tar
                 list.appendChild(el);
             });
             loaded=true;
-        }).catch(function(){document.getElementById('counselorNotifLoading').style.display='none';});
+        }).catch(function(){document.getElementById('studentNotifLoading').style.display='none';});
     }
 
-    function counselorMarkOne(id, el){
+    function markOne(id,el){
         fetch(MARK_READ_BASE+'/'+id,{method:'POST',headers:{'X-CSRF-TOKEN':CSRF,'X-Requested-With':'XMLHttpRequest','Content-Type':'application/json'},body:JSON.stringify({_method:'PATCH'})})
         .then(function(){
             if(el){
@@ -252,29 +261,29 @@ document.addEventListener('click',e=>{if(e.target.classList.contains('mo'))e.tar
                 if(title)title.style.fontWeight='500';
                 var dot=el.querySelector('[style*="border-radius:50%;display:inline-block"]');
                 if(dot)dot.remove();
-                var badge=document.getElementById('counselorNotifBadge');
+                var badge=document.getElementById('studentNotifBadge');
                 var cur=parseInt(badge.textContent)||0;
                 if(cur>1){badge.textContent=cur-1;}
-                else{badge.style.display='none';document.getElementById('counselorMarkAllBtn').style.display='none';document.getElementById('counselorNotifUnread').textContent='All read';}
+                else{badge.style.display='none';document.getElementById('studentMarkAllBtn').style.display='none';document.getElementById('studentNotifUnread').textContent='All read';}
             }
         });
     }
 
-    window.counselorMarkAll=function(){
+    window.studentMarkAll=function(){
         fetch(MARK_ALL_URL,{method:'POST',headers:{'X-CSRF-TOKEN':CSRF,'X-Requested-With':'XMLHttpRequest','Content-Type':'application/json'},body:JSON.stringify({})})
-        .then(function(){loaded=false;document.getElementById('counselorNotifLoading').style.display='block';document.getElementById('counselorNotifList').style.display='none';load();});
+        .then(function(){loaded=false;document.getElementById('studentNotifLoading').style.display='block';document.getElementById('studentNotifList').style.display='none';load();});
     };
 
-    window.toggleCounselorNotif=function(){
-        var dd=document.getElementById('counselorNotifDropdown');
+    window.toggleStudentNotif=function(){
+        var dd=document.getElementById('studentNotifDropdown');
         open=!open;dd.style.display=open?'block':'none';
         if(open&&!loaded)load();
     };
 
     document.addEventListener('click',function(e){
         if(!open)return;
-        var w=document.getElementById('counselorNotifWrapper');
-        if(w&&!w.contains(e.target)){document.getElementById('counselorNotifDropdown').style.display='none';open=false;}
+        var w=document.getElementById('studentNotifWrapper');
+        if(w&&!w.contains(e.target)){document.getElementById('studentNotifDropdown').style.display='none';open=false;}
     });
 
     setInterval(function(){
@@ -282,7 +291,7 @@ document.addEventListener('click',e=>{if(e.target.classList.contains('mo'))e.tar
         fetch(DROPDOWN_URL,{headers:{'X-Requested-With':'XMLHttpRequest','Accept':'application/json'}})
         .then(function(r){return r.json();})
         .then(function(data){
-            var badge=document.getElementById('counselorNotifBadge');
+            var badge=document.getElementById('studentNotifBadge');
             var u=data.unread||0;
             if(u>0){badge.style.display='flex';badge.textContent=u>99?'99+':u;}
             else{badge.style.display='none';}
@@ -290,69 +299,8 @@ document.addEventListener('click',e=>{if(e.target.classList.contains('mo'))e.tar
         }).catch(function(){});
     },60000);
 })();
-</script>
-
-<script>
-    (function(){
-        // Apply saved theme (system/light/dark) and resolve "system" using OS preference.
-        var body=document.body;
-        if(!body) return;
-
-        var savedTheme=<?php echo json_encode(auth()->user()->theme ?? 'system', 15, 512) ?>;
-        var resolved=savedTheme;
-        if(savedTheme==='system'){
-            var prefersDark=window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches;
-            resolved=prefersDark?'dark':'light';
-        }
-        body.setAttribute('data-theme',resolved);
-
-        // Theme toggle button state
-        var btn=document.getElementById('themeToggleBtn');
-        var icon=document.getElementById('themeToggleIcon');
-        if(btn){
-            var cycle=['system','light','dark'];
-            var idx=Math.max(0,cycle.indexOf(savedTheme));
-
-            function setIcon(){
-                if(!icon) return;
-                var map={system:'fas fa-laptop', light:'fas fa-sun', dark:'fas fa-moon'};
-                icon.className=map[savedTheme]||'fas fa-adjust';
-                btn.title='Theme: '+savedTheme.charAt(0).toUpperCase()+savedTheme.slice(1);
-            }
-
-            setIcon();
-
-            btn.addEventListener('click',function(){
-                var next=cycle[(idx+1)%cycle.length];
-                idx=(idx+1)%cycle.length;
-                savedTheme=next;
-
-                var nextResolved=next;
-                if(next==='system'){
-                    var pDark=window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches;
-                    nextResolved=pDark?'dark':'light';
-                }
-                body.setAttribute('data-theme',nextResolved);
-                setIcon();
-
-                var csrf=document.querySelector('meta[name="csrf-token"]').getAttribute('content');
-                fetch('<?php echo e(route('settings.theme.update')); ?>',{
-                    method:'POST',
-                    headers:{
-                        'Content-Type':'application/json',
-                        'X-CSRF-TOKEN':csrf,
-                        'X-Requested-With':'XMLHttpRequest'
-                    },
-                    body:JSON.stringify({theme:next})
-                }).catch(function(){});
-            });
-        }
-    })();
-</script>
-
-
-<?php echo $__env->yieldPushContent('scripts'); ?>
+</script><?php echo $__env->yieldPushContent('scripts'); ?>
 <script src="<?php echo e(asset('js/isams-ajax.js')); ?>"></script>
 <?php echo $__env->make('chatbot.chatbot-widget', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?>
 </body></html>
-<?php /**PATH C:\Users\Acer\Herd\isams\resources\views/counselor/layouts/app.blade.php ENDPATH**/ ?>
+<?php /**PATH C:\Users\Acer\Herd\isams\resources\views/student/layouts/app.blade.php ENDPATH**/ ?>
