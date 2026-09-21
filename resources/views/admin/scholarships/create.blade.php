@@ -64,7 +64,7 @@
         <div class="alert al-ai" style="font-size:12px;margin-bottom:16px;"><i class="fas fa-info-circle"></i>
         <span>The AI engine uses these criteria to evaluate each student application automatically. Set them to match the official scholarship requirements.</span></div>
         <div class="g2">
-            <div class="fg"><label class="fl">Maximum GWA (gwa_max)</label>
+            <div class="fg"><label class="fl">Maximum GWA</label>
             <input type="number" name="ai_gwa_max" class="fc mono" step="0.01" min="1" max="5" value="{{ old('ai_gwa_max', 1.75) }}" placeholder="1.75">
             <div style="font-size:11px;color:var(--tm);margin-top:3px;">Students with GWA equal to or better than this qualify. Example: 1.75 means GWA must be 1.75 or lower.</div></div>
             <div class="fg"><label class="fl">Maximum Family Income (₱/year)</label>

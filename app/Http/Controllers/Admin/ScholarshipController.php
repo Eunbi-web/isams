@@ -58,9 +58,15 @@ class ScholarshipController extends Controller
         return redirect()->route('admin.scholarships.index')->with('success','Scholarship created!');
     }
 
-    public function show(Scholarship $scholarship)
+    public function show(Request $request, Scholarship $scholarship)
     {
-        $scholarship->load('applications.student.user');
+        $scholarship->load('applications.student');
+
+        // Quick-view modal on the Programs list: return only the details markup
+        if ($request->boolean('modal')) {
+            return view('admin.scholarships._details', compact('scholarship'))->render();
+        }
+
         return view('admin.scholarships.show', compact('scholarship'));
     }
 

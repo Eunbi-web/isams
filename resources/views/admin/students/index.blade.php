@@ -3,12 +3,34 @@
 @section('page-title','Student Records')
 @section('content')
 <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:14px;">
-<form method="GET" style="display:flex;gap:8px;">
+<form method="GET" style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
     <div style="position:relative;">
         <i class="fas fa-search" style="position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--tm);font-size:12px;"></i>
         <input type="text" name="search" value="{{ request('search') }}" class="fc" placeholder="Search students..." style="padding-left:30px;width:200px;">
     </div>
-    <button type="submit" class="btn btn-p btn-sm"><i class="fas fa-filter"></i> Search</button>
+    <select name="course" class="fc" style="width:170px;">
+        <option value="">All Courses</option>
+        @foreach($courses as $c)
+        <option value="{{ $c }}" {{ request('course')===$c?'selected':'' }}>{{ Str::limit($c,26) }}</option>
+        @endforeach
+    </select>
+    <select name="year_level" class="fc" style="width:120px;">
+        <option value="">All Years</option>
+        @foreach($years as $y)
+        <option value="{{ $y }}" {{ request('year_level')===$y?'selected':'' }}>{{ $y }}</option>
+        @endforeach
+    </select>
+    <select name="enrollment_type" class="fc" style="width:140px;">
+        <option value="">All Enrollment</option>
+        <option value="Regular" {{ request('enrollment_type')==='Regular'?'selected':'' }}>Regular</option>
+        <option value="Irregular" {{ request('enrollment_type')==='Irregular'?'selected':'' }}>Irregular</option>
+    </select>
+    <select name="status" class="fc" style="width:120px;">
+        <option value="">All Status</option>
+        <option value="Active" {{ request('status')==='Active'?'selected':'' }}>Active</option>
+        <option value="Inactive" {{ request('status')==='Inactive'?'selected':'' }}>Inactive</option>
+    </select>
+    <button type="submit" class="btn btn-p btn-sm"><i class="fas fa-filter"></i> Filter</button>
     <a href="{{ route('admin.students.index') }}" class="btn btn-o btn-sm">Clear</a>
 </form>
 

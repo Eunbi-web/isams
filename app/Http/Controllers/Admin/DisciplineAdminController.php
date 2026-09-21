@@ -55,16 +55,13 @@ class DisciplineAdminController extends Controller
 
     public function create()
     {
-        // Keep existing dropdown for now, but also allow lookup by EDP from students_imports.
-        $students = Student::orderBy('last_name')
-            ->get(['id', 'student_id', 'first_name', 'middle_name', 'last_name', 'course', 'contact_number', 'guardian_name']);
-
-        return view('admin.discipline.create', compact('students'));
+        return view('admin.discipline.create');
     }
 
     /**
      * Lookup student information by EDP (students_imports.student_id).
-     * Used by Discipline Records > Add Record form.
+     * Used by Discipline Records > Add Record form to auto-fill
+     * name, department, contact number and guardian.
      */
     public function lookupEdp(Request $request)
     {
@@ -77,6 +74,7 @@ class DisciplineAdminController extends Controller
         $import = StudentsImport::query()
             ->where('student_id', $edp)
             ->orWhere('student_id', 'like', $edp . '%')
+            ->orderByRaw('CASE WHEN student_id = ? THEN 0 ELSE 1 END', [$edp])
             ->first();
 
         if (!$import) {
@@ -86,9 +84,17 @@ class DisciplineAdminController extends Controller
             ], 404);
         }
 
+        // Enrich with the official student record when it exists
+        $student = Student::where('student_id', $import->student_id)->first();
+
         return response()->json([
             'ok' => true,
-            'name' => $import->getFullNameAttribute(),
+            'edp' => $import->student_id,
+            'name' => $student?->full_name ?: $import->getFullNameAttribute(),
+            'department' => $student?->department,
+            'course' => $student?->course,
+            'contact_number' => $student?->contact_number,
+            'guardian_name' => $student?->guardian_name,
         ]);
     }
 
@@ -96,13 +102,51 @@ class DisciplineAdminController extends Controller
     public function store(Request $request)
     {
         $data = $request->validate([
-            'student_id' => 'required|exists:students,id',
+            'edp' => 'required|string|max:50',
             'offense_category' => 'required|in:Major,Minor',
+            'department' => 'nullable|in:CTEAS,CBE,CCS,COC',
+            'contact_number' => 'nullable|string|max:30',
+            'guardian_name' => 'nullable|string|max:150',
             'description' => 'nullable|string',
             'date' => 'required|date',
         ]);
 
-        $student = Student::query()->findOrFail($data['student_id']);
+        // Resolve the student by EDP number (exact match first)
+        $import = StudentsImport::where('student_id', $data['edp'])->first();
+
+        $student = Student::where('student_id', $data['edp'])->first();
+
+        // Student not yet in the official table — create it from the import record
+        if (!$student) {
+            if (!$import) {
+                return back()
+                    ->withInput()
+                    ->with('error', "No student found with EDP {$data['edp']}. Check the EDP number and try again.");
+            }
+
+            $student = Student::create([
+                'student_id'      => $import->student_id,
+                'first_name'      => $import->first_name,
+                'middle_name'     => $import->middle_name,
+                'last_name'       => $import->last_name,
+                // course / year_level columns are NOT NULL with no default;
+                // placeholders until the full record is encoded
+                'course'          => $data['department'] ?? 'CTEAS',
+                'year_level'      => '1st Year',
+                'department'      => $data['department'] ?? null,
+                'contact_number'  => $data['contact_number'] ?? null,
+                'guardian_name'   => $data['guardian_name'] ?? null,
+                'enrollment_type' => 'Regular',
+                'status'          => 'Active',
+            ]);
+        } else {
+            // Keep the student's department/contact/guardian up to date from the form
+            $student->update(array_filter([
+                'department'     => $data['department'] ?? null,
+                'contact_number' => $data['contact_number'] ?? null,
+                'guardian_name'  => $data['guardian_name'] ?? null,
+            ]));
+        }
 
         // Auto-generate case number
         $year = now()->year;
@@ -124,7 +168,7 @@ class DisciplineAdminController extends Controller
 
         return redirect()
             ->route('admin.discipline.index')
-            ->with('success', 'Discipline record added successfully.');
+            ->with('success', "Discipline record {$caseNumber} added successfully for {$student->full_name}.");
     }
 }
 

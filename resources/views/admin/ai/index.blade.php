@@ -8,9 +8,8 @@
     <div class="ai-bar-label"><div class="ai-dot"></div>Groq AI Active</div>
     <div class="ai-bar-stats">
         <div class="ai-stat">Total Applications: <strong>{{ $stats['total'] }}</strong></div>
-        <div class="ai-stat">Eligible: <strong>{{ $stats['eligible'] }}</strong></div>
+        <div class="ai-stat">Eligible: <strong>{{ $stats['eligible'] }}/{{ $stats['total'] }}</strong></div>
         <div class="ai-stat">For Review: <strong>{{ $stats['review'] }}</strong></div>
-        <div class="ai-stat">Not Eligible: <strong>{{ $stats['not_eligible'] }}</strong></div>
         <div class="ai-stat">Avg AI Score: <strong>{{ $stats['avg_score'] }}%</strong></div>
     </div>
 </div>
@@ -34,12 +33,11 @@ $hasKey = !empty(trim($gk));
 <input type="hidden" id="gk" value="{{ htmlspecialchars($gk,ENT_QUOTES,'UTF-8') }}">
 
 {{-- STAT CARDS --}}
-<div class="sg" style="grid-template-columns:repeat(5,1fr);margin-bottom:20px;">
+<div class="sg" style="grid-template-columns:repeat(4,1fr);margin-bottom:20px;">
     <div class="sc an d1"><div class="si t"><i class="fas fa-users"></i></div><div class="sv"><div class="lbl">Total Evaluated</div><div class="val">{{ $stats['total'] }}</div></div></div>
-    <div class="sc an d2"><div class="si g"><i class="fas fa-check-circle"></i></div><div class="sv"><div class="lbl">Eligible</div><div class="val">{{ $stats['eligible'] }}</div><div class="chg">Score ≥ 75%</div></div></div>
+    <div class="sc an d2"><div class="si g"><i class="fas fa-check-circle"></i></div><div class="sv"><div class="lbl">Eligible</div><div class="val">{{ $stats['eligible'] }}<span style="font-size:16px;color:var(--tm);font-weight:600;">/{{ $stats['total'] }}</span></div><div class="chg">Out of all evaluated</div></div></div>
     <div class="sc an d3"><div class="si o"><i class="fas fa-exclamation-circle"></i></div><div class="sv"><div class="lbl">For Review</div><div class="val">{{ $stats['review'] }}</div><div class="chg">Score 50–74%</div></div></div>
-    <div class="sc an d4"><div class="si r"><i class="fas fa-times-circle"></i></div><div class="sv"><div class="lbl">Not Eligible</div><div class="val">{{ $stats['not_eligible'] }}</div></div></div>
-    <div class="sc an d5"><div class="si y"><i class="fas fa-star"></i></div><div class="sv"><div class="lbl">Avg AI Score</div><div class="val">{{ $stats['avg_score'] }}%</div></div></div>
+    <div class="sc an d4"><div class="si y"><i class="fas fa-star"></i></div><div class="sv"><div class="lbl">Avg AI Score</div><div class="val">{{ $stats['avg_score'] }}%</div></div></div>
 </div>
 
 {{-- ═══ BATCH ANALYSIS + SCREENING ═══ --}}
@@ -180,7 +178,6 @@ $hasKey = !empty(trim($gk));
                 <option value="">All</option>
                 <option value="Eligible"     {{ request('eligibility')==='Eligible'?'selected':'' }}>Eligible</option>
                 <option value="For Review"   {{ request('eligibility')==='For Review'?'selected':'' }}>For Review</option>
-                <option value="Not Eligible" {{ request('eligibility')==='Not Eligible'?'selected':'' }}>Not Eligible</option>
             </select></div>
             <div style="flex:1;min-width:140px;"><label class="fl" style="font-size:12px;">Scholarship</label>
             <select name="scholarship_id" class="fc" onchange="this.form.submit()">
@@ -378,7 +375,7 @@ $hasKey = !empty(trim($gk));
         setLoading(true,'Groq AI is running batch analysis on '+APPS.length+' applications...');
 
         var p = 'You are ISAMS AI for admin officers at Saint Columban College, Pagadian City, Philippines.\n\n'
-            +'STATISTICS:\nTotal:'+STATS.total+' | Eligible:'+STATS.eligible+' | Review:'+STATS.review+' | Not Eligible:'+STATS.not_eligible+' | Avg Score:'+STATS.avg_score+'%\n\n'
+            +'STATISTICS:\nTotal:'+STATS.total+' | Eligible:'+STATS.eligible+' of '+STATS.total+' | Review:'+STATS.review+' | Avg Score:'+STATS.avg_score+'%\n\n'
             +'APPLICATIONS (ranked by AI score):\n'+appSummary()+'\n\n'
             +'Generate a structured BATCH ANALYSIS REPORT with:\n'
             +'1. EXECUTIVE SUMMARY: Overall picture in 2-3 sentences.\n'
@@ -428,7 +425,7 @@ $hasKey = !empty(trim($gk));
         setLoading(true,'Analyzing...');
 
         var p = 'You are ISAMS AI for admin at Saint Columban College, Philippines.\n\n'
-            +'Stats: Total:'+STATS.total+' | Eligible:'+STATS.eligible+' | Review:'+STATS.review+' | Not Eligible:'+STATS.not_eligible+' | Avg:'+STATS.avg_score+'%\n\n'
+            +'Stats: Total:'+STATS.total+' | Eligible:'+STATS.eligible+' of '+STATS.total+' | Review:'+STATS.review+' | Avg:'+STATS.avg_score+'%\n\n'
             +'Applications:\n'+appSummary()+'\n\n'
             +'Admin asks: "'+question+'"\n\n'
             +'Answer helpfully for an admin officer. Plain text, no asterisks. Max 200 words.';

@@ -56,9 +56,18 @@ class StudentController extends Controller {
                     ->orWhere('last_name','like',"%$s%")
                     ->orWhere('student_id','like',"%$s%");
             });
-        })->latest()->paginate(20);
+        })
+        ->when($r->filled('course'), fn($q) => $q->where('course', $r->course))
+        ->when($r->filled('year_level'), fn($q) => $q->where('year_level', $r->year_level))
+        ->when($r->filled('enrollment_type'), fn($q) => $q->where('enrollment_type', $r->enrollment_type))
+        ->when($r->filled('status'), fn($q) => $q->where('status', $r->status))
+        ->latest()->paginate(20)->withQueryString();
 
-        return view('admin.students.index', compact('students'));
+        // Distinct values for the filter dropdowns
+        $courses = Student::whereNotNull('course')->where('course','!=','')->distinct()->orderBy('course')->pluck('course');
+        $years   = Student::whereNotNull('year_level')->where('year_level','!=','')->distinct()->orderBy('year_level')->pluck('year_level');
+
+        return view('admin.students.index', compact('students','courses','years'));
     }
 
     public function create()  { return view('admin.students.create'); }

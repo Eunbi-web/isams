@@ -59,7 +59,7 @@
             @forelse($cases as $c)
                 @php
                     $s = $c->student;
-                    $department = $s?->course;
+                    $department = $s?->department ?: $s?->course;
                     $contact = $s?->contact_number;
                     $guardian = $s?->guardian_name;
                 @endphp
