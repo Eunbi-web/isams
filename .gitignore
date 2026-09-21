@@ -19,3 +19,12 @@ yarn-error.log
 
 .vercel
 .env*
+# Never commit generated caches — dev-only providers leak into production otherwise
+/bootstrap/cache/packages.php
+/bootstrap/cache/services.php
+# Never commit runtime artifacts
+/storage/logs/*.log
+/storage/framework/views/*.php
+/storage/framework/sessions/*
+!/storage/framework/sessions/.gitkeep
+/storage/framework/cache/data/*
