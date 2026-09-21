@@ -74,10 +74,33 @@ $app = Application::configure(basePath: dirname(__DIR__))
         // detected from X-Forwarded-Proto and generated URLs stay https.
         $middleware->trustProxies(at: '*');
     })
-    ->withExceptions(function (Exceptions $exceptions) {})
+    ->withExceptions(function (Exceptions $exceptions) {
+        // TEMPORARY (Vercel 500 diagnosis): surface server-error details as
+        // JSON instead of the generic page. REMOVE once resolved.
+        $exceptions->render(function (Throwable $e, $request) {
+            $status = $e instanceof Symfony\Component\HttpKernel\Exception\HttpException
+                ? $e->getStatusCode()
+                : 500;
+            if ($status >= 500) {
+                return response()->json([
+                    'vercel_500_diag' => true,
+                    'error' => get_class($e),
+                    'message' => substr($e->getMessage(), 0, 1000),
+                    'file' => $e->getFile().':'.$e->getLine(),
+                ], 500);
+            }
+        });
+    })
     ->create();
 
-if ($isVercel) {
+$isVercel = isset($_ENV['VERCEL']) || isset($_SERVER['VERCEL']) || getenv('VERCEL');
+
+// Serverless/read-only filesystems (Vercel) cannot use the repo storage dir
+// for compiled views, sessions or logs. Fall back to /tmp whenever the
+// Vercel flag is present OR the repo storage dir is not writable.
+$repoStorageWritable = is_writable(dirname(__DIR__).'/storage');
+
+if ($isVercel || !$repoStorageWritable) {
     $storage = '/tmp/laravel';
 
     $directories = [
