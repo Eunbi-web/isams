@@ -66,13 +66,13 @@ body::before{
     line-height:1.3;
 }
 .system-name{
-    font-family:'Sora',sans-serif;
-    font-size:20px;
-    font-weight:700;
-    color:var(--g);
+    font-family:'DM Sans',sans-serif;
+    font-size:12px;
+    font-weight:400;
+    color:#1a2e1a;
     text-align:center;
     line-height:1.35;
-    margin-top:6px;
+    margin-top:2px;
 }
 .alert-err{
     padding:10px 13px;
