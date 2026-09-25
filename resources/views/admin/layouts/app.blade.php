@@ -132,16 +132,11 @@ body[data-theme="light"]{--bg:#f2f7f3;--card:#fff;--sb:#0d3318;--st:#90c8a0;--tx
 <div class="ai-pill-sb"><div class="ai-dot"></div><span>AI Engine Active</span><span class="ai-v">v2.1</span></div>
 <div class="sb-sec"><div class="sb-lbl">Main</div>
 <a href="{{ route('admin.dashboard') }}" class="nav-a {{ request()->routeIs('admin.dashboard')?'active':'' }}"><i class="fas fa-th-large"></i> Dashboard</a></div>
-<div class="sb-sec"><div class="sb-lbl">Scholarship</div>
-<a href="{{ route('admin.scholarships.index') }}" class="nav-a {{ request()->routeIs('admin.scholarships*')?'active':'' }}"><i class="fas fa-award"></i> Programs</a>
-<a href="{{ route('admin.scraper.index') }}" class="nav-a {{ request()->routeIs('admin.scraper*')?'active':'' }}"><i class="fas fa-flag"></i> PH Scholarship Sync<span class="nav-badge ph">PH</span></a>
-<a href="{{ route('admin.applications.index') }}" class="nav-a {{ request()->routeIs('admin.applications*')?'active':'' }}"><i class="fas fa-file-alt"></i> Applications</a>
-<a href="{{ route('admin.ai.index') }}" class="nav-a {{ request()->routeIs('admin.ai*')?'active':'' }}"><i class="fas fa-robot"></i> AI Filter<span class="nav-badge">AI</span></a>
+<div class="sb-sec"><div class="sb-lbl">DSA Services</div>
+<a href="{{ route('admin.announcements.index') }}" class="nav-a {{ request()->routeIs('admin.announcements*')?'active':'' }}"><i class="fas fa-bullhorn"></i> Announcements</a>
+<a href="{{ route('admin.discipline.index') }}" class="nav-a {{ request()->routeIs('admin.discipline*')?'active':'' }}"><i class="fas fa-gavel"></i> Discipline Records</a>
 <a href="{{ route('admin.students.index') }}" class="nav-a {{ request()->routeIs('admin.students*')?'active':'' }}"><i class="fas fa-users"></i> Students</a>
 <a href="{{ route('admin.reports.index') }}" class="nav-a {{ request()->routeIs('admin.reports*')?'active':'' }}"><i class="fas fa-chart-bar"></i> Reports</a></div>
-<div class="sb-sec"><div class="sb-lbl">Services</div>
-<a href="{{ route('admin.announcements.index') }}" class="nav-a {{ request()->routeIs('admin.announcements*')?'active':'' }}"><i class="fas fa-bullhorn"></i> Announcements</a>
-<a href="{{ route('admin.discipline.index') }}" class="nav-a {{ request()->routeIs('admin.discipline*')?'active':'' }}"><i class="fas fa-gavel"></i> Discipline Records</a></div>
 <div class="sb-sec"><div class="sb-lbl">Account</div>
 {{-- Notifications removed from sidebar — now in topbar bell icon --}}
 <a href="{{ route('admin.settings.index') }}" class="nav-a {{ request()->routeIs('admin.settings*')?'active':'' }}"><i class="fas fa-cog"></i> Settings</a></div>

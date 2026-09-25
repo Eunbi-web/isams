@@ -5,6 +5,16 @@ use App\Http\Controllers\Admin\{DashboardController as AdminDash, ScholarshipCon
 use App\Http\Controllers\Counselor\{DashboardController as CounselorDash, CounselingController as CounselorCounseling, AnnouncementController as CounselorAnn, DisciplineController as CounselorDiscipline, NotificationController as CounselorNotif, SettingsController as CounselorSettings};
 use App\Http\Controllers\Student\{DashboardController as StudentDash, ScholarshipController as StudentScholarship, ApplicationController as StudentApp, EligibilityController as StudentEligibility, CounselingController as StudentCounseling, AnnouncementController as StudentAnn, NotificationController as StudentNotif, ProfileController as StudentProfile};
 use App\Http\Controllers\SuperAdmin\{DashboardController as SADash, UserController as SAUser, LogController as SALog, MonitoringController as SAMonitor};
+use App\Http\Controllers\Scholarship\DashboardController as ScholDash;
+use App\Http\Controllers\Scholarship\ProgramController as ScholProgram;
+use App\Http\Controllers\Scholarship\ScraperController as ScholScraper;
+use App\Http\Controllers\Scholarship\ApplicationController as ScholApp;
+use App\Http\Controllers\Scholarship\AiController as ScholAi;
+use App\Http\Controllers\Scholarship\StudentController as ScholStudent;
+use App\Http\Controllers\Scholarship\ReportController as ScholReport;
+use App\Http\Controllers\Scholarship\AnnouncementController as ScholAnn;
+use App\Http\Controllers\Scholarship\NotificationController as ScholNotif;
+use App\Http\Controllers\Scholarship\SettingsController as ScholSettings;
 
 Route::middleware('guest')->group(function () {
     Route::get('/', [AuthController::class,'showLogin']);
@@ -136,6 +146,62 @@ Route::middleware(['auth','role:admin,officer'])->prefix('admin')->name('admin.'
     Route::get('discipline/create', [\App\Http\Controllers\Admin\DisciplineAdminController::class,'create'])->name('discipline.create');
     Route::post('discipline', [\App\Http\Controllers\Admin\DisciplineAdminController::class,'store'])->name('discipline.store');
     Route::post('discipline/lookup-edp', [\App\Http\Controllers\Admin\DisciplineAdminController::class,'lookupEdp'])->name('discipline.lookup-edp');
+});
+
+// SCHOLARSHIP — Scholarship Management Portal
+Route::middleware(['auth','role:scholarship'])->prefix('scholarship')->name('scholarship.')->group(function () {
+    Route::get('dashboard', [ScholDash::class,'index'])->name('dashboard');
+
+    // Scraper routes MUST come before Route::resource('programs') to avoid
+    // the {program} wildcard swallowing the "scraper" segment as an ID
+    Route::get('programs/scraper',                      [ScholScraper::class,'index'])->name('scraper.index');
+    Route::post('programs/scraper/run',                 [ScholScraper::class,'run'])->name('scraper.run');
+    Route::post('programs/scraper/source/{source}',     [ScholScraper::class,'runSource'])->name('scraper.run-source');
+    Route::post('programs/scraper/import-all',          [ScholScraper::class,'importAll'])->name('scraper.import-all');
+    Route::post('programs/scraper/{scraped}/import',    [ScholScraper::class,'import'])->name('scraper.import');
+    Route::post('programs/scraper/{scraped}/dismiss',   [ScholScraper::class,'destroySynced'])->name('scraper.dismiss');
+    Route::delete('programs/scraper/{scraped}',         [ScholScraper::class,'destroySynced'])->name('scraper.destroy');
+
+    Route::resource('programs', ScholProgram::class);
+
+    // Bulk routes MUST come before resource to avoid {application} wildcard conflicts
+    Route::post('applications/bulk-approve', [ScholApp::class,'bulkApprove'])->name('applications.bulk-approve');
+    Route::post('applications/bulk-reject',  [ScholApp::class,'bulkReject'])->name('applications.bulk-reject');
+
+    Route::resource('applications', ScholApp::class);
+
+    // Explicit approve/reject PATCH routes for AJAX buttons
+    Route::patch('applications/{application}/approve', [ScholApp::class,'approve'])->name('applications.approve');
+    Route::patch('applications/{application}/reject',  [ScholApp::class,'reject'])->name('applications.reject');
+    Route::patch('applications/{application}/status',  [ScholApp::class,'updateStatus'])->name('applications.updateStatus');
+
+    Route::get('ai', [ScholAi::class,'index'])->name('ai.index');
+    Route::post('ai/run',                      [ScholAi::class,'index'])->name('ai.run');
+    Route::get('ai/results',                   [ScholAi::class,'index'])->name('ai.results');
+    Route::post('ai/{application}/run-single', [ScholAi::class,'runSingle'])->name('ai.runSingle');
+    Route::patch('ai/{application}/status',    [ScholAi::class,'updateStatus'])->name('ai.updateStatus');
+
+    Route::get('students/export', [ScholStudent::class,'export'])->name('students.export');
+    Route::get('students/import', [ScholStudent::class,'importForm'])->name('students.import-form');
+    Route::post('students/import', [ScholStudent::class,'import'])->name('students.import');
+    Route::post('students/lookup', [ScholStudent::class,'lookupFromImported'])->name('students.lookup');
+
+    Route::resource('students', ScholStudent::class);
+
+    Route::get('reports', [ScholReport::class,'index'])->name('reports.index');
+    Route::get('reports/download/{type}', [ScholReport::class,'download'])->name('reports.download');
+
+    Route::resource('announcements', ScholAnn::class);
+
+    Route::get('notifications', [ScholNotif::class,'index'])->name('notifications.index');
+    Route::patch('notifications/{id}', [ScholNotif::class,'markRead'])->name('notifications.read');
+
+    Route::get('settings', [ScholSettings::class,'index'])->name('settings.index');
+    Route::post('settings', [ScholSettings::class,'update'])->name('settings.update');
+
+    // Notification dropdown routes
+    Route::get('notifications/dropdown',  [ScholNotif::class,'dropdown'])->name('notifications.dropdown');
+    Route::post('notifications/mark-all', [ScholNotif::class,'markAllRead'])->name('notifications.mark-all');
 });
 
 // COUNSELOR — Guidance Counseling Portal

@@ -33,10 +33,11 @@
 <option value="admin" {{ old('role',$user->role)==='admin'?'selected':'' }}>Admin — Scholarship Officer</option>
 <option value="officer" {{ old('role',$user->role)==='officer'?'selected':'' }}>Officer — Scholarship Staff</option>
 <option value="counselor" {{ old('role',$user->role)==='counselor'?'selected':'' }}>Counselor — Guidance Counseling Staff</option>
+<option value="scholarship" {{ old('role',$user->role)==='scholarship'?'selected':'' }}>Scholarship Officer — Scholarship Management Portal</option>
 <option value="student" {{ old('role',$user->role)==='student'?'selected':'' }}>Student</option>
 </select>
 @error('role')<div style="color:var(--danger);font-size:12px;margin-bottom:10px;">{{ $message }}</div>@enderror
-<div style="font-size:12px;color:var(--tm);margin-top:6px;">Counselor accounts will have access to the Guidance Counseling Portal only — they cannot access Scholarship or Admin features.</div>
+<div style="font-size:12px;color:var(--tm);margin-top:6px;">Scholarship Officer accounts will have access to the Scholarship Management Portal only.</div>
 </div>
 </div></div>
 

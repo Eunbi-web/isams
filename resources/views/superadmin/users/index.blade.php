@@ -6,7 +6,7 @@
 <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:18px;">
 <div style="display:flex;gap:9px;flex-wrap:wrap;">
 <div style="position:relative;"><i class="fas fa-search" style="position:absolute;left:11px;top:50%;transform:translateY(-50%);color:var(--tm);font-size:12px;pointer-events:none;"></i><input type="text" id="uSearch" class="fc" placeholder="Search name or email..." style="padding-left:32px;width:220px;"></div>
-<select class="fc" style="width:150px;" id="rFilter"><option value="">All Roles</option><option value="superadmin">Super Admin</option><option value="admin">Admin</option><option value="officer">Officer</option><option value="counselor">Counselor</option><option value="student">Student</option></select>
+<select class="fc" style="width:150px;" id="rFilter"><option value="">All Roles</option><option value="superadmin">Super Admin</option><option value="admin">Admin</option><option value="officer">Officer</option><option value="counselor">Counselor</option><option value="scholarship">Scholarship</option><option value="student">Student</option></select>
 </div>
 <a href="{{ route('superadmin.users.create') }}" class="btn btn-ac"><i class="fas fa-user-plus"></i> Create User & Assign Role</a>
 </div>
@@ -23,6 +23,7 @@
 @case('admin')<span class="badge b-p">Admin</span>@break
 @case('officer')<span class="badge b-i">Officer</span>@break
 @case('counselor')<span class="badge" style="background:#1a4a6b;color:#fff;">Counselor</span>@break
+@case('scholarship')<span class="badge" style="background:#1a4a2e;color:#fff;">Scholarship</span>@break
 @default<span class="badge b-gray">Student</span>
 @endswitch</td>
 <td style="font-size:12px;color:var(--tm);">{{ $user->department??'—' }}</td>
