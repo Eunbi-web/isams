@@ -2,9 +2,6 @@
 @section('title','Dashboard')
 @section('page-title','Scholarship Dashboard')
 @section('page-sub','Scholarship Management Portal')
-@section('ai-bar')
-<div class="ai-bar"><div class="ai-bar-label"><div class="ai-dot"></div>AI Engine Active</div><div class="ai-bar-stats"><div class="ai-stat">Eligible: <strong>{{ $stats['eligible'] }}</strong></div><div class="ai-stat">For Review: <strong>{{ $stats['for_review'] }}</strong></div><div class="ai-stat">Evaluated Today: <strong>{{ $stats['processed_today'] }}</strong></div><div class="ai-stat">Awaiting Sync: <strong>{{ $stats['synced'] }}</strong></div></div></div>
-@endsection
 @section('content')
 <div class="sg">
 <div class="sc an d1"><div class="si g"><i class="fas fa-award"></i></div><div class="sv"><div class="lbl">Active Scholarships</div><div class="val">{{ $stats['programs'] }}</div><div class="chg">Scholarship programs</div></div></div>

@@ -29,7 +29,10 @@
         <a href="{{ route('admin.discipline.index') }}" class="btn btn-o btn-sm">Clear</a>
     </form>
 
-    <a href="{{ route('admin.discipline.create') }}" class="btn btn-p btn-sm"><i class="fas fa-file-medical"></i> Add Record</a>
+    <div style="display:flex;gap:8px;">
+        <a href="{{ route('admin.discipline.export', request()->only(['search','offense_category'])) }}" class="btn btn-o btn-sm"><i class="fas fa-download"></i> Export CSV</a>
+        <a href="{{ route('admin.discipline.create') }}" class="btn btn-p btn-sm"><i class="fas fa-file-medical"></i> Add Record</a>
+    </div>
 </div>
 
 <div class="card an">

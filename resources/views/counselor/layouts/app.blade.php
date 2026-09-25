@@ -127,7 +127,6 @@ body[data-theme="light"]{--bg:#f2f7f3;--card:#fff;--sb:#0d3318;--st:#90c8a0;--tx
 <body data-theme="light">
 <aside class="sidebar" id="sidebar" style="background:#0a1f2e;">
 <div class="sb-brand"><div class="sb-logo"><div class="sb-icon"><img src="{{ asset('images/SCC_NEW_LOGO.png') }}" alt="Logo"></div><div><div class="sb-name">ISAMS</div><div class="sb-sub" style="color:#90b8c8;">Counselor Portal</div></div></div></div>
-<div class="ai-pill-sb"><div class="ai-dot"></div><span>AI Engine Active</span><span class="ai-v">v2.1</span></div>
 <div class="sb-sec"><div class="sb-lbl">Main</div>
 <a href="{{ route('counselor.dashboard') }}" class="nav-a {{ request()->routeIs('counselor.dashboard')?'active':'' }}" style="color:#90b8c8;{{ request()->routeIs('counselor.dashboard')?'background:#1a4a6b;color:#f0c020;':'' }}" onmouseover="this.style.background='#1a4a6b';this.style.color='#fff'" onmouseout="if(!this.classList.contains('active')){this.style.background='';this.style.color='#90b8c8'}"><i class="fas fa-th-large"></i> Dashboard</a></div>
 <div class="sb-sec"><div class="sb-lbl">Services</div>
@@ -141,7 +140,6 @@ body[data-theme="light"]{--bg:#f2f7f3;--card:#fff;--sb:#0d3318;--st:#90c8a0;--tx
 </aside>
 <div class="sb-backdrop" id="sbBackdrop"></div>
 <div class="main">
-@yield('ai-bar')
 <header class="topbar">
 <button class="mob-toggle" id="sbToggle"><i class="fas fa-bars"></i></button>
 <div><div class="tp-title">@yield('page-title','Dashboard')</div><div class="tp-sub">@yield('page-sub','Guidance Counseling Staff Portal')</div></div>

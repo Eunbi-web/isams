@@ -2,9 +2,6 @@
 @section('title','Counseling Sessions')
 @section('page-title','Counseling Sessions')
 @section('page-sub','Manage and schedule guidance counseling requests')
-@section('ai-bar')
-<div class="ai-bar"><div class="ai-bar-label"><div class="ai-dot"></div>Counseling Overview</div><div class="ai-bar-stats"><div class="ai-stat">In Queue: <strong>{{ $stats['inQueue'] }}</strong></div><div class="ai-stat">Scheduled: <strong>{{ $stats['scheduled'] }}</strong></div><div class="ai-stat">Completed: <strong>{{ $stats['completed'] }}</strong></div><div class="ai-stat">Total: <strong>{{ $stats['total'] }}</strong></div></div></div>
-@endsection
 @section('content')
 <div class="card mb3">
 <div class="cb" style="padding:14px 18px;">

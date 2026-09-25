@@ -3,23 +3,6 @@
 @section('page-title','AI Scholarship Screening')
 @section('page-sub','Smart screening dashboard — rank physical applicants and generate approval recommendations')
 
-@section('ai-bar')
-<div class="ai-bar">
-    <div class="ai-bar-label"><div class="ai-dot"></div>Groq AI Active</div>
-    <div class="ai-bar-stats">
-        <div class="ai-stat">Total Applications: <strong>{{ $stats['total'] }}</strong></div>
-        <div class="ai-stat">Eligible: <strong>{{ $stats['eligible'] }}/{{ $stats['total'] }}</strong></div>
-        <div class="ai-stat">For Review: <strong>{{ $stats['review'] }}</strong></div>
-        <div class="ai-stat">Avg AI Score: <strong>{{ $stats['avg_score'] }}%</strong></div>
-        <div style="width:1px;height:20px;background:rgba(255,255,255,0.2);"></div>
-        <div class="ai-stat">Total Applied: <strong>{{ $totalApplied }}</strong></div>
-        <div class="ai-stat">Pending: <strong>{{ $pendingCount }}</strong></div>
-        <div class="ai-stat">On Review: <strong>{{ $onReviewCount }}</strong></div>
-        <div class="ai-stat">Canceled: <strong>{{ $canceledCount }}</strong></div>
-        <div class="ai-stat">Not Evaluated: <strong>{{ $unevaluatedCount }}</strong></div>
-    </div>
-</div>
-@endsection
 
 @section('content')
 

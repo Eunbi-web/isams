@@ -131,7 +131,6 @@ tbody td{padding:11px 13px;font-size:13px;border-bottom:1px solid var(--bd);}tbo
 <body>
 <aside class="sidebar" id="sidebar">
 <div class="sb-brand"><div class="sb-logo"><div class="sb-icon"><img src="{{ asset('images/SCC_NEW_LOGO.png') }}" alt="Logo"></div><div><div class="sb-name">ISAMS</div><div class="sb-sub">Student Portal</div></div></div></div>
-<div class="ai-pill-sb"><div class="ai-dot"></div><span>AI Engine Active</span><span class="ai-v">v2.1</span></div>
 <div class="sb-sec"><div class="sb-lbl">Main</div>
 <a href="{{ route('student.dashboard') }}" class="nav-a {{ request()->routeIs('student.dashboard')?'active':'' }}"><i class="fas fa-th-large"></i> Dashboard</a></div>
 <div class="sb-sec"><div class="sb-lbl">Scholarship</div>
@@ -140,9 +139,13 @@ tbody td{padding:11px 13px;font-size:13px;border-bottom:1px solid var(--bd);}tbo
 <a href="{{ route('student.eligibility') }}" class="nav-a {{ request()->routeIs('student.eligibility*')?'active':'' }}"><i class="fas fa-robot"></i> AI Eligibility<span class="nav-badge">AI</span></a></div>
 <div class="sb-sec"><div class="sb-lbl">Services</div>
 <a href="{{ route('student.counseling.index') }}" class="nav-a {{ request()->routeIs('student.counseling*')?'active':'' }}"><i class="fas fa-heart"></i> Counseling</a>
+<a href="{{ route('student.complaints') }}" class="nav-a {{ request()->routeIs('student.complaints*')?'active':'' }}"><i class="fas fa-exclamation-circle"></i> Complaints and Reports</a>
+<a href="{{ route('student.letters') }}" class="nav-a {{ request()->routeIs('student.letters*')?'active':'' }}"><i class="fas fa-box"></i> Confiscated Item Letters</a>
 <a href="{{ route('student.announcements') }}" class="nav-a {{ request()->routeIs('student.announcements*')?'active':'' }}"><i class="fas fa-bullhorn"></i> Announcements</a></div>
 <div class="sb-sec"><div class="sb-lbl">Account</div>
 {{-- Notifications removed from sidebar — now in topbar bell icon --}}
+@php $unreadMsgs = auth()->user()->student ? \App\Models\AdminMessage::where('student_id', auth()->user()->student->id)->where('is_read', false)->count() : 0; @endphp
+<a href="{{ route('student.messages') }}" class="nav-a {{ request()->routeIs('student.messages*')?'active':'' }}"><i class="fas fa-envelope"></i> Messages @if($unreadMsgs > 0)<span class="nav-badge">{{ $unreadMsgs }}</span>@endif</a>
 <a href="{{ route('student.profile') }}" class="nav-a {{ request()->routeIs('student.profile*')?'active':'' }}"><i class="fas fa-user-circle"></i> My Profile</a></div>
 <div class="sb-footer"><div class="user-card"><div class="u-av">{{ strtoupper(substr(auth()->user()->name??'S',0,1)) }}</div><div><div class="u-name">{{ explode(' ',auth()->user()->name??'Student')[0] }}</div><div class="u-role">Student</div></div><a href="{{ route('logout') }}" class="u-out" onclick="event.preventDefault();document.getElementById('slf').submit();" title="Logout"><i class="fas fa-sign-out-alt"></i></a></div><form id="slf" action="{{ route('logout') }}" method="POST" style="display:none;">@csrf</form></div>
 </aside>

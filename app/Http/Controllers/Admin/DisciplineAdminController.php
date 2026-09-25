@@ -59,6 +59,73 @@ class DisciplineAdminController extends Controller
     }
 
     /**
+     * CSV export of all discipline records, honoring the same filters as the index page.
+     */
+    public function export(Request $request)
+    {
+        $query = DisciplineCase::with('student');
+
+        if ($request->filled('search')) {
+            $s = $request->string('search')->trim()->toString();
+            $query->where(function ($q) use ($s) {
+                $q->where('case_number', 'like', "%{$s}%")
+                    ->orWhere('description', 'like', "%{$s}%")
+                    ->orWhere('violation_type', 'like', "%{$s}%")
+                    ->orWhereHas('student', function ($sq) use ($s) {
+                        $sq->where('student_id', 'like', "%{$s}%")
+                            ->orWhere('first_name', 'like', "%{$s}%")
+                            ->orWhere('last_name', 'like', "%{$s}%");
+                    });
+            });
+        }
+
+        if ($request->filled('offense_category')) {
+            $query->where('violation_type', $request->string('offense_category')->trim()->toString());
+        }
+
+        if ($request->filled('status')) {
+            $query->where('status', $request->string('status')->trim()->toString());
+        }
+
+        if ($request->filled('department')) {
+            $dept = $request->string('department')->trim()->toString();
+            $query->whereHas('student', function ($sq) use ($dept) {
+                $sq->where('department', $dept)->orWhere('course', $dept);
+            });
+        }
+
+        $fileName = 'discipline-records-' . now()->format('Y-m-d') . '.csv';
+
+        return response()->streamDownload(function () use ($query) {
+            $out = fopen('php://output', 'w');
+            fputcsv($out, ['ID', 'EDP Number', 'Student Name', 'Department', 'Category of Offense', 'Description', 'Incident Date', 'Guardian Name', 'Guardian Contact', 'Status', 'Created At']);
+
+            $query->orderBy('created_at', 'desc')->chunk(500, function ($cases) use ($out) {
+                foreach ($cases as $c) {
+                    $s = $c->student;
+                    fputcsv($out, [
+                        $c->id,
+                        $s?->student_id,
+                        $s?->full_name,
+                        $s?->department ?: $s?->course,
+                        $c->violation_type,
+                        $c->description,
+                        $c->incident_date?->format('Y-m-d'),
+                        $s?->guardian_name,
+                        $s?->guardian_contact,
+                        $c->status,
+                        $c->created_at?->format('Y-m-d H:i:s'),
+                    ]);
+                }
+            });
+
+            fclose($out);
+        }, $fileName, [
+            'Content-Type' => 'text/csv',
+        ]);
+    }
+
+    /**
      * Lookup student information by EDP (students_imports.student_id).
      * Used by Discipline Records > Add Record form to auto-fill
      * name, department, contact number and guardian.

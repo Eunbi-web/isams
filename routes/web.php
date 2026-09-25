@@ -1,9 +1,9 @@
 <?php
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
-use App\Http\Controllers\Admin\{DashboardController as AdminDash, ScholarshipController as AdminScholarship, ApplicationController as AdminApp, AiController as AdminAi, StudentController as AdminStudent, ReportController as AdminReport, AnnouncementController as AdminAnn, NotificationController as AdminNotif, SettingsController as AdminSettings, ScraperController as AdminScraper};
+use App\Http\Controllers\Admin\{DashboardController as AdminDash, ScholarshipController as AdminScholarship, ApplicationController as AdminApp, AiController as AdminAi, StudentController as AdminStudent, ReportController as AdminReport, AnnouncementController as AdminAnn, NotificationController as AdminNotif, SettingsController as AdminSettings, ScraperController as AdminScraper, ComplaintController as AdminComplaint, MessageController as AdminMessage};
 use App\Http\Controllers\Counselor\{DashboardController as CounselorDash, CounselingController as CounselorCounseling, AnnouncementController as CounselorAnn, DisciplineController as CounselorDiscipline, NotificationController as CounselorNotif, SettingsController as CounselorSettings};
-use App\Http\Controllers\Student\{DashboardController as StudentDash, ScholarshipController as StudentScholarship, ApplicationController as StudentApp, EligibilityController as StudentEligibility, CounselingController as StudentCounseling, AnnouncementController as StudentAnn, NotificationController as StudentNotif, ProfileController as StudentProfile};
+use App\Http\Controllers\Student\{DashboardController as StudentDash, ScholarshipController as StudentScholarship, ApplicationController as StudentApp, EligibilityController as StudentEligibility, CounselingController as StudentCounseling, AnnouncementController as StudentAnn, NotificationController as StudentNotif, ProfileController as StudentProfile, ComplaintController as StudentComplaint, ConfiscatedItemLetterController as StudentLetter, MessageController as StudentMessage};
 use App\Http\Controllers\SuperAdmin\{DashboardController as SADash, UserController as SAUser, LogController as SALog, MonitoringController as SAMonitor};
 use App\Http\Controllers\Scholarship\DashboardController as ScholDash;
 use App\Http\Controllers\Scholarship\ProgramController as ScholProgram;
@@ -142,10 +142,27 @@ Route::middleware(['auth','role:admin,officer'])->prefix('admin')->name('admin.'
     Route::post('notifications/mark-all', [AdminNotif::class,'markAllRead'])->name('notifications.mark-all');
 
     // Discipline Records (Admin)
+    Route::get('discipline/export', [\App\Http\Controllers\Admin\DisciplineAdminController::class,'export'])->name('discipline.export');
     Route::get('discipline', [\App\Http\Controllers\Admin\DisciplineAdminController::class,'index'])->name('discipline.index');
     Route::get('discipline/create', [\App\Http\Controllers\Admin\DisciplineAdminController::class,'create'])->name('discipline.create');
     Route::post('discipline', [\App\Http\Controllers\Admin\DisciplineAdminController::class,'store'])->name('discipline.store');
     Route::post('discipline/lookup-edp', [\App\Http\Controllers\Admin\DisciplineAdminController::class,'lookupEdp'])->name('discipline.lookup-edp');
+
+    // Complaints and Reports Inbox
+    Route::get('complaints',                   [AdminComplaint::class,'index'])->name('complaints.index');
+    Route::get('complaints/{complaint}',       [AdminComplaint::class,'show'])->name('complaints.show');
+    Route::post('complaints/{complaint}/reply',[AdminComplaint::class,'reply'])->name('complaints.reply');
+    Route::patch('complaints/{complaint}/status', [AdminComplaint::class,'updateStatus'])->name('complaints.status');
+
+    // Counseling requests monitoring (admin)
+    Route::get('counseling',                                        [\App\Http\Controllers\Admin\CounselingController::class,'index'])->name('counseling.index');
+    Route::post('counseling/{counseling}/schedule',                 [\App\Http\Controllers\Admin\CounselingController::class,'schedule'])->name('counseling.schedule');
+    Route::post('counseling/{counseling}/complete',                 [\App\Http\Controllers\Admin\CounselingController::class,'complete'])->name('counseling.complete');
+
+    // Messages (one-way: admin to student)
+    Route::get('messages',          [AdminMessage::class,'index'])->name('messages.index');
+    Route::get('messages/create',   [AdminMessage::class,'create'])->name('messages.create');
+    Route::post('messages',         [AdminMessage::class,'store'])->name('messages.store');
 });
 
 // SCHOLARSHIP — Scholarship Management Portal
@@ -255,4 +272,19 @@ Route::middleware(['auth','role:student'])->prefix('student')->name('student.')-
     Route::patch('notifications/{id}', [StudentNotif::class,'markRead'])->name('notifications.read');
     Route::get('profile', [StudentProfile::class,'index'])->name('profile');
     Route::post('profile', [StudentProfile::class,'update'])->name('profile.update');
+
+    // Complaints and Reports
+    Route::get('complaints',         [StudentComplaint::class,'index'])->name('complaints');
+    Route::get('complaints/create',  [StudentComplaint::class,'create'])->name('complaints.create');
+    Route::post('complaints',        [StudentComplaint::class,'store'])->name('complaints.store');
+
+    // Confiscated Item Letters
+    Route::get('letters',            [StudentLetter::class,'index'])->name('letters');
+    Route::get('letters/create',     [StudentLetter::class,'create'])->name('letters.create');
+    Route::post('letters',           [StudentLetter::class,'store'])->name('letters.store');
+    Route::get('letters/{letter}',   [StudentLetter::class,'show'])->name('letters.show');
+
+    // Messages (one-way: read-only for students)
+    Route::get('messages',           [StudentMessage::class,'index'])->name('messages');
+    Route::get('messages/{message}', [StudentMessage::class,'show'])->name('messages.show');
 });

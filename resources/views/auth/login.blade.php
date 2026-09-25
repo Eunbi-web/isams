@@ -65,13 +65,14 @@ body::before{
     text-align:center;
     line-height:1.3;
 }
-.school-sub{
-    font-size:12px;
-    color:#5a7a60;
+.system-name{
+    font-family:'Sora',sans-serif;
+    font-size:20px;
+    font-weight:700;
+    color:var(--g);
     text-align:center;
-    margin-top:2px;
-    text-transform:uppercase;
-    letter-spacing:.5px;
+    line-height:1.35;
+    margin-top:6px;
 }
 .alert-err{
     padding:10px 13px;
@@ -142,7 +143,7 @@ body::before{
             <img src="{{ asset('images/SCC_NEW_LOGO.png') }}" alt="Saint Columban College Logo">
         </div>
         <div class="school-name">Saint Columban College</div>
-        <div class="school-sub">ISAMS Portal</div>
+        <div class="system-name">Integrated Student Affairs<br>Management System</div>
     </div>
 
     @if($errors->any())

@@ -3,18 +3,6 @@
 @section('page-title','PH Scholarship Sync')
 @section('page-sub','Automatically fetch and sync Philippine scholarship programs from official sources')
 
-@section('ai-bar')
-<div class="ai-bar">
-    <div class="ai-bar-label"><div class="ai-dot"></div>AI Sync Engine Active</div>
-    <div class="ai-bar-stats">
-        <div class="ai-stat">Total Found: <strong>{{ $stats['total'] }}</strong></div>
-        <div class="ai-stat">New: <strong>{{ $stats['new'] }}</strong></div>
-        <div class="ai-stat">Updated: <strong>{{ $stats['updated'] }}</strong></div>
-        <div class="ai-stat">Imported: <strong>{{ $stats['imported'] }}</strong></div>
-        <div class="ai-stat">Last Sync: <strong>{{ $stats['last_run'] ? \Carbon\Carbon::parse($stats['last_run'])->diffForHumans() : 'Never' }}</strong></div>
-    </div>
-</div>
-@endsection
 
 @section('content')
 

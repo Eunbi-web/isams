@@ -129,13 +129,15 @@ body[data-theme="light"]{--bg:#f2f7f3;--card:#fff;--sb:#0d3318;--st:#90c8a0;--tx
 <body data-theme="light">
 <aside class="sidebar" id="sidebar">
 <div class="sb-brand"><div class="sb-logo"><div class="sb-icon"><img src="{{ asset('images/DSA_logo.png') }}" alt="Logo"></div><div><div class="sb-name">ISAMS</div><div class="sb-sub">Admin Portal</div></div></div></div>
-<div class="ai-pill-sb"><div class="ai-dot"></div><span>AI Engine Active</span><span class="ai-v">v2.1</span></div>
 <div class="sb-sec"><div class="sb-lbl">Main</div>
 <a href="{{ route('admin.dashboard') }}" class="nav-a {{ request()->routeIs('admin.dashboard')?'active':'' }}"><i class="fas fa-th-large"></i> Dashboard</a></div>
 <div class="sb-sec"><div class="sb-lbl">DSA Services</div>
 <a href="{{ route('admin.announcements.index') }}" class="nav-a {{ request()->routeIs('admin.announcements*')?'active':'' }}"><i class="fas fa-bullhorn"></i> Announcements</a>
 <a href="{{ route('admin.discipline.index') }}" class="nav-a {{ request()->routeIs('admin.discipline*')?'active':'' }}"><i class="fas fa-gavel"></i> Discipline Records</a>
 <a href="{{ route('admin.students.index') }}" class="nav-a {{ request()->routeIs('admin.students*')?'active':'' }}"><i class="fas fa-users"></i> Students</a>
+@php $pendingComplaints = \App\Models\Complaint::where('status','Pending')->count(); @endphp
+<a href="{{ route('admin.complaints.index') }}" class="nav-a {{ request()->routeIs('admin.complaints*')?'active':'' }}"><i class="fas fa-inbox"></i> Complaints @if($pendingComplaints > 0)<span class="nav-badge">{{ $pendingComplaints }}</span>@endif</a>
+<a href="{{ route('admin.messages.index') }}" class="nav-a {{ request()->routeIs('admin.messages*')?'active':'' }}"><i class="fas fa-envelope"></i> Messages</a>
 <a href="{{ route('admin.reports.index') }}" class="nav-a {{ request()->routeIs('admin.reports*')?'active':'' }}"><i class="fas fa-chart-bar"></i> Reports</a></div>
 <div class="sb-sec"><div class="sb-lbl">Account</div>
 {{-- Notifications removed from sidebar — now in topbar bell icon --}}
@@ -144,7 +146,6 @@ body[data-theme="light"]{--bg:#f2f7f3;--card:#fff;--sb:#0d3318;--st:#90c8a0;--tx
 </aside>
 <div class="sb-backdrop" id="sbBackdrop"></div>
 <div class="main">
-@yield('ai-bar')
 <header class="topbar">
 <button class="mob-toggle" id="sbToggle"><i class="fas fa-bars"></i></button>
 <div><div class="tp-title">@yield('page-title','Dashboard')</div><div class="tp-sub">@yield('page-sub','ISAMS — Integrated Student Affairs Management System')</div></div>
