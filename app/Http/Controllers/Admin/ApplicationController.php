@@ -8,7 +8,11 @@ class ApplicationController extends Controller {
 
         $applications = ScholarshipApplication::with(['student','scholarship'])
             ->when($r->search,fn($q,$s)=>$q->whereHas('student',fn($sq)=>$sq->where('first_name','like',"%$s%")->orWhere('last_name','like',"%$s%")))
-            ->when($r->status,fn($q,$s)=>$q->where('status',$s))
+            // CHANGE 5: status filter accepts the new On Review / Canceled values too;
+            // 'Approved' also matches legacy 'Scholarship Granted' rows
+            ->when($r->status,fn($q,$s)=>$q->when($s==='Approved',
+                fn($qq)=>$qq->whereIn('status',['Approved','Scholarship Granted']),
+                fn($qq)=>$qq->where('status',$s)))
             ->when($r->ai_eligibility,fn($q,$e)=>$q->where('ai_eligibility',$e))
             ->latest()->paginate(25);
         return view('admin.applications.index',compact('applications'));
@@ -31,21 +35,53 @@ class ApplicationController extends Controller {
     public function edit(ScholarshipApplication $application) { $students=Student::orderBy('last_name')->get(); $scholarships=Scholarship::all(); return view('admin.applications.edit',compact('application','students','scholarships')); }
     public function update(Request $r, ScholarshipApplication $application) { $application->update($r->only(['status','remarks'])); return redirect()->route('admin.applications.show',$application)->with('success','Updated!'); }
     public function destroy(ScholarshipApplication $application) { $application->delete(); return redirect()->route('admin.applications.index')->with('success','Deleted.'); }
+
+    // CHANGE 5: updateStatus now recognizes the full new status set
+    // (Pending, On Review, Approved, Rejected, Canceled). Statuses are stored
+    // exactly as chosen — 'Approved' stays 'Approved' so the new status filter
+    // and badges match; the student portal already displays Approved as granted.
     public function updateStatus(Request $r, ScholarshipApplication $application) {
-        $newStatus = $r->status;
-        // Accepted by admin => student sees "Scholarship granted" in their My Applications
-        if ($newStatus === 'Approved') {
-            $newStatus = 'Scholarship Granted';
-        }
+        $data = $r->validate([
+            // 'For Review' kept for legacy links/buttons that still post it
+            'status' => 'required|in:Pending,On Review,Approved,Rejected,Canceled,For Review',
+        ]);
+        $newStatus = $data['status'];
         $application->update(['status' => $newStatus]);
         return back()->with('success', "Status updated to {$newStatus}!");
     }
 
+    // ADDED: approve/reject handlers — the routes existed but the methods were
+    // missing, so the Approve/Reject buttons in the AI Filter and applications
+    // index threw a server error when clicked.
+    public function approve(Request $r, ScholarshipApplication $application) {
+        $application->update(['status' => 'Approved']);
+        if ($r->ajax() || $r->wantsJson()) {
+            return response()->json(['message' => 'Status updated', 'status' => 'Approved']);
+        }
+        return back()->with('success', 'Application approved!');
+    }
+    public function reject(Request $r, ScholarshipApplication $application) {
+        $application->update(['status' => 'Rejected']);
+        if ($r->ajax() || $r->wantsJson()) {
+            return response()->json(['message' => 'Status updated', 'status' => 'Rejected']);
+        }
+        return back()->with('success', 'Application rejected.');
+    }
+
+    // CHANGE 5: bulk approve now stores the canonical 'Approved' status
     public function bulkApprove() {
         $count = ScholarshipApplication::where('ai_eligibility','Eligible')
-            ->where('status','Pending')
-            ->update(['status'=>'Scholarship Granted']);
+            ->whereIn('status',['Pending','On Review'])
+            ->update(['status'=>'Approved']);
         return back()->with('success',"{$count} eligible applications approved!");
+    }
+
+    // ADDED: bulk reject handler — the route existed but the method was missing
+    public function bulkReject() {
+        $count = ScholarshipApplication::where('ai_eligibility','Not Eligible')
+            ->where('status','Pending')
+            ->update(['status'=>'Rejected']);
+        return back()->with('success',"{$count} applications rejected.");
     }
 
 }

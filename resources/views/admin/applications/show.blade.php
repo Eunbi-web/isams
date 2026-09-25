@@ -11,7 +11,7 @@
 <div class="chance-circle"><div><div class="chance-val">{{ $sc }}%</div><div class="chance-lbl">AI Score</div></div></div>
 </div>
 <div class="g2 mt3">
-<div class="card an"><div class="ch"><i class="fas fa-file-alt" style="color:var(--gm);"></i><h2>Details</h2><div class="ch-acts"><span class="badge {{ $application->status==='Approved'?'b-s':($application->status==='Rejected'?'b-d':'b-w') }}">{{ $application->status }}</span></div></div><div class="cb">
+<div class="card an"><div class="ch"><i class="fas fa-file-alt" style="color:var(--gm);"></i><h2>Details</h2><div class="ch-acts"><span class="badge {{ ($application->status==='Approved'||$application->status==='Scholarship Granted')?'b-s':($application->status==='Rejected'?'b-d':($application->status==='On Review'?'b-i':($application->status==='Canceled'?'b-gray':'b-w'))) }}">{{ $application->status }}</span></div></div><div class="cb">
 @foreach([['GWA',number_format($application->gwa??0,2)],['Enrollment',$application->enrollment_type],['Year Level',$application->year_level??'—'],['Academic Load',$application->academic_load??'—'],['Academic Honors',$application->academic_honors??'—'],['Application Type',$application->application_type??'—'],['Parent Employment',$application->parent_employment_status??'—'],['Siblings in College',$application->siblings_in_college??'0'],['Failing',$application->has_failing?'Yes':'No'],['Discipline',$application->has_discipline?'Yes':'No'],['Income',$application->income_bracket],['Filed',$application->created_at->format('M d, Y')]] as $d)
 <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--bd);font-size:13px;"><span class="tm">{{ $d[0] }}</span><span class="fws">{{ $d[1] }}</span></div>
 @endforeach
@@ -28,7 +28,7 @@
 <div class="card an mt3"><div class="ch"><i class="fas fa-gavel" style="color:var(--gm);"></i><h2>Update Status</h2></div><div class="cb" style="display:flex;gap:10px;">
 <form method="POST" action="{{ route('admin.applications.updateStatus',$application->id) }}">@csrf @method('PATCH')<input type="hidden" name="status" value="Approved"><button class="btn btn-s"><i class="fas fa-check"></i> Approve Application</button></form>
 <form method="POST" action="{{ route('admin.applications.updateStatus',$application->id) }}">@csrf @method('PATCH')<input type="hidden" name="status" value="Rejected"><button class="btn btn-d" onclick="return confirm('Reject this application?')"><i class="fas fa-times"></i> Reject</button></form>
-<form method="POST" action="{{ route('admin.applications.updateStatus',$application->id) }}">@csrf @method('PATCH')<input type="hidden" name="status" value="For Review"><button class="btn btn-o"><i class="fas fa-search"></i> Mark For Review</button></form>
+<form method="POST" action="{{ route('admin.applications.updateStatus',$application->id) }}">@csrf @method('PATCH')<input type="hidden" name="status" value="On Review"><button class="btn btn-o"><i class="fas fa-search"></i> Mark On Review</button></form>
 </div></div>
 @endif
 </div>

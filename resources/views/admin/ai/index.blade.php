@@ -11,6 +11,12 @@
         <div class="ai-stat">Eligible: <strong>{{ $stats['eligible'] }}/{{ $stats['total'] }}</strong></div>
         <div class="ai-stat">For Review: <strong>{{ $stats['review'] }}</strong></div>
         <div class="ai-stat">Avg AI Score: <strong>{{ $stats['avg_score'] }}%</strong></div>
+        <div style="width:1px;height:20px;background:rgba(255,255,255,0.2);"></div>
+        <div class="ai-stat">Total Applied: <strong>{{ $totalApplied }}</strong></div>
+        <div class="ai-stat">Pending: <strong>{{ $pendingCount }}</strong></div>
+        <div class="ai-stat">On Review: <strong>{{ $onReviewCount }}</strong></div>
+        <div class="ai-stat">Canceled: <strong>{{ $canceledCount }}</strong></div>
+        <div class="ai-stat">Not Evaluated: <strong>{{ $unevaluatedCount }}</strong></div>
     </div>
 </div>
 @endsection
@@ -172,7 +178,7 @@ $hasKey = !empty(trim($gk));
 <div class="card an mb3">
     <div class="ch"><i class="fas fa-filter" style="color:var(--gm);"></i><h2>Filter Applications</h2></div>
     <div class="cb">
-        <form method="GET" style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;">
+        <form method="GET" id="aiFilterForm" style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;">
             <div style="flex:1;min-width:140px;"><label class="fl" style="font-size:12px;">Eligibility</label>
             <select name="eligibility" class="fc" onchange="this.form.submit()">
                 <option value="">All</option>
@@ -196,13 +202,32 @@ $hasKey = !empty(trim($gk));
             <div style="flex:1;min-width:140px;"><label class="fl" style="font-size:12px;">Status</label>
             <select name="status" class="fc" onchange="this.form.submit()">
                 <option value="">All Status</option>
-                <option value="Pending"  {{ request('status')==='Pending'?'selected':'' }}>Pending</option>
-                <option value="Approved" {{ request('status')==='Approved'?'selected':'' }}>Approved</option>
-                <option value="Rejected" {{ request('status')==='Rejected'?'selected':'' }}>Rejected</option>
+                <option value="Pending"   {{ request('status')==='Pending'?'selected':'' }}>Pending</option>
+                <option value="On Review" {{ request('status')==='On Review'?'selected':'' }}>On Review</option>
+                <option value="Approved"  {{ request('status')==='Approved'?'selected':'' }}>Approved</option>
+                <option value="Rejected"  {{ request('status')==='Rejected'?'selected':'' }}>Rejected</option>
+                <option value="Canceled"  {{ request('status')==='Canceled'?'selected':'' }}>Canceled</option>
             </select></div>
+            <div style="min-width:145px;"><label class="fl" style="font-size:12px;">Date From</label>
+            <input type="date" name="date_from" class="fc" style="width:145px;" value="{{ $filters['date_from'] ?? '' }}" placeholder="From date" onchange="this.form.submit()"></div>
+            <div style="min-width:145px;"><label class="fl" style="font-size:12px;">Date To</label>
+            <input type="date" name="date_to" class="fc" style="width:145px;" value="{{ $filters['date_to'] ?? '' }}" placeholder="To date" onchange="this.form.submit()"></div>
+            <label style="display:inline-flex;align-items:center;gap:6px;font-size:12px;cursor:pointer;background:var(--bg);border:1.5px solid var(--bd);border-radius:var(--rs);padding:8px 12px;white-space:nowrap;font-weight:600;color:var(--tm);">
+                <input type="checkbox" name="unevaluated_only" value="1" {{ !empty($filters['unevaluated_only'])?'checked':'' }} onchange="this.form.submit()" style="width:auto;">
+                Unevaluated Only
+            </label>
+            <input type="hidden" name="sort" id="sortInput" value="{{ $filters['sort'] ?? '' }}">
             <a href="{{ route('admin.ai.index') }}" class="btn btn-o btn-sm">Clear</a>
         </form>
     </div>
+</div>
+
+{{-- ═══ GROUPING SELECTOR (ADDITION 4C) ═══ --}}
+<div style="display:flex;gap:8px;align-items:center;margin-bottom:12px;flex-wrap:wrap;">
+    <span style="font-size:12px;color:var(--tm);font-weight:600;">Group results:</span>
+    <button type="button" class="grp-btn btn btn-sm" data-grouping="none" onclick="setGrouping('none')" style="background:var(--g);color:#fff;"><i class="fas fa-list"></i> No Grouping</button>
+    <button type="button" class="grp-btn btn btn-o btn-sm" data-grouping="scholarship" onclick="setGrouping('scholarship')"><i class="fas fa-award"></i> Group by Scholarship</button>
+    <button type="button" class="grp-btn btn btn-o btn-sm" data-grouping="status" onclick="setGrouping('status')"><i class="fas fa-tags"></i> Group by Status</button>
 </div>
 
 {{-- ═══ AUTO-RANKED TABLE ═══ --}}
@@ -219,6 +244,7 @@ $hasKey = !empty(trim($gk));
                 <th style="text-align:center;width:50px;">Rank</th>
                 <th>Student</th>
                 <th>Scholarship</th>
+                <th style="cursor:pointer;white-space:nowrap;" onclick="sortDate()" title="Click to sort by applied date">Applied Date @if(($filters['sort']??'')==='date_asc')<i class="fas fa-arrow-up" style="font-size:9px;color:var(--gm);"></i>@elseif(($filters['sort']??'')==='date_desc')<i class="fas fa-arrow-down" style="font-size:9px;color:var(--gm);"></i>@endif</th>
                 <th>GWA</th>
                 <th>AI Score</th>
                 <th>AI Eligibility</th>
@@ -227,19 +253,22 @@ $hasKey = !empty(trim($gk));
                 <th>Actions</th>
             </tr>
         </thead>
-        <tbody>
+        <tbody id="aiTableBody">
         @forelse($applications as $rank => $app)
         @php
-            $sc  = $app->ai_score ?? 0;
+            $sc  = (int) ($app->ai_score ?? 0);
+            $uneval = $app->ai_run_at === null || $sc === 0;
             $sfC = $sc>=75?'ash':($sc>=50?'asm':'asl');
             $el  = $app->ai_eligibility ?? 'N/A';
             $elC = $el==='Eligible'?'el':($el==='For Review'?'rv':'no');
             $absRank = (($applications->currentPage()-1)*$applications->perPage())+$rank+1;
-            $rowBg = $sc>=75?'background:#f0faf2;':($sc>=50?'background:#fffcf0;':'');
+            $rowBg = !$uneval && $sc>=75?'background:#f0faf2;':(!$uneval && $sc>=50?'background:#fffcf0;':'');
+            $st  = $app->status;
+            $stC = ($st==='Approved'||$st==='Scholarship Granted')?'b-s':($st==='Rejected'?'b-d':($st==='On Review'?'b-i':($st==='Canceled'?'b-gray':'b-w')));
         @endphp
-        <tr style="{{ $rowBg }}">
+        <tr id="app-row-{{ $app->id }}" class="app-row" style="{{ $rowBg }}" data-id="{{ $app->id }}" data-scholarship-id="{{ $app->scholarship_id }}" data-scholarship-name="{{ $app->scholarship?->name ?? 'No Scholarship' }}" data-status="{{ $st }}">
             <td style="text-align:center;">
-                <div style="width:30px;height:30px;border-radius:50%;background:{{ $absRank<=3?'linear-gradient(135deg,#1a6b2f,#2d9e4f)':($sc>=75?'#d0f0d8':($sc>=50?'#fef3cd':'#fde8e6')) }};color:{{ $absRank<=3?'#f0c020':($sc>=75?'#0d6624':($sc>=50?'#a07c00':'#c0392b')) }};display:flex;align-items:center;justify-content:center;font-weight:800;font-size:12px;margin:0 auto;">{{ $absRank }}</div>
+                <div style="width:30px;height:30px;border-radius:50%;background:{{ $absRank<=3?'linear-gradient(135deg,#1a6b2f,#2d9e4f)':(!$uneval && $sc>=75?'#d0f0d8':(!$uneval && $sc>=50?'#fef3cd':'#fde8e6')) }};color:{{ $absRank<=3?'#f0c020':(!$uneval && $sc>=75?'#0d6624':(!$uneval && $sc>=50?'#a07c00':'#c0392b')) }};display:flex;align-items:center;justify-content:center;font-weight:800;font-size:12px;margin:0 auto;">{{ $absRank }}</div>
             </td>
             <td>
                 <div style="display:flex;align-items:center;gap:9px;">
@@ -251,30 +280,50 @@ $hasKey = !empty(trim($gk));
                 </div>
             </td>
             <td>
-                <div class="fws" style="font-size:12px;">{{ \Illuminate\Support\Str::limit($app->scholarship?->name??'N/A',28) }}</div>
-                <span class="badge {{ $app->scholarship?->type==='Government'?'b-p':($app->scholarship?->type==='Private'?'b-s':'b-i') }}" style="font-size:10px;">{{ $app->scholarship?->type }}</span>
+                <div class="fws" style="font-size:12px;color:var(--g);">{{ \Illuminate\Support\Str::limit($app->scholarship?->name??'N/A',28) }}</div>
+                <div style="font-size:10px;color:var(--tm);">{{ $app->scholarship?->type }}</div>
             </td>
+            <td class="mono" style="font-size:11px;color:var(--tm);white-space:nowrap;">{{ $app->created_at?->format('M d Y') }}</td>
             <td class="mono fwb" style="color:var(--g);">{{ number_format($app->gwa,2) }}</td>
-            <td style="min-width:120px;">
+            <td id="score-cell-{{ $app->id }}" style="min-width:120px;">
+                @if($uneval)
+                <span class="badge b-gray" style="font-size:10px;">Not Evaluated</span>
+                @else
                 <div style="display:flex;align-items:center;gap:7px;">
                     <div style="flex:1;"><div class="asb"><div class="asf {{ $sfC }}" style="width:{{ $sc }}%;"></div></div></div>
                     <span class="mono fwb" style="font-size:13px;color:{{ $sc>=75?'var(--gm)':($sc>=50?'var(--warn)':'var(--danger)') }}">{{ $sc }}%</span>
                 </div>
+                @endif
             </td>
-            <td>
+            <td id="elig-cell-{{ $app->id }}">
                 <span class="badge elig-{{ $elC }}">{{ $el }}</span>
                 @if($app->ai_tag)<br><span style="font-size:10px;color:var(--tm);margin-top:2px;display:block;">{{ $app->ai_tag }}</span>@endif
             </td>
-            <td style="max-width:180px;font-size:11px;color:var(--tm);line-height:1.5;">{{ \Illuminate\Support\Str::limit($app->ai_reasoning??'—',85) }}</td>
-            <td><span class="badge {{ $app->status==='Approved'?'b-s':($app->status==='Rejected'?'b-d':'b-w') }}">{{ $app->status }}</span></td>
-            <td>
+            <td id="reason-cell-{{ $app->id }}" style="max-width:180px;font-size:11px;color:var(--tm);line-height:1.5;">{{ \Illuminate\Support\Str::limit($app->ai_reasoning??'—',85) }}</td>
+            <td id="status-cell-{{ $app->id }}">
+                <div class="st-wrap" style="display:inline-flex;align-items:center;gap:4px;position:relative;" data-url="{{ route('admin.ai.updateStatus',$app->id) }}">
+                    <span class="badge st-badge {{ $stC }}">{{ $st }}</span>
+                    <button type="button" class="st-caret" title="Change status"><i class="fas fa-chevron-down"></i></button>
+                    <div class="st-menu">
+                        @foreach(['Pending','On Review','Approved','Rejected','Canceled'] as $opt)
+                        <button type="button" class="st-item" data-status="{{ $opt }}"><span class="st-dot" style="background:{{ $opt==='Pending'?'#f0c020':($opt==='On Review'?'var(--info)':($opt==='Approved'?'#2d9e4f':($opt==='Rejected'?'var(--danger)':'#8a97a5'))) }};"></span> {{ $opt }}</button>
+                        @endforeach
+                    </div>
+                </div>
+            </td>
+            <td id="act-cell-{{ $app->id }}">
                 <div style="display:flex;gap:4px;">
                     <a href="{{ route('admin.applications.show',$app->id) }}" class="btn btn-o btn-sm btn-ic" title="View"><i class="fas fa-eye"></i></a>
-                    @if($app->status==='Pending')
-                    <form method="POST" action="{{ route('admin.applications.approve',$app->id) }}">@csrf
+                    @if($uneval)
+                    <button type="button" class="btn btn-ai btn-sm btn-ic eval-btn" title="Run AI evaluation" data-id="{{ $app->id }}" data-url="{{ route('admin.ai.runSingle',$app->id) }}" onclick="evaluateApp(this)"><i class="fas fa-robot"></i></button>
+                    @endif
+                    @if($st==='Pending')
+                    <form method="POST" action="{{ route('admin.applications.approve',$app->id) }}">@csrf @method('PATCH')
+                        <input type="hidden" name="status" value="Approved">
                         <button class="btn btn-s btn-sm btn-ic" title="Approve (AI Score: {{ $sc }}%)"><i class="fas fa-check"></i></button>
                     </form>
-                    <form method="POST" action="{{ route('admin.applications.reject',$app->id) }}">@csrf
+                    <form method="POST" action="{{ route('admin.applications.reject',$app->id) }}">@csrf @method('PATCH')
+                        <input type="hidden" name="status" value="Rejected">
                         <button class="btn btn-d btn-sm btn-ic" title="Reject"><i class="fas fa-times"></i></button>
                     </form>
                     @endif
@@ -282,7 +331,7 @@ $hasKey = !empty(trim($gk));
             </td>
         </tr>
         @empty
-        <tr><td colspan="9" style="text-align:center;padding:28px;color:var(--tm);">No applications found.</td></tr>
+        <tr><td colspan="10" style="text-align:center;padding:28px;color:var(--tm);">No applications found.</td></tr>
         @endforelse
         </tbody>
     </table></div>
@@ -294,6 +343,7 @@ $hasKey = !empty(trim($gk));
 {{-- App data for JS --}}
 <div id="jsAppData" style="display:none;">{{ json_encode($applications->map(function($a){
     return [
+        'id'          => $a->id,
         'name'        => $a->student?->user?->name ?? 'N/A',
         'course'      => $a->student?->course ?? '',
         'year'        => $a->student?->year_level ?? '',
@@ -319,12 +369,26 @@ $hasKey = !empty(trim($gk));
     ];
 })) }}</div>
 
-<style>@keyframes aiSpin{to{transform:rotate(360deg);}}</style>
+<style>
+@keyframes aiSpin{to{transform:rotate(360deg);}}
+/* ADDITION 4D — status change dropdown */
+.st-caret{border:1px solid var(--bd);background:#fff;border-radius:6px;width:20px;height:20px;font-size:9px;color:var(--tm);cursor:pointer;display:inline-flex;align-items:center;justify-content:center;padding:0;}
+.st-caret:hover{border-color:var(--gm);color:var(--gm);}
+.st-menu{display:none;position:absolute;top:26px;right:0;background:#fff;border:1px solid var(--bd);border-radius:var(--rs);box-shadow:0 8px 24px rgba(0,0,0,.14);z-index:60;min-width:135px;overflow:hidden;}
+.st-menu.open{display:block;}
+.st-menu .st-item{display:flex;width:100%;padding:7px 12px;font-size:12px;border:none;background:#fff;cursor:pointer;text-align:left;gap:8px;align-items:center;font-weight:600;color:var(--tx);font-family:inherit;}
+.st-menu .st-item:hover{background:var(--bg);}
+.st-dot{width:8px;height:8px;border-radius:50%;display:inline-block;flex-shrink:0;}
+/* ADDITION 4C — group header rows */
+.grp-hdr td{background:linear-gradient(135deg,#0d3318,#1a6b2f);color:#fff;font-weight:700;font-size:12px;padding:8px 14px;cursor:pointer;user-select:none;}
+.grp-hdr:hover td{background:linear-gradient(135deg,#0a2812,#155c26);}
+.grp-arrow{display:inline-block;width:14px;font-size:10px;}
+</style>
 
 <script>
 (function(){
     var GK    = document.getElementById('gk').value;
-    var APPS  = JSON.parse(document.getElementById('jsAppData').textContent || '[]');
+    var APPS  = window.APPS = JSON.parse(document.getElementById('jsAppData').textContent || '[]');
     var STATS = JSON.parse(document.getElementById('jsStatsData').textContent || '{}');
     var SCHS  = JSON.parse(document.getElementById('jsSchData').textContent || '[]');
 
@@ -332,7 +396,9 @@ $hasKey = !empty(trim($gk));
         if(!GK||!GK.trim()){ onError('GROQ_API_KEY is missing. Add to .env and run: php artisan config:clear'); return; }
         fetch('https://api.groq.com/openai/v1/chat/completions', {
             method:'POST', headers:{'Content-Type':'application/json','Authorization':'Bearer '+GK},
-            body: JSON.stringify({model:'llama-3.1-8b-instant',messages:[{role:'user',content:prompt}],max_tokens:maxTokens||500,temperature:0.6})
+            // gpt-oss-20b replaces the removed llama-3.1-8b-instant; reasoning tokens
+            // count toward max_tokens, so budget 3x the target reply length
+            body: JSON.stringify({model:'openai/gpt-oss-20b',messages:[{role:'user',content:prompt}],max_tokens:(maxTokens||500)*3,temperature:0.6,reasoning_effort:'low'})
         })
         .then(function(r){ return r.json().then(function(d){ return {ok:r.ok,status:r.status,data:d}; }); })
         .then(function(r){
@@ -505,6 +571,206 @@ $hasKey = !empty(trim($gk));
         win.document.write('</body></html>');
         win.document.close();
         win.print();
+    };
+})();
+</script>
+
+{{-- ADDITIONS 4C/4D — grouping, status dropdown, applied-date sort, evaluate button --}}
+<script>
+(function(){
+    var CSRF = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+    var STATUS_BADGE = { 'Pending':'b-w', 'On Review':'b-i', 'Approved':'b-s', 'Rejected':'b-d', 'Canceled':'b-gray' };
+
+    /* ── ADDITION 4C: grouping ─────────────────────────────── */
+    var currentGrouping = 'none';
+    var tbody = document.getElementById('aiTableBody');
+    var originalRows = tbody ? Array.prototype.slice.call(tbody.querySelectorAll('tr.app-row')) : [];
+    var groupIndex = {};   // group key -> row elements (kept for collapse toggling)
+    var groupHdrs  = {};   // group key -> header element
+
+    window.setGrouping = function(g){
+        currentGrouping = g;
+        document.querySelectorAll('.grp-btn').forEach(function(b){
+            if(b.dataset.grouping === g){
+                b.classList.remove('btn-o');
+                b.classList.add('btn');
+                b.style.background = 'var(--g)';
+                b.style.color = '#fff';
+            } else {
+                b.classList.add('btn-o');
+                b.classList.remove('btn');
+                b.style.background = '';
+                b.style.color = '';
+            }
+        });
+        renderGroups();
+    };
+
+    function renderGroups(){
+        if(!tbody) return;
+        // wipe any generated header rows
+        tbody.querySelectorAll('tr.grp-hdr').forEach(function(h){ h.remove(); });
+        groupIndex = {}; groupHdrs = {};
+
+        if(currentGrouping === 'none'){
+            originalRows.forEach(function(r){ r.style.display = ''; tbody.appendChild(r); });
+            return;
+        }
+
+        var keyOf, labelOf;
+        if(currentGrouping === 'scholarship'){
+            keyOf   = function(r){ return r.dataset.scholarshipId || '0'; };
+            labelOf = function(r){ return r.dataset.scholarshipName || 'No Scholarship'; };
+        } else {
+            keyOf   = function(r){ return r.dataset.status || 'Pending'; };
+            labelOf = function(r){ return 'Status: ' + (r.dataset.status || 'Pending'); };
+        }
+
+        var order = [];
+        originalRows.forEach(function(r){
+            var k = keyOf(r);
+            if(!(k in groupIndex)){ groupIndex[k] = []; order.push(k); }
+            groupIndex[k].push(r);
+        });
+
+        order.forEach(function(k){
+            var rows = groupIndex[k];
+            var hdr = document.createElement('tr');
+            hdr.className = 'grp-hdr';
+            hdr.innerHTML = '<td colspan="10"><span class="grp-arrow">▼</span> ' +
+                labelOf(rows[0]) + ' — ' + rows.length + ' applicant' + (rows.length>1?'s':'') + '</td>';
+            hdr.addEventListener('click', function(){ toggleGroup(k); });
+            tbody.appendChild(hdr);
+            groupHdrs[k] = hdr;
+            rows.forEach(function(r){ r.style.display = ''; tbody.appendChild(r); });
+        });
+    }
+
+    function toggleGroup(k){
+        var hdr = groupHdrs[k];
+        if(!hdr) return;
+        var arrow = hdr.querySelector('.grp-arrow');
+        var hide = arrow.textContent === '▼';
+        (groupIndex[k] || []).forEach(function(r){ r.style.display = hide ? 'none' : ''; });
+        arrow.textContent = hide ? '▶' : '▼';
+    }
+
+    /* ── ADDITION 4D: applied date column sort ─────────────── */
+    window.sortDate = function(){
+        var input = document.getElementById('sortInput');
+        input.value = (input.value === 'date_asc') ? 'date_desc' : 'date_asc';
+        document.getElementById('aiFilterForm').submit();
+    };
+
+    /* ── ADDITION 4D: status change dropdown ───────────────── */
+    document.addEventListener('click', function(e){
+        var caret = e.target.closest('.st-caret');
+        var item  = e.target.closest('.st-item');
+
+        // close every open menu, then handle the click target
+        document.querySelectorAll('.st-menu.open').forEach(function(m){
+            if(!caret || m.previousElementSibling !== caret) m.classList.remove('open');
+        });
+
+        if(caret){
+            var menu = caret.nextElementSibling;
+            if(menu) menu.classList.toggle('open');
+            return;
+        }
+
+        if(item){
+            var wrap = item.closest('.st-wrap');
+            var url  = wrap.dataset.url;
+            var newStatus = item.dataset.status;
+            wrap.querySelectorAll('.st-menu.open').forEach(function(m){ m.classList.remove('open'); });
+
+            fetch(url, {
+                method: 'PATCH',
+                headers: {
+                    'X-CSRF-TOKEN': CSRF,
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ status: newStatus })
+            })
+            .then(function(r){ return r.json().then(function(d){ return { ok:r.ok, data:d }; }); })
+            .then(function(res){
+                if(!res.ok){ alert(res.data.message || 'Failed to update status.'); return; }
+                var row = wrap.closest('tr');
+                var badge = wrap.querySelector('.st-badge');
+                badge.className = 'badge st-badge ' + (STATUS_BADGE[newStatus] || 'b-w');
+                badge.textContent = newStatus;
+                if(row){
+                    row.dataset.status = newStatus;
+                    // status left Pending — the inline Approve/Reject buttons no longer apply
+                    if(newStatus !== 'Pending') row.querySelectorAll('td:last-child form').forEach(function(f){ f.remove(); });
+                }
+                // reflect the change in the Groq prompt data
+                var id = row ? row.dataset.id : null;
+                if(id){ for(var i=0;i<APPS.length;i++){ if(String(APPS[i].id)===String(id)) APPS[i].status = newStatus; } }
+            })
+            .catch(function(err){ alert('Network error: ' + err.message); });
+        }
+    });
+
+    /* ── ADDITION 4D/CHANGE 6: evaluate unevaluated row ────── */
+    window.evaluateApp = function(btn){
+        var id  = btn.dataset.id;
+        var url = btn.dataset.url;
+        var orig = btn.innerHTML;
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+
+        fetch(url, {
+            method: 'POST',
+            headers: {
+                'X-CSRF-TOKEN': CSRF,
+                'X-Requested-With': 'XMLHttpRequest',
+                'Accept': 'application/json'
+            }
+        })
+        .then(function(r){ return r.json().then(function(d){ return { ok:r.ok, data:d }; }); })
+        .then(function(res){
+            if(!res.ok){ throw new Error(res.data.message || 'Evaluation failed.'); }
+            var d = res.data;
+            var sc  = parseInt(d.score, 10) || 0;
+            var sfC = sc>=75?'ash':(sc>=50?'asm':'asl');
+            var scColor = sc>=75?'var(--gm)':(sc>=50?'var(--warn)':'var(--danger)');
+            var elC = d.eligibility==='Eligible'?'el':(d.eligibility==='For Review'?'rv':'no');
+
+            document.getElementById('score-cell-'+id).innerHTML =
+                '<div style="display:flex;align-items:center;gap:7px;">' +
+                '<div style="flex:1;"><div class="asb"><div class="asf '+sfC+'" style="width:'+sc+'%;"></div></div></div>' +
+                '<span class="mono fwb" style="font-size:13px;color:'+scColor+';">'+sc+'%</span></div>';
+
+            document.getElementById('elig-cell-'+id).innerHTML =
+                '<span class="badge elig-'+elC+'">'+d.eligibility+'</span>' +
+                (d.tag ? '<br><span style="font-size:10px;color:var(--tm);margin-top:2px;display:block;">'+d.tag+'</span>' : '');
+
+            document.getElementById('reason-cell-'+id).textContent = d.reasoning || '—';
+
+            var row = document.getElementById('app-row-'+id);
+            if(row){
+                row.style.background = sc>=75 ? '#f0faf2' : (sc>=50 ? '#fffcf0' : '');
+                // keep grouping labels in sync
+                for(var i=0;i<APPS.length;i++){
+                    if(String(APPS[i].id)===String(id)){
+                        APPS[i].ai_score = sc; APPS[i].eligibility = d.eligibility;
+                        APPS[i].tag = d.tag || ''; APPS[i].reasoning = d.reasoning || '';
+                        break;
+                    }
+                }
+            }
+
+            // remove the Evaluate button now that a score exists
+            btn.remove();
+        })
+        .catch(function(err){
+            alert(err.message);
+            btn.disabled = false;
+            btn.innerHTML = orig;
+        });
     };
 })();
 </script>

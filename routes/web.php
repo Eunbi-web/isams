@@ -92,12 +92,17 @@ Route::middleware(['auth','role:admin,officer'])->prefix('admin')->name('admin.'
     // ADDED: explicit approve/reject PATCH routes for AJAX buttons
     Route::patch('applications/{application}/approve', [AdminApp::class,'approve'])->name('applications.approve');
     Route::patch('applications/{application}/reject',  [AdminApp::class,'reject'])->name('applications.reject');
+    // ADDED: status-change route used by the applications show page buttons
+    Route::patch('applications/{application}/status', [AdminApp::class,'updateStatus'])->name('applications.updateStatus');
 
     Route::get('ai', [AdminAi::class,'index'])->name('ai.index');
     // Aliases for old blade references — redirect to ai.index
     Route::post('ai/run',                      [AdminAi::class,'index'])->name('ai.run');
     Route::get('ai/results',                   [AdminAi::class,'index'])->name('ai.results');
-    Route::post('ai/{application}/run-single', [AdminAi::class,'index'])->name('ai.runSingle');
+    // CHANGED: runSingle now points to the real AJAX evaluation handler
+    Route::post('ai/{application}/run-single', [AdminAi::class,'runSingle'])->name('ai.runSingle');
+    // NEW (CHANGE 3): quick status change from the AI Filter table
+    Route::patch('ai/{application}/status', [AdminAi::class,'updateStatus'])->name('ai.updateStatus');
 
     Route::get('students/export', [AdminStudent::class,'export'])->name('students.export');
     Route::get('students/import', [AdminStudent::class,'importForm'])->name('students.import-form');
