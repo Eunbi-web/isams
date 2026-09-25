@@ -24,7 +24,9 @@ class ApplicationController extends Controller {
         $app->has_failing=$request->boolean('has_failing');
         $app->has_discipline=$request->boolean('has_discipline');
         $app->income_bracket=$request->input('income_bracket','below_200');
-        $app->scholarship=Scholarship::find($data['scholarship_id']);
+        // scholarship_id is already set on the model via make($data) — assigning a
+        // model object to the $app->scholarship relation name made Eloquent try
+        // to insert a non-existent "scholarship" column (SQLSTATE 42703)
         $aiCtrl=new AiController();
         $result=$aiCtrl->evaluate($app);
         $app->ai_score=$result['score']; $app->ai_eligibility=$result['eligibility']; $app->ai_tag=$result['tag']; $app->ai_reasoning=$result['reasoning']; $app->ai_run_at=now();

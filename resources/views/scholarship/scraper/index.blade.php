@@ -74,7 +74,7 @@
             </div>
             <div style="display:flex;align-items:center;justify-content:space-between;gap:7px;">
                 <a href="{{ $src['url'] }}" target="_blank" class="btn btn-o btn-sm" style="font-size:11px;flex:1;justify-content:center;"><i class="fas fa-external-link-alt"></i> Visit Site</a>
-                <form method="POST" action="{{ route('scholarship.scraper.run-source') }}">@csrf
+                <form method="POST" action="{{ route('scholarship.scraper.run-source', $idx) }}">@csrf
                     <input type="hidden" name="source_index" value="{{ $idx }}">
                     <button class="btn btn-ai btn-sm" style="font-size:11px;"><i class="fas fa-sync-alt"></i> Sync</button>
                 </form>

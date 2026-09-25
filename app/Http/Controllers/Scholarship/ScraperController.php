@@ -38,7 +38,7 @@ class ScraperController extends Controller
             'last_run'  => ScrapedScholarship::max('created_at'),
         ];
 
-        return view('scholarship.programs.scraper', compact('scraped', 'stats', 'sources'));
+        return view('scholarship.scraper.index', compact('scraped', 'stats', 'sources'));
     }
 
     /**
