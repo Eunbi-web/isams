@@ -231,6 +231,9 @@ Route::middleware(['auth','role:counselor'])->prefix('counselor')->name('counsel
     Route::delete('counseling/{counseling}', [CounselorCounseling::class,'destroy'])->name('counseling.destroy');
 
     Route::get('announcements', [CounselorAnn::class,'index'])->name('announcements');
+    Route::post('announcements', [CounselorAnn::class,'store'])->name('announcements.store');
+    Route::put('announcements/{announcement}', [CounselorAnn::class,'update'])->name('announcements.update');
+    Route::delete('announcements/{announcement}', [CounselorAnn::class,'destroy'])->name('announcements.destroy');
 
     Route::get('discipline', [CounselorDiscipline::class,'index'])->name('discipline.index');
     Route::post('discipline', [CounselorDiscipline::class,'store'])->name('discipline.store');
