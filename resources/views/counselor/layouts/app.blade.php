@@ -111,7 +111,48 @@ tbody td{padding:11px 13px;font-size:13px;border-bottom:1px solid var(--bd);}tbo
 .sb-backdrop.open{display:block;}
 @media(max-width:520px){.notif-wrapper div[id$="NotifDropdown"],#counselorNotifDropdown{width:calc(100vw - 20px)!important;}}
 /* Theme overrides (light/dark) */
-body[data-theme="dark"]{--bg:#0b1220;--card:#0f1a2d;--sb:#081022;--st:#9fb3c8;--tm:#dbe8f5;--tm2:#6f8aa7;--bd:rgba(160,190,220,0.22);--shadow:0 8px 30px rgba(0,0,0,0.35);}
+/* ── Theme: dark mode ── */
+body[data-theme="dark"]{--bg:#0b1220;--card:#0f1a2d;--sb:#081022;--st:#9fb3c8;--tx:#dbe8f5;--tm:#8fa8c4;--gp:#12261c;--yp:#26210e;--bd:rgba(160,190,220,.22);--shadow:0 8px 30px rgba(0,0,0,.35);--g:#3fbf68;--gm:#57cf7f;}
+body[data-theme="dark"] thead th{background:#0c1626;}
+body[data-theme="dark"] tbody tr:hover{background:#13203a;}
+body[data-theme="dark"] .fc{background:#0c1626;color:var(--tx);}
+body[data-theme="dark"] .mb{background:var(--card);}
+body[data-theme="dark"] .mh{background:var(--card);}
+body[data-theme="dark"] .asb{background:#1a2942;}
+body[data-theme="dark"] .slot-bar{background:#1a2942;}
+body[data-theme="dark"] .b-s{background:#12351f;color:#7ee2a0;}
+body[data-theme="dark"] .b-d{background:#3a1512;color:#ff9a8c;}
+body[data-theme="dark"] .b-w{background:#33290d;color:#ffd66b;}
+body[data-theme="dark"] .b-i{background:#0e2a38;color:#7ec8e8;}
+body[data-theme="dark"] .b-p{background:#12261c;color:#6fd98f;}
+body[data-theme="dark"] .b-y{background:#2a2410;color:#e8c14b;}
+body[data-theme="dark"] .b-gray{background:#1a2942;color:#8fa8c4;}
+body[data-theme="dark"] .tag-renewal{background:#12351f;color:#7ee2a0;}
+body[data-theme="dark"] .tag-needs,body[data-theme="dark"] .tag-closing{background:#2a2410;color:#e8c14b;}
+body[data-theme="dark"] .tag-disq{background:#3a1512;color:#ff9a8c;}
+body[data-theme="dark"] .tag-open{background:#12261c;color:#6fd98f;}
+body[data-theme="dark"] .tag-queue{background:#0e2a38;color:#7ec8e8;}
+body[data-theme="dark"] .elig-el{background:#12351f;color:#7ee2a0;border-color:#1f5c35;}
+body[data-theme="dark"] .elig-rv{background:#2a2410;color:#e8c14b;border-color:#5c4f1f;}
+body[data-theme="dark"] .elig-no{background:#3a1512;color:#ff9a8c;border-color:#5c1f1a;}
+body[data-theme="dark"] .al-s{background:#0f2417;color:#a8e6c3;}
+body[data-theme="dark"] .al-d{background:#2a0f0d;color:#ffb3a6;}
+body[data-theme="dark"] .al-w{background:#241c08;color:#ffdf91;}
+body[data-theme="dark"] .al-i{background:#0e2233;color:#9ad6f0;}
+body[data-theme="dark"] .al-ai{background:#241f0a;color:#ffe08a;}
+body[data-theme="dark"] .si.g{background:#12261c;color:#5bd07f;}
+body[data-theme="dark"] .si.y{background:#2a2410;color:#e8c14b;}
+body[data-theme="dark"] .si.r{background:#3a1512;color:#ff9a8c;}
+body[data-theme="dark"] .si.t{background:#0e2a38;color:#7ec8e8;}
+body[data-theme="dark"] .si.o{background:#241c08;color:#ffcf6b;}
+body[data-theme="dark"] .si.dg{background:#12351f;color:#7ee2a0;}
+body[data-theme="dark"] .btn-o:hover{background:#12261c;}
+body[data-theme="dark"] .sv .chg{color:#7ee2a0;}
+body[data-theme="dark"] .notif-item.unread{background:#12203a;}
+body[data-theme="dark"] .notif-item.unread:hover{background:#182a4a;}
+body[data-theme="dark"] div[id$="NotifDropdown"]{background:var(--card)!important;}
+body[data-theme="dark"] ::-webkit-scrollbar-thumb{background:#28405e;}
+
 body[data-theme="light"]{--bg:#f2f7f3;--card:#fff;--sb:#0d3318;--st:#90c8a0;--tx:#1a2e1a;--tm:#5a7a60;--bd:#cde0d0;--shadow:0 2px 12px rgba(26,107,47,.09);}
 
 /* ── Notification Dropdown ── */
@@ -124,7 +165,7 @@ body[data-theme="light"]{--bg:#f2f7f3;--card:#fff;--sb:#0d3318;--st:#90c8a0;--tx
 .notif-icon{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0;}
 @keyframes notifSpin{to{transform:rotate(360deg);}}
 </style>@stack('styles')</head>
-<body data-theme="light">
+<body data-theme="{{ (auth()->user()->theme ?? 'system') === 'dark' ? 'dark' : 'light' }}">
 <aside class="sidebar" id="sidebar" style="background:#0a1f2e;">
 <div class="sb-brand"><div class="sb-logo"><div class="sb-icon"><img src="{{ asset('images/SCC_NEW_LOGO.png') }}" alt="Logo"></div><div><div class="sb-name">ISAMS</div><div class="sb-sub" style="color:#90b8c8;">Counselor Portal</div></div></div></div>
 <div class="sb-sec"><div class="sb-lbl">Main</div>
@@ -296,65 +337,6 @@ document.addEventListener('click',e=>{if(e.target.classList.contains('mo'))e.tar
     },60000);
 })();
 </script>
-
-<script>
-    (function(){
-        // Apply saved theme (system/light/dark) and resolve "system" using OS preference.
-        var body=document.body;
-        if(!body) return;
-
-        var savedTheme=@json(auth()->user()->theme ?? 'system');
-        var resolved=savedTheme;
-        if(savedTheme==='system'){
-            var prefersDark=window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches;
-            resolved=prefersDark?'dark':'light';
-        }
-        body.setAttribute('data-theme',resolved);
-
-        // Theme toggle button state
-        var btn=document.getElementById('themeToggleBtn');
-        var icon=document.getElementById('themeToggleIcon');
-        if(btn){
-            var cycle=['system','light','dark'];
-            var idx=Math.max(0,cycle.indexOf(savedTheme));
-
-            function setIcon(){
-                if(!icon) return;
-                var map={system:'fas fa-laptop', light:'fas fa-sun', dark:'fas fa-moon'};
-                icon.className=map[savedTheme]||'fas fa-adjust';
-                btn.title='Theme: '+savedTheme.charAt(0).toUpperCase()+savedTheme.slice(1);
-            }
-
-            setIcon();
-
-            btn.addEventListener('click',function(){
-                var next=cycle[(idx+1)%cycle.length];
-                idx=(idx+1)%cycle.length;
-                savedTheme=next;
-
-                var nextResolved=next;
-                if(next==='system'){
-                    var pDark=window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches;
-                    nextResolved=pDark?'dark':'light';
-                }
-                body.setAttribute('data-theme',nextResolved);
-                setIcon();
-
-                var csrf=document.querySelector('meta[name="csrf-token"]').getAttribute('content');
-                fetch('{{ route('settings.theme.update') }}',{
-                    method:'POST',
-                    headers:{
-                        'Content-Type':'application/json',
-                        'X-CSRF-TOKEN':csrf,
-                        'X-Requested-With':'XMLHttpRequest'
-                    },
-                    body:JSON.stringify({theme:next})
-                }).catch(function(){});
-            });
-        }
-    })();
-</script>
-
 
 @stack('scripts')
 <script src="{{ asset('js/isams-ajax.js') }}"></script>

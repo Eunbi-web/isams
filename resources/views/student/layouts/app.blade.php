@@ -127,8 +127,50 @@ tbody td{padding:11px 13px;font-size:13px;border-bottom:1px solid var(--bd);}tbo
 .notif-item:last-child{border-bottom:none;}
 .notif-icon{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0;}
 @keyframes notifSpin{to{transform:rotate(360deg);}}
+
+/* ── Theme: dark mode ── */
+body[data-theme="dark"]{--bg:#0b1220;--card:#0f1a2d;--sb:#081022;--st:#9fb3c8;--tx:#dbe8f5;--tm:#8fa8c4;--gp:#12261c;--yp:#26210e;--bd:rgba(160,190,220,.22);--shadow:0 8px 30px rgba(0,0,0,.35);--g:#3fbf68;--gm:#57cf7f;}
+body[data-theme="dark"] thead th{background:#0c1626;}
+body[data-theme="dark"] tbody tr:hover{background:#13203a;}
+body[data-theme="dark"] .fc{background:#0c1626;color:var(--tx);}
+body[data-theme="dark"] .mb{background:var(--card);}
+body[data-theme="dark"] .mh{background:var(--card);}
+body[data-theme="dark"] .asb{background:#1a2942;}
+body[data-theme="dark"] .slot-bar{background:#1a2942;}
+body[data-theme="dark"] .b-s{background:#12351f;color:#7ee2a0;}
+body[data-theme="dark"] .b-d{background:#3a1512;color:#ff9a8c;}
+body[data-theme="dark"] .b-w{background:#33290d;color:#ffd66b;}
+body[data-theme="dark"] .b-i{background:#0e2a38;color:#7ec8e8;}
+body[data-theme="dark"] .b-p{background:#12261c;color:#6fd98f;}
+body[data-theme="dark"] .b-y{background:#2a2410;color:#e8c14b;}
+body[data-theme="dark"] .b-gray{background:#1a2942;color:#8fa8c4;}
+body[data-theme="dark"] .tag-renewal{background:#12351f;color:#7ee2a0;}
+body[data-theme="dark"] .tag-needs,body[data-theme="dark"] .tag-closing{background:#2a2410;color:#e8c14b;}
+body[data-theme="dark"] .tag-disq{background:#3a1512;color:#ff9a8c;}
+body[data-theme="dark"] .tag-open{background:#12261c;color:#6fd98f;}
+body[data-theme="dark"] .tag-queue{background:#0e2a38;color:#7ec8e8;}
+body[data-theme="dark"] .elig-el{background:#12351f;color:#7ee2a0;border-color:#1f5c35;}
+body[data-theme="dark"] .elig-rv{background:#2a2410;color:#e8c14b;border-color:#5c4f1f;}
+body[data-theme="dark"] .elig-no{background:#3a1512;color:#ff9a8c;border-color:#5c1f1a;}
+body[data-theme="dark"] .al-s{background:#0f2417;color:#a8e6c3;}
+body[data-theme="dark"] .al-d{background:#2a0f0d;color:#ffb3a6;}
+body[data-theme="dark"] .al-w{background:#241c08;color:#ffdf91;}
+body[data-theme="dark"] .al-i{background:#0e2233;color:#9ad6f0;}
+body[data-theme="dark"] .al-ai{background:#241f0a;color:#ffe08a;}
+body[data-theme="dark"] .si.g{background:#12261c;color:#5bd07f;}
+body[data-theme="dark"] .si.y{background:#2a2410;color:#e8c14b;}
+body[data-theme="dark"] .si.r{background:#3a1512;color:#ff9a8c;}
+body[data-theme="dark"] .si.t{background:#0e2a38;color:#7ec8e8;}
+body[data-theme="dark"] .si.o{background:#241c08;color:#ffcf6b;}
+body[data-theme="dark"] .si.dg{background:#12351f;color:#7ee2a0;}
+body[data-theme="dark"] .btn-o:hover{background:#12261c;}
+body[data-theme="dark"] .sv .chg{color:#7ee2a0;}
+body[data-theme="dark"] .notif-item.unread{background:#12203a;}
+body[data-theme="dark"] .notif-item.unread:hover{background:#182a4a;}
+body[data-theme="dark"] div[id$="NotifDropdown"]{background:var(--card)!important;}
+body[data-theme="dark"] ::-webkit-scrollbar-thumb{background:#28405e;}
 </style>@stack('styles')</head>
-<body>
+<body data-theme="{{ (auth()->user()->theme ?? 'system') === 'dark' ? 'dark' : 'light' }}">
 <aside class="sidebar" id="sidebar">
 <div class="sb-brand"><div class="sb-logo"><div class="sb-icon"><img src="{{ asset('images/SCC_NEW_LOGO.png') }}" alt="Logo"></div><div><div class="sb-name">ISAMS</div><div class="sb-sub">Student Portal</div></div></div></div>
 <div class="sb-sec"><div class="sb-lbl">Main</div>
@@ -156,6 +198,10 @@ tbody td{padding:11px 13px;font-size:13px;border-bottom:1px solid var(--bd);}tbo
 <div><div class="tp-title">@yield('page-title','Dashboard')</div><div class="tp-sub">@yield('page-sub','ISAMS Student Portal')</div></div>
 <div class="tp-right">
 <span class="school-chip"><img src="{{ asset('images/SCC_NEW_LOGO.png') }}" alt="Logo">ISAMS</span>
+
+{{-- Light/Dark theme switch --}}
+@include('components.theme-toggle')
+
 
 {{-- STUDENT NOTIFICATION DROPDOWN --}}
 <div id="studentNotifWrapper" style="position:relative;">

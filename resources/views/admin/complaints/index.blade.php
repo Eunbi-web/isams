@@ -13,7 +13,7 @@
 .inbox-subject{font-weight:700;font-size:14px;color:var(--tx);}
 .inbox-meta{font-size:12px;color:var(--tm);margin-top:2px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
 .inbox-right{margin-left:auto;display:flex;align-items:center;gap:10px;flex-shrink:0;}
-.finput{padding:8px 12px;border:1.5px solid var(--bd);border-radius:var(--rs);font-size:13px;font-family:inherit;background:#fff;color:var(--tx);}
+.finput{padding:8px 12px;border:1.5px solid var(--bd);border-radius:var(--rs);font-size:13px;font-family:inherit;background:var(--card);color:var(--tx);}
 </style>
 @endpush
 @section('content')

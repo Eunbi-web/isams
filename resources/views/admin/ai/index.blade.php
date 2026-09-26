@@ -69,7 +69,7 @@ $hasKey = !empty(trim($gk));
                     <button type="button" onclick="document.getElementById('aiResult').style.display='none'" style="background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);border-radius:8px;padding:4px 10px;font-size:11px;color:rgba(255,255,255,.7);cursor:pointer;">Close</button>
                 </div>
             </div>
-            <div id="aiResultText" style="padding:20px 24px;font-size:13.5px;color:var(--tx);line-height:1.9;white-space:pre-wrap;background:#fff;"></div>
+            <div id="aiResultText" style="padding:20px 24px;font-size:13.5px;color:var(--tx);line-height:1.9;white-space:pre-wrap;background:var(--card);"></div>
         </div>
 
         <div id="aiError" style="display:none;background:#fde8e6;border:1.5px solid var(--danger);border-radius:var(--rs);padding:12px 14px;font-size:13px;color:#7a1a14;margin-bottom:14px;">
@@ -152,7 +152,7 @@ $hasKey = !empty(trim($gk));
                 <span id="screenResultTitle" style="font-size:14px;font-weight:700;"></span>
                 <span id="screenResultScore" style="margin-left:auto;font-family:'Sora',sans-serif;font-size:22px;font-weight:800;"></span>
             </div>
-            <div id="screenResultBody" style="padding:14px 18px;font-size:13px;color:var(--tx);line-height:1.8;white-space:pre-wrap;background:#fff;"></div>
+            <div id="screenResultBody" style="padding:14px 18px;font-size:13px;color:var(--tx);line-height:1.8;white-space:pre-wrap;background:var(--card);"></div>
         </div>
     </div>
 </div>
@@ -245,7 +245,7 @@ $hasKey = !empty(trim($gk));
             $el  = $app->ai_eligibility ?? 'N/A';
             $elC = $el==='Eligible'?'el':($el==='For Review'?'rv':'no');
             $absRank = (($applications->currentPage()-1)*$applications->perPage())+$rank+1;
-            $rowBg = !$uneval && $sc>=75?'background:#f0faf2;':(!$uneval && $sc>=50?'background:#fffcf0;':'');
+            $rowBg = !$uneval && $sc>=75?'background:rgba(45,158,79,.08)':(!$uneval && $sc>=50?'background:rgba(240,192,32,.08)':'');
             $st  = $app->status;
             $stC = ($st==='Approved'||$st==='Scholarship Granted')?'b-s':($st==='Rejected'?'b-d':($st==='On Review'?'b-i':($st==='Canceled'?'b-gray':'b-w')));
         @endphp
@@ -355,11 +355,11 @@ $hasKey = !empty(trim($gk));
 <style>
 @keyframes aiSpin{to{transform:rotate(360deg);}}
 /* ADDITION 4D — status change dropdown */
-.st-caret{border:1px solid var(--bd);background:#fff;border-radius:6px;width:20px;height:20px;font-size:9px;color:var(--tm);cursor:pointer;display:inline-flex;align-items:center;justify-content:center;padding:0;}
+.st-caret{border:1px solid var(--bd);background:var(--card);border-radius:6px;width:20px;height:20px;font-size:9px;color:var(--tm);cursor:pointer;display:inline-flex;align-items:center;justify-content:center;padding:0;}
 .st-caret:hover{border-color:var(--gm);color:var(--gm);}
-.st-menu{display:none;position:absolute;top:26px;right:0;background:#fff;border:1px solid var(--bd);border-radius:var(--rs);box-shadow:0 8px 24px rgba(0,0,0,.14);z-index:60;min-width:135px;overflow:hidden;}
+.st-menu{display:none;position:absolute;top:26px;right:0;background:var(--card);border:1px solid var(--bd);border-radius:var(--rs);box-shadow:0 8px 24px rgba(0,0,0,.14);z-index:60;min-width:135px;overflow:hidden;}
 .st-menu.open{display:block;}
-.st-menu .st-item{display:flex;width:100%;padding:7px 12px;font-size:12px;border:none;background:#fff;cursor:pointer;text-align:left;gap:8px;align-items:center;font-weight:600;color:var(--tx);font-family:inherit;}
+.st-menu .st-item{display:flex;width:100%;padding:7px 12px;font-size:12px;border:none;background:var(--card);cursor:pointer;text-align:left;gap:8px;align-items:center;font-weight:600;color:var(--tx);font-family:inherit;}
 .st-menu .st-item:hover{background:var(--bg);}
 .st-dot{width:8px;height:8px;border-radius:50%;display:inline-block;flex-shrink:0;}
 /* ADDITION 4C — group header rows */

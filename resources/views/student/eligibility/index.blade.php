@@ -171,7 +171,7 @@ $review_count   = count(array_filter($mapped, fn($x) => $x['eligibility']==='For
                 <span style="font-size:13px;font-weight:700;color:#fff;">AI-Generated Scholarship Passport — Powered by Groq AI</span>
                 <button type="button" onclick="document.getElementById('passportAI').style.display='none'" style="margin-left:auto;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);border-radius:8px;padding:4px 10px;font-size:11px;color:rgba(255,255,255,.7);cursor:pointer;">Close</button>
             </div>
-            <div id="passportAIContent" style="padding:20px 24px;font-size:13.5px;color:var(--tx);line-height:1.9;white-space:pre-wrap;background:#fff;"></div>
+            <div id="passportAIContent" style="padding:20px 24px;font-size:13.5px;color:var(--tx);line-height:1.9;white-space:pre-wrap;background:var(--card);"></div>
         </div>
 
         <div id="passportError" style="display:none;background:#fde8e6;border:1.5px solid var(--danger);border-radius:var(--rs);padding:12px 14px;font-size:13px;color:#7a1a14;margin-top:12px;">
@@ -242,7 +242,7 @@ $review_count   = count(array_filter($mapped, fn($x) => $x['eligibility']==='For
                 <span style="font-size:13px;font-weight:700;color:#fff;">AI Gap Analysis Report</span>
                 <button type="button" onclick="document.getElementById('gapResult').style.display='none'" style="margin-left:auto;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);border-radius:8px;padding:4px 10px;font-size:11px;color:rgba(255,255,255,.7);cursor:pointer;">Close</button>
             </div>
-            <div id="gapResultText" style="padding:18px 20px;font-size:13.5px;color:var(--tx);line-height:1.9;white-space:pre-wrap;background:#fff;"></div>
+            <div id="gapResultText" style="padding:18px 20px;font-size:13.5px;color:var(--tx);line-height:1.9;white-space:pre-wrap;background:var(--card);"></div>
         </div>
 
         <div id="gapError" style="display:none;background:#fde8e6;border:1.5px solid var(--danger);border-radius:var(--rs);padding:12px 14px;font-size:13px;color:#7a1a14;margin-top:10px;">
@@ -310,7 +310,7 @@ $review_count   = count(array_filter($mapped, fn($x) => $x['eligibility']==='For
                 <span style="font-size:13px;font-weight:700;color:#fff;">AI Priority Action Plan</span>
                 <button type="button" onclick="document.getElementById('planResult').style.display='none'" style="margin-left:auto;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.3);border-radius:8px;padding:4px 10px;font-size:11px;color:rgba(255,255,255,.7);cursor:pointer;">Close</button>
             </div>
-            <div id="planResultText" style="padding:18px 20px;font-size:13.5px;color:var(--tx);line-height:1.9;white-space:pre-wrap;background:#fff;"></div>
+            <div id="planResultText" style="padding:18px 20px;font-size:13.5px;color:var(--tx);line-height:1.9;white-space:pre-wrap;background:var(--card);"></div>
         </div>
 
         <div id="planError" style="display:none;background:#fde8e6;border:1.5px solid var(--danger);border-radius:var(--rs);padding:12px 14px;font-size:13px;color:#7a1a14;margin-top:10px;">

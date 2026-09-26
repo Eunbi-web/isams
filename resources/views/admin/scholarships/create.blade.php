@@ -88,7 +88,7 @@
             <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--tm);margin-bottom:8px;">AI Score Breakdown Preview</div>
             <div style="display:flex;flex-wrap:wrap;gap:8px;">
                 @foreach([['GWA','40 pts max','fas fa-star','y'],['Enrollment Type','20 pts max','fas fa-id-badge','g'],['No Failing Grades','20 pts max','fas fa-graduation-cap','g'],['Family Income','15 pts max','fas fa-hand-holding-usd','t'],['No Discipline Case','10 pts max','fas fa-gavel','o'],['GWA Excellence Bonus','+5 pts','fas fa-award','y']] as $s)
-                <div style="display:flex;align-items:center;gap:6px;background:#fff;border:1px solid var(--bd);border-radius:20px;padding:5px 10px;font-size:11px;">
+                <div style="display:flex;align-items:center;gap:6px;background:var(--card);border:1px solid var(--bd);border-radius:20px;padding:5px 10px;font-size:11px;">
                     <i class="{{ $s[2] }}" style="color:{{ $s[3]==='y'?'var(--yd)':($s[3]==='g'?'var(--gm)':($s[3]==='t'?'var(--info)':'var(--warn)')) }};font-size:11px;"></i>
                     <span style="color:var(--tm);">{{ $s[0] }}</span>
                     <strong style="color:var(--g);">{{ $s[1] }}</strong>

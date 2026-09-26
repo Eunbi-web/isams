@@ -96,7 +96,7 @@
 <style>
 @media print{
 .sidebar,.topbar,.ai-bar,.card:first-of-type,.c-pagination,.btn,.mob-toggle{display:none !important;}
-body{background:#fff;}
+body{background:var(--bg);}
 .main{margin-left:0;}
 .card{border:none;box-shadow:none;}
 .card .ch{display:none;}
