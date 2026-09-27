@@ -260,7 +260,8 @@ Route::middleware(['auth','role:student'])->prefix('student')->name('student.')-
     Route::post('applications', [StudentApp::class,'store'])->name('applications.store');
     Route::get('applications/{id}', [StudentApp::class,'show'])->name('applications.show');
     Route::get('eligibility', [StudentEligibility::class,'index'])->name('eligibility');
-    Route::post('eligibility/compute', [StudentEligibility::class,'compute'])->name('eligibility.compute');
+    // Server-side AI generation for the AI Eligibility page (passport / gap / plan)
+    Route::post('eligibility/ai', [StudentEligibility::class,'aiGenerate'])->name('eligibility.ai');
     // Notification dropdown routes
     Route::get('notifications/dropdown',  [StudentNotif::class,'dropdown'])->name('notifications.dropdown');
     Route::post('notifications/mark-all', [StudentNotif::class,'markAllRead'])->name('notifications.mark-all');

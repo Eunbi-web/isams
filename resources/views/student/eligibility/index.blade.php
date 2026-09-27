@@ -5,18 +5,6 @@
 @section('content')
 
 @php
-// Read Gemini key
-$gk = '';
-try { $gk = config('services.groq.key',''); } catch(\Exception $e){}
-if(!$gk){ $gk = getenv('GROQ_API_KEY') ?: ''; }
-if(!$gk && file_exists(base_path('.env'))){
-    foreach(file(base_path('.env'),FILE_IGNORE_NEW_LINES|FILE_SKIP_EMPTY_LINES) as $ln){
-        $ln=trim($ln); if(strpos($ln,'#')===0) continue;
-        if(strpos($ln,'GROQ_API_KEY=')===0){ $gk=trim(substr($ln,15)," \t\"'"); break; }
-    }
-}
-$hasKey = !empty(trim($gk));
-
 $gwa        = (float)($student?->gwa ?? 5.0);
 $isRegular  = strtolower($student?->enrollment_type ?? '') === 'regular';
 $bracket    = $student?->income_bracket ?? '';
@@ -50,8 +38,6 @@ $top = count($mapped) > 0 ? $mapped[0] : null;
 $eligible_count = count(array_filter($mapped, fn($x) => $x['eligibility']==='Eligible'));
 $review_count   = count(array_filter($mapped, fn($x) => $x['eligibility']==='For Review'));
 @endphp
-
-<input type="hidden" id="gk" value="{{ htmlspecialchars($gk, ENT_QUOTES,'UTF-8') }}">
 
 {{-- OVERALL BANNER --}}
 <div class="elig-banner {{ $bannerClass }} an" style="margin-bottom:20px;">
@@ -372,33 +358,28 @@ $review_count   = count(array_filter($mapped, fn($x) => $x['eligibility']==='For
 
 <script>
 (function(){
-    var GK   = document.getElementById('gk').value;
     var SCH  = JSON.parse(document.getElementById('jsSchData').textContent || document.getElementById('jsSchData').innerText || '[]');
     var PRF  = JSON.parse(document.getElementById('jsProfileData').textContent || document.getElementById('jsProfileData').innerText || '{}');
 
-    function callGemini(prompt, onSuccess, onError, maxTokens){
-        if(!GK||!GK.trim()){ onError('GROQ_API_KEY is missing. Add it to .env and run: php artisan config:clear'); return; }
-        fetch('https://api.groq.com/openai/v1/chat/completions', {
+    // AI generation runs server-side (student/eligibility/ai) — the API key
+    // stays in .env and the prompt/model live in EligibilityController.
+    function callAI(action, onSuccess, onError){
+        fetch('{{ route('student.eligibility.ai') }}', {
             method:'POST',
-            headers:{'Content-Type':'application/json','Authorization':'Bearer '+GK},
-            body: JSON.stringify({
-                model:'llama-3.1-8b-instant',messages:[{role:'user',content:prompt}],max_tokens:maxTokens||400,temperature:0.7
-            })
+            headers:{
+                'Content-Type':'application/json',
+                'X-CSRF-TOKEN':document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                'X-Requested-With':'XMLHttpRequest'
+            },
+            body: JSON.stringify({action:action})
         })
-        .then(function(r){ return r.json().then(function(d){ return {ok:r.ok,status:r.status,data:d}; }); })
+        .then(function(r){ return r.json().then(function(d){ return {ok:r.ok,data:d}; }); })
         .then(function(r){
-            if(!r.ok){ onError('Groq AI Error: '+(r.data&&r.data.error?r.data.error.message:'HTTP '+r.status)); return; }
-            var t = r.data&&r.data.choices&&r.data.choices[0]&&r.data.choices[0].message?r.data.choices[0].message.content:'';
-            if(!t){ onError('Empty response from Groq. Please try again.'); return; }
-            onSuccess(t);
+            if(!r.ok){ onError(r.data&&r.data.message?r.data.message:'AI request failed. Please try again.'); return; }
+            if(!r.data.text){ onError('Empty AI response. Please try again.'); return; }
+            onSuccess(r.data.text);
         })
         .catch(function(e){ onError('Network error: '+e.message); });
-    }
-
-    function schSummary(){
-        return SCH.map(function(s,i){
-            return (i+1)+'. '+s.name+' ('+s.type+') | Score:'+s.score+'% | '+s.eligibility+(s.tag?' | '+s.tag:'')+(s.reasoning?' | '+s.reasoning.substring(0,80):'');
-        }).join('\n');
     }
 
     window.generatePassport = function(){
@@ -409,19 +390,7 @@ $review_count   = count(array_filter($mapped, fn($x) => $x['eligibility']==='For
         document.getElementById('passportAI').style.display='none';
         document.getElementById('passportError').style.display='none';
 
-        var p = 'You are ISAMS AI at Saint Columban College, Pagadian City, Philippines. Generate a formal SCHOLARSHIP PASSPORT document for this student.\n\n'
-            +'STUDENT PROFILE:\n'
-            +'Name: '+PRF.name+'\nCourse: '+PRF.course+' '+PRF.yearLevel+'\nGWA: '+PRF.gwa+'\nEnrollment: '+PRF.enrollment+'\nIncome Bracket: '+PRF.income+'\nBest AI Score: '+PRF.bestScore+'% ('+PRF.eligibility+')\nEligible for: '+PRF.eligible_count+' scholarship(s)\n\n'
-            +'SCHOLARSHIP SCORES:\n'+schSummary()+'\n\n'
-            +'Generate a formal scholarship passport with these sections:\n'
-            +'1. ELIGIBILITY SUMMARY: Overall status and best matches in 2 sentences.\n'
-            +'2. TOP RECOMMENDED SCHOLARSHIPS: List the top 1-3 with score and why they qualify. Say "Visit SAO Office to apply physically."\n'
-            +'3. GAP ANALYSIS: For each scholarship they don\'t fully qualify for, what exactly is missing (e.g., "Need GWA of 1.75, currently 1.90 — need 0.15 improvement").\n'
-            +'4. DOCUMENTS TO PREPARE: List standard physical application documents needed.\n'
-            +'5. NEXT STEPS: 3 concrete actions for this semester.\n\n'
-            +'Write formally. Plain text only. No asterisks or hashtags. This will be printed.';
-
-        callGemini(p, function(text){
+        callAI('passport', function(text){
             document.getElementById('passportLoading').style.display='none';
             document.getElementById('passportAIContent').textContent = text;
             document.getElementById('passportAI').style.display='block';
@@ -433,7 +402,7 @@ $review_count   = count(array_filter($mapped, fn($x) => $x['eligibility']==='For
             document.getElementById('passportError').style.display='block';
             btn.disabled = false;
             btn.innerHTML = '<i class="fas fa-magic"></i> Generate AI Passport';
-        }, 600);
+        });
     };
 
     window.generateGapAnalysis = function(){
@@ -443,17 +412,7 @@ $review_count   = count(array_filter($mapped, fn($x) => $x['eligibility']==='For
         document.getElementById('gapResult').style.display='none';
         document.getElementById('gapError').style.display='none';
 
-        var p = 'You are ISAMS AI at Saint Columban College, Pagadian City, Philippines. Generate a detailed GAP ANALYSIS for this student.\n\n'
-            +'STUDENT: '+PRF.name+' | GWA:'+PRF.gwa+' | '+PRF.enrollment+' | Income:'+PRF.income+'\n\n'
-            +'SCHOLARSHIP SCORES:\n'+schSummary()+'\n\n'
-            +'For each scholarship, provide:\n'
-            +'- Current score vs needed score (75% to be eligible)\n'
-            +'- Exact gap in points\n'
-            +'- Specific actions to close the gap (e.g., "Improve GWA by 0.10 to gain 8 more points")\n'
-            +'- Timeline estimate (e.g., "Achievable next semester if GWA improves")\n\n'
-            +'Be specific with numbers. Plain text only. No asterisks. Helpful and encouraging tone.';
-
-        callGemini(p, function(text){
+        callAI('gap', function(text){
             document.getElementById('gapLoading').style.display='none';
             document.getElementById('gapResultText').textContent=text;
             document.getElementById('gapResult').style.display='block';
@@ -463,7 +422,7 @@ $review_count   = count(array_filter($mapped, fn($x) => $x['eligibility']==='For
             document.getElementById('gapErrorMsg').textContent=err;
             document.getElementById('gapError').style.display='block';
             btn.disabled=false; btn.innerHTML='<i class="fas fa-search"></i> Run AI Gap Analysis';
-        }, 500);
+        });
     };
 
     window.generateActionPlan = function(){
@@ -473,19 +432,7 @@ $review_count   = count(array_filter($mapped, fn($x) => $x['eligibility']==='For
         document.getElementById('planResult').style.display='none';
         document.getElementById('planError').style.display='none';
 
-        var p = 'You are ISAMS AI at Saint Columban College, Pagadian City, Philippines. Generate a PRIORITY ACTION PLAN for this student to maximize scholarship eligibility.\n\n'
-            +'STUDENT: '+PRF.name+' | GWA:'+PRF.gwa+' | '+PRF.enrollment+' | Income:'+PRF.income+' | Best Score:'+PRF.bestScore+'%\n\n'
-            +'SCHOLARSHIPS:\n'+schSummary()+'\n\n'
-            +'Create a numbered action plan with:\n'
-            +'1. Immediate actions (this week) — e.g., visit SAO for forms, update profile\n'
-            +'2. Short-term actions (this semester) — e.g., academic improvements needed\n'
-            +'3. Documents to prepare before applying physically at SAO\n'
-            +'4. Specific GWA target needed to unlock more scholarships\n'
-            +'5. Which scholarship to prioritize applying for first and why\n\n'
-            +'Note: All applications are done physically at the Student Affairs Office. Do not say apply online.\n'
-            +'Be specific, encouraging, and practical. Plain text only. No asterisks.';
-
-        callGemini(p, function(text){
+        callAI('plan', function(text){
             document.getElementById('planLoading').style.display='none';
             document.getElementById('planResultText').textContent=text;
             document.getElementById('planResult').style.display='block';
@@ -495,7 +442,7 @@ $review_count   = count(array_filter($mapped, fn($x) => $x['eligibility']==='For
             document.getElementById('planErrorMsg').textContent=err;
             document.getElementById('planError').style.display='block';
             btn.disabled=false; btn.innerHTML='<i class="fas fa-robot"></i> Generate AI Plan';
-        }, 500);
+        });
     };
 
     window.printPassport = function(){

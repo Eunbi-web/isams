@@ -16,18 +16,11 @@
         <div style="font-size:13px;color:rgba(255,255,255,.7);margin-top:3px;">Automatically fetches and syncs <strong style="color:var(--y);">Philippine-only</strong> scholarship programs from {{ count($sources) }} official government and private sources — CHED, DOST-SEI, DSWD, PVAO, SM Foundation, and more.</div>
     </div>
     <div style="display:flex;flex-direction:column;gap:8px;flex-shrink:0;">
-        <form method="POST" action="{{ route('scholarship.scraper.run') }}">@csrf
+        <form method="POST" action="{{ route('scholarship.scraper.run') }}" data-ajax="true">@csrf
             <button class="btn btn-ac" onclick="return confirm('Run full PH Scholarship Sync on all {{ count($sources) }} sources? This may take 1–2 minutes.')">
                 <i class="fas fa-sync-alt"></i> Sync All PH Sources
             </button>
         </form>
-        @if($stats['high_conf'] > 0)
-        <form method="POST" action="{{ route('scholarship.scraper.import-all') }}">@csrf
-            <button class="btn btn-s btn-sm" style="width:100%;justify-content:center;">
-                <i class="fas fa-download"></i> Auto-Import {{ $stats['high_conf'] }} High-Confidence
-            </button>
-        </form>
-        @endif
     </div>
 </div>
 
@@ -61,8 +54,10 @@
                 <span class="badge {{ $src['type']==='Government'?'b-p':'b-s' }}" style="font-size:10px;flex-shrink:0;">{{ $src['type'] }}</span>
             </div>
             <div style="display:flex;align-items:center;justify-content:space-between;gap:7px;">
-                <a href="{{ $src['url'] }}" target="_blank" class="btn btn-o btn-sm" style="font-size:11px;flex:1;justify-content:center;"><i class="fas fa-external-link-alt"></i> Visit Site</a>
-                <form method="POST" action="{{ route('scholarship.scraper.run-source', $idx) }}">@csrf
+                <button type="button" class="btn btn-o btn-sm" style="font-size:11px;flex:1;justify-content:center;" onclick="openSiteModal('{{ $src['url'] }}', '{{ addslashes($src['name']) }}')">
+                    <i class="fas fa-external-link-alt"></i> Visit Site
+                </button>
+                <form method="POST" action="{{ route('scholarship.scraper.run-source', $idx) }}" data-ajax="true">@csrf
                     <input type="hidden" name="source_index" value="{{ $idx }}">
                     <button class="btn btn-ai btn-sm" style="font-size:11px;"><i class="fas fa-sync-alt"></i> Sync</button>
                 </form>
@@ -125,7 +120,7 @@
                 <tr>
                     <td>
                         <div class="fws" style="font-size:13px;">{{ Str::limit($s->name, 45) }}</div>
-                        <a href="{{ $s->source_url }}" target="_blank" style="font-size:11px;color:var(--info);">
+                        <a href="#" style="font-size:11px;color:var(--info);" onclick="openSiteModal('{{ $s->source_url }}', '{{ addslashes($s->name) }}'); return false;">
                             <i class="fas fa-external-link-alt" style="margin-right:3px;"></i>View Source
                         </a>
                     </td>
@@ -187,8 +182,8 @@
                     <td colspan="10" style="text-align:center;padding:32px;color:var(--tm);">
                         <div style="font-size:36px;margin-bottom:12px;opacity:.4;"><i class="fas fa-flag"></i></div>
                         <div class="fws" style="font-size:15px;margin-bottom:6px;">No Philippine scholarships synced yet</div>
-                        <div style="font-size:13px;margin-bottom:14px;">Click "Sync All PH Sources" to fetch scholarships from {{ count($sources) }} official Philippine websites</div>
-                        <form method="POST" action="{{ route('scholarship.scraper.run') }}">@csrf
+                        <div style="font-size:13px;margin-bottom:14px;">Click "Sync All PH Sources" to fetch scholarships from {{ count($sources) }} official Philippine websites — synced items are saved directly to Scholarship Programs</div>
+                        <form method="POST" action="{{ route('scholarship.scraper.run') }}" data-ajax="true">@csrf
                             <button class="btn btn-ac"><i class="fas fa-sync-alt"></i> Sync Now</button>
                         </form>
                     </td>
@@ -212,7 +207,7 @@
                 ['2','fas fa-robot','AI Reads Content','AI reads each page and extracts scholarship names, benefits, requirements, and deadlines automatically.','g'],
                 ['3','fas fa-check-circle','Confidence Score','Each result gets an AI confidence score (0–100) based on how reliably the data was extracted.','t'],
                 ['4','fas fa-sync','Detects Updates','If a scholarship deadline, slot count, or benefit changes on the source site, it is flagged as Updated automatically.','o'],
-                ['5','fas fa-download','One-Click Import','Admin reviews results and clicks Import to add it to Scholarship Programs with AI criteria auto-configured.','g'],
+                ['5','fas fa-download','Auto-Saved to Programs','Synced scholarships are saved directly to Scholarship Programs and the database automatically — no manual import step needed.','g'],
                 ['6','fas fa-clock','Auto Schedule','Set up daily auto-sync via the artisan command: php artisan scamp:scrape --auto-import','y'],
             ] as $step)
             <div style="background:var(--bg);border:1px solid var(--bd);border-radius:var(--rs);padding:13px;">
@@ -226,8 +221,76 @@
         </div>
         <div class="alert al-ai mt3" style="margin-bottom:0;font-size:12px;">
             <i class="fas fa-key"></i>
-            <span><strong>Setup Required:</strong> Add your Anthropic API key to <code>.env</code> as <code>ANTHROPIC_API_KEY=sk-ant-...</code> for full AI extraction. Without it, the sync uses fallback placeholder data.</span>
+            <span><strong>Setup Required:</strong> Add your Groq API key to <code>.env</code> as <code>GROQ_API_KEY=gsk_...</code> for full AI extraction. Without it, the sync uses fallback placeholder data.</span>
         </div>
     </div>
 </div>
+
+{{-- ═══ VISIT SITE MODAL (in-app browser) ═══ --}}
+<div id="siteModal" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.6);backdrop-filter:blur(3px);">
+    <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:min(1100px,94vw);height:min(85vh,820px);background:var(--card);border-radius:14px;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 24px 70px rgba(0,0,0,.45);">
+        <div style="display:flex;align-items:center;gap:10px;padding:11px 16px;background:linear-gradient(135deg,#0d3318,#1a3a6b);flex-shrink:0;">
+            <div style="width:28px;height:28px;background:rgba(255,255,255,.15);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:12px;color:#fff;flex-shrink:0;"><i class="fas fa-globe"></i></div>
+            <div style="flex:1;min-width:0;">
+                <div id="siteModalTitle" style="font-size:13px;font-weight:700;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">Site</div>
+                <div id="siteModalUrl" style="font-size:10px;color:rgba(255,255,255,.55);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"></div>
+            </div>
+            <a id="siteModalOpenTab" href="#" target="_blank" style="background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);border-radius:8px;padding:5px 11px;font-size:11px;color:rgba(255,255,255,.85);text-decoration:none;flex-shrink:0;" title="Open in new tab"><i class="fas fa-external-link-alt"></i></a>
+            <button type="button" onclick="closeSiteModal()" style="background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);border-radius:8px;padding:5px 11px;font-size:11px;color:rgba(255,255,255,.85);cursor:pointer;flex-shrink:0;">Close</button>
+        </div>
+        <iframe id="siteModalFrame" src="about:blank" style="flex:1;width:100%;border:0;background:#fff;"></iframe>
+        <div id="siteModalBlocked" style="display:none;flex:1;align-items:center;justify-content:center;flex-direction:column;gap:12px;padding:30px;text-align:center;background:var(--bg);">
+            <div style="font-size:44px;opacity:.35;"><i class="fas fa-shield-alt"></i></div>
+            <div class="fws" style="font-size:15px;color:var(--tx);">This website blocks embedding inside other apps</div>
+            <div style="font-size:13px;color:var(--tm);max-width:460px;line-height:1.6;">The source site sent a security header that prevents it from displaying in a modal window. Use the button below to view it in a new tab instead.</div>
+            <a id="siteModalBlockedLink" href="#" target="_blank" class="btn btn-p" style="text-decoration:none;"><i class="fas fa-external-link-alt" style="margin-right:6px;"></i>Open Site in New Tab</a>
+        </div>
+    </div>
+</div>
+
+<script>
+function openSiteModal(url, title){
+    var modal   = document.getElementById('siteModal');
+    var frame   = document.getElementById('siteModalFrame');
+    var blocked = document.getElementById('siteModalBlocked');
+    if(!url || url.indexOf('http') !== 0){
+        url = 'https://ched.gov.ph/scholarships/';
+    }
+    document.getElementById('siteModalTitle').textContent = title || 'Source Website';
+    document.getElementById('siteModalUrl').textContent   = url;
+    document.getElementById('siteModalOpenTab').href      = url;
+    document.getElementById('siteModalBlockedLink').href  = url;
+    frame.style.display   = 'block';
+    blocked.style.display = 'none';
+    modal.style.display   = 'block';
+    document.body.style.overflow = 'hidden';
+
+    // If the site refuses to load (X-Frame-Options / CSP), show the fallback.
+    frame.src = url;
+    function checkFrame(){
+        if(modal.style.display !== 'block') return;
+        try{
+            var doc = frame.contentDocument || null;
+            if(!doc || (doc.body && doc.body.childElementCount === 0)){
+                frame.style.display   = 'none';
+                blocked.style.display = 'flex';
+            }
+        }catch(e){ /* cross-origin frame that loaded fine — leave the iframe */ }
+    }
+    frame.addEventListener('load', function(){ setTimeout(checkFrame, 800); });
+    setTimeout(checkFrame, 5000);
+}
+function closeSiteModal(){
+    var modal = document.getElementById('siteModal');
+    modal.style.display = 'none';
+    document.getElementById('siteModalFrame').src = 'about:blank';
+    document.body.style.overflow = '';
+}
+document.addEventListener('keydown', function(e){
+    if(e.key === 'Escape' && document.getElementById('siteModal').style.display === 'block') closeSiteModal();
+});
+document.getElementById('siteModal').addEventListener('click', function(e){
+    if(e.target === this) closeSiteModal();
+});
+</script>
 @endsection

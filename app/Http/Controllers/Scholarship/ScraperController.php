@@ -42,39 +42,16 @@ class ScraperController extends Controller
     }
 
     /**
-     * Run ALL sources and save results to scraped_scholarships table.
+     * Run ALL sources: syncs results and auto-imports them straight into
+     * the Scholarship Programs list — no separate import step needed.
      */
     public function run(Request $request)
     {
         try {
             $results = $this->scraper->scrapeAll();
-            $saved   = 0;
+            [$saved, $imported] = $this->persistResults($results, '');
 
-            foreach ($results as $item) {
-                // Skip items with no name — Groq may return malformed entries
-                if (empty($item['name'] ?? '')) continue;
-
-                $exists = ScrapedScholarship::where('name', $item['name'])
-                    ->where('source', $item['source'] ?? '')
-                    ->first();
-
-                if (!$exists) {
-                    ScrapedScholarship::create([
-                        'name'         => $item['name'],
-                        'source'       => $item['source']      ?? '',
-                        'type'         => $item['type']        ?? 'Government',
-                        'benefits'     => $item['benefits']    ?? '',
-                        'requirements' => $item['requirements'] ?? '',
-                        'slots'        => is_numeric($item['slots'] ?? null) ? (int)$item['slots'] : null,
-                        'end_date'     => !empty($item['end_date']) ? $item['end_date'] : null,
-                        'link'         => $item['link']        ?? '',
-                        'imported'     => false,
-                    ]);
-                    $saved++;
-                }
-            }
-
-            $msg = "Sync complete. Found ".count($results)." scholarships, $saved new ones saved.";
+            $msg = "Sync complete. {$saved} new scholarship(s) synced and saved directly to Scholarship Programs.";
             if ($request->wantsJson() || $request->ajax()) {
                 return response()->json(['message' => $msg, 'reload' => true]);
             }
@@ -90,40 +67,16 @@ class ScraperController extends Controller
     }
 
     /**
-     * Run a SINGLE source and save results.
+     * Run a SINGLE source: syncs and auto-imports into Scholarship Programs.
      */
     public function runSource(Request $request, string $source)
     {
         try {
             $results = $this->scraper->scrapeSource($source);
-            $saved   = 0;
-
-            foreach ($results as $item) {
-                // Skip items with no name
-                if (empty($item['name'] ?? '')) continue;
-
-                $exists = ScrapedScholarship::where('name', $item['name'])
-                    ->where('source', $item['source'] ?? $source)
-                    ->first();
-
-                if (!$exists) {
-                    ScrapedScholarship::create([
-                        'name'         => $item['name'],
-                        'source'       => $item['source']      ?? $source,
-                        'type'         => $item['type']        ?? 'Government',
-                        'benefits'     => $item['benefits']    ?? '',
-                        'requirements' => $item['requirements'] ?? '',
-                        'slots'        => is_numeric($item['slots'] ?? null) ? (int)$item['slots'] : null,
-                        'end_date'     => !empty($item['end_date']) ? $item['end_date'] : null,
-                        'link'         => $item['link']        ?? '',
-                        'imported'     => false,
-                    ]);
-                    $saved++;
-                }
-            }
+            [$saved, $imported] = $this->persistResults($results, $source);
 
             $label = ucwords(str_replace(['-','_'], ' ', $source));
-            $msg   = "$label synced. Found ".count($results)." scholarships, $saved new saved.";
+            $msg   = "$label synced — ".count($results)." found, $imported new program(s) saved directly to Scholarship Programs.";
 
             if ($request->wantsJson() || $request->ajax()) {
                 return response()->json(['message' => $msg, 'reload' => true]);
@@ -140,6 +93,132 @@ class ScraperController extends Controller
     }
 
     /**
+     * Save scraped items with the real scraped_scholarships columns and
+     * immediately create the matching Scholarship program row. Returns
+     * [newSyncedCount, importedToProgramsCount].
+     */
+    private function persistResults(array $results, string $defaultSourceKey): array
+    {
+        $sources   = $this->scraper->getSources();
+        $sourceDef = $sources[$defaultSourceKey] ?? null;
+
+        // Scholarship.type drives Government/Private/Institutional badges —
+        // the AI sometimes returns award-level types ("Full Scholarship"),
+        // so fall back to the source's own classification when unknown.
+        $allowedTypes = ['Government','Private','Institutional'];
+
+        // The extractor regenerates names on every run, so exact-name
+        // dedupe misses near-identical repeats ("... (PSU) Scholarship" vs
+        // "... (PSU) Scholarships") and would duplicate rows indefinitely.
+        $existingScraped     = ScrapedScholarship::all(['id','name','imported','scholarship_id']);
+        $existingProgramIds  = Scholarship::pluck('id','name');
+
+        $saved = 0;
+        $importedCount = 0;
+
+        foreach ($results as $item) {
+            // Skip items with no name — AI may return malformed entries
+            if (empty($item['name'] ?? '')) continue;
+
+            $itemType = in_array($item['type'] ?? '', $allowedTypes, true)
+                ? $item['type']
+                : ($sourceDef['type'] ?? ($item['source_type'] ?? 'Government'));
+
+            $itemAgency = $item['source'] ?? ($sourceDef['agency'] ?? ($defaultSourceKey ?: ''));
+            $itemUrl    = $item['link'] ?? ($sourceDef['url'] ?? '');
+
+            $existing = $existingScraped->first(
+                fn ($row) => $this->namesMatch($row->name, $item['name'])
+            );
+
+            if ($existing) {
+                // Refresh sync metadata; program row is managed below
+                $existing->update([
+                    'benefits'        => $item['benefits']    ?? $existing->benefits,
+                    'requirements'    => $item['requirements'] ?? $existing->requirements,
+                    'deadline'        => !empty($item['end_date']) ? $item['end_date'] : $existing->deadline,
+                    'slots'           => is_numeric($item['slots'] ?? null) ? (int)$item['slots'] : $existing->slots,
+                    'source_url'      => $itemUrl ?: $existing->source_url,
+                    'source_agency'   => $itemAgency ?: $existing->source_agency,
+                    'source_type'     => $itemType ?? $existing->source_type,
+                    'status'          => 'updated',
+                    'last_scraped_at' => now(),
+                ]);
+                $scraped = $existing;
+            } else {
+                $scraped = ScrapedScholarship::create([
+                    'name'            => $item['name'],
+                    'benefits'        => $item['benefits']     ?? '',
+                    'requirements'    => $item['requirements'] ?? '',
+                    'deadline'        => !empty($item['end_date']) ? $item['end_date'] : null,
+                    'slots'           => is_numeric($item['slots'] ?? null) ? (int)$item['slots'] : null,
+                    'source_url'      => $itemUrl,
+                    'source_agency'   => $itemAgency,
+                    'source_type'     => $itemType,
+                    'status'          => 'new',
+                    'ai_confidence'   => 75,
+                    'imported'        => false,
+                    'last_scraped_at' => now(),
+                ]);
+                $saved++;
+            }
+
+            // Auto-import: create the Scholarship program immediately so it
+            // shows up in the Programs list without a manual import step.
+            if (!$scraped->imported) {
+                $existingProgramId = $existingProgramIds->first(
+                    fn ($id, $name) => $this->namesMatch($name, $scraped->name)
+                );
+
+                if ($existingProgramId) {
+                    $scraped->update(['imported' => true, 'scholarship_id' => $existingProgramId]);
+                } else {
+                    $scholarship = Scholarship::create([
+                        'name'         => $scraped->name,
+                        'type'         => $scraped->source_type ?? 'Government',
+                        'benefits'     => $scraped->benefits    ?? '',
+                        'requirements' => $scraped->requirements ?? '',
+                        'slots'        => $scraped->slots       ?? null,
+                        'end_date'     => $scraped->deadline    ?? null,
+                        'source'       => $scraped->source_agency ?? '',
+                        'status'       => 'Active',
+                        'ai_criteria'  => json_encode([
+                            'gwa_max'       => 1.75,
+                            'income_max'    => 400000,
+                            'no_failing'    => true,
+                            'no_discipline' => false,
+                        ]),
+                    ]);
+                    $scraped->update(['imported' => true, 'scholarship_id' => $scholarship->id]);
+                    $existingProgramIds->put($scholarship->name, $scholarship->id);
+                    $importedCount++;
+                }
+            }
+        }
+
+        return [$saved, $importedCount];
+    }
+
+    /**
+     * Loose scholarship-name comparison used for dedupe across sync runs
+     * (the extractor rarely reproduces a name verbatim).
+     */
+    private function namesMatch(string $a, string $b): bool
+    {
+        $na = preg_replace('/[^A-Z0-9]/', '', strtoupper($a));
+        $nb = preg_replace('/[^A-Z0-9]/', '', strtoupper($b));
+
+        if ($na === '' || $nb === '') return false;
+        if ($na === $nb) return true;
+        if (str_contains($na, $nb) || str_contains($nb, $na)) return true;
+
+        // 0.9 — high enough that sibling programs from one source
+        // ("...Veterans' Widows/Spouses/Children") stay distinct, low
+        // enough to absorb run-to-run wording drift from the extractor.
+        return similar_text($na, $nb) / max(strlen($na), strlen($nb)) >= 0.9;
+    }
+
+    /**
      * Import ALL high-confidence unimported scholarships at once.
      */
     public function importAll(Request $request)
@@ -151,14 +230,18 @@ class ScraperController extends Controller
 
         $count = 0;
         foreach ($toImport as $scraped) {
+            if (Scholarship::where('name', $scraped->name)->exists()) {
+                $scraped->update(['imported' => true]);
+                continue;
+            }
             $scholarship = Scholarship::create([
                 'name'         => $scraped->name,
-                'type'         => $scraped->type         ?? 'Government',
+                'type'         => $scraped->source_type ?? 'Government',
                 'benefits'     => $scraped->benefits     ?? '',
                 'requirements' => $scraped->requirements ?? '',
                 'slots'        => $scraped->slots        ?? null,
-                'end_date'     => $scraped->end_date     ?? null,
-                'source'       => $scraped->source       ?? '',
+                'end_date'     => $scraped->deadline     ?? null,
+                'source'       => $scraped->source_agency ?? '',
                 'status'       => 'Active',
                 'ai_criteria'  => json_encode([
                     'gwa_max'       => 1.75,
@@ -193,12 +276,12 @@ class ScraperController extends Controller
 
         $scholarship = Scholarship::create([
             'name'         => $scraped->name,
-            'type'         => $scraped->type         ?? 'Government',
+            'type'         => $scraped->source_type ?? 'Government',
             'benefits'     => $scraped->benefits     ?? '',
             'requirements' => $scraped->requirements ?? '',
             'slots'        => $scraped->slots        ?? null,
-            'end_date'     => $scraped->end_date     ?? null,
-            'source'       => $scraped->source       ?? '',
+            'end_date'     => $scraped->deadline     ?? null,
+            'source'       => $scraped->source_agency ?? '',
             'status'       => 'Active',
             'ai_criteria'  => json_encode([
                 'gwa_max'       => 1.75,

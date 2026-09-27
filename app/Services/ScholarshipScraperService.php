@@ -120,16 +120,17 @@ class ScholarshipScraperService
                     . "name, source, type, benefits, requirements, slots (integer or null), end_date (YYYY-MM-DD or null), link.\n"
                     . "Return ONLY a valid JSON array. No markdown, no explanation, no code blocks.";
 
-                $res = Http::timeout(20)
+                $res = Http::timeout(30)
                     ->withHeaders([
                         'Authorization' => 'Bearer ' . $groqKey,
                         'Content-Type'  => 'application/json',
                     ])
                     ->post('https://api.groq.com/openai/v1/chat/completions', [
-                        'model'       => 'llama-3.1-8b-instant',
-                        'messages'    => [['role' => 'user', 'content' => $prompt]],
-                        'max_tokens'  => 500,
-                        'temperature' => 0.3,
+                        'model'            => 'openai/gpt-oss-20b',
+                        'messages'         => [['role' => 'user', 'content' => $prompt]],
+                        'max_tokens'       => 900,
+                        'temperature'      => 0,
+                        'reasoning_effort' => 'low',
                     ]);
 
                 if ($res->ok()) {
