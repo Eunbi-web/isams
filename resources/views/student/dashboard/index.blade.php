@@ -3,13 +3,23 @@
 @section('page-title','Dashboard')
 @section('page-sub','Welcome back — ISAMS Student Portal')
 @section('content')
-@php $aiScore = $student ? (function($s){ $apps=\App\Models\ScholarshipApplication::where('student_id',$s->id)->orderByDesc('ai_score')->first(); return $apps?$apps->ai_score:0; })($student) : 0; $eligibility=$aiScore>=75?'Eligible':($aiScore>=50?'For Review':'Not Evaluated'); @endphp
+@php
+$bracketLabels = \App\Http\Controllers\Student\EligibilityController::INCOME_BRACKETS;
+$hasTest = $profile !== null;
+@endphp
 <div style="background:linear-gradient(135deg,#0d5c24,#1a6b2f);border-radius:var(--r);padding:20px 24px;display:flex;align-items:center;gap:18px;margin-bottom:20px;border:1px solid var(--gm);" class="an">
-<div style="width:56px;height:56px;border-radius:16px;background:rgba(255,255,255,.15);display:flex;align-items:center;justify-content:center;font-size:24px;color:#fff;flex-shrink:0;"><i class="fas fa-{{ $eligibility==='Eligible'?'check-circle':'robot' }}"></i></div>
-<div style="flex:1;"><div style="font-family:'Sora',sans-serif;font-size:20px;font-weight:800;color:#fff;">{{ $eligibility==='Eligible'?'You are Eligible!':($eligibility==='For Review'?'Profile Under Review':'Check Your Eligibility') }}</div>
+<div style="width:56px;height:56px;border-radius:16px;background:rgba(255,255,255,.15);display:flex;align-items:center;justify-content:center;font-size:24px;color:#fff;flex-shrink:0;"><i class="fas fa-{{ $eligibility==='Eligible'?'check-circle':($hasTest?'exclamation-circle':'robot') }}"></i></div>
+<div style="flex:1;"><div style="font-family:'Sora',sans-serif;font-size:20px;font-weight:800;color:#fff;">{{ $eligibility==='Eligible'?'You are Eligible!':($eligibility==='For Review'?'Partially Qualified':'Check Your Eligibility') }}</div>
+@if($hasTest)
+<div style="font-size:13px;color:rgba(255,255,255,.75);margin-top:3px;">From your Eligibility Test: GWA <strong style="color:#fff;">{{ number_format((float)$profile->gwa,2) }}</strong> · {{ $profile->year_level }} · {{ $profile->enrollment_type }} · {{ $bracketLabels[$profile->income_bracket] ?? 'N/A' }} · {{ $profile->academic_honors }}</div>
+<div style="font-size:12px;color:rgba(255,255,255,.65);margin-top:2px;">Eligible for <strong style="color:#fff;">{{ $eligibleCount }}</strong> active scholarship{{ $eligibleCount!=1?'s':'' }} · updated {{ $profile->updated_at?->format('M d, Y') }}</div>
+<div style="margin-top:10px;"><a href="{{ route('student.eligibility') }}" class="btn btn-ac btn-sm" style="font-size:11px;"><i class="fas fa-clipboard-check"></i> View Eligibility Test</a></div>
+@else
 <div style="font-size:13px;color:rgba(255,255,255,.75);margin-top:3px;">GWA: <strong style="color:#fff;">{{ number_format($student?->gwa??0,2) }}</strong> · {{ $student?->enrollment_type??'N/A' }} · {{ Str::limit($student?->course??'N/A',30) }}</div>
-<div style="margin-top:10px;"><a href="{{ route('student.eligibility') }}" class="btn btn-ac btn-sm" style="font-size:11px;"><i class="fas fa-robot"></i> View AI Eligibility</a></div></div>
-<div style="text-align:center;flex-shrink:0;"><div style="width:80px;height:80px;border-radius:50%;background:rgba(255,255,255,.15);display:flex;flex-direction:column;align-items:center;justify-content:center;"><div style="font-family:'JetBrains Mono',monospace;font-size:22px;font-weight:800;color:#fff;">{{ $aiScore }}%</div><div style="font-size:9px;color:rgba(255,255,255,.7);">AI Score</div></div></div>
+<div style="margin-top:10px;"><a href="{{ route('student.eligibility') }}" class="btn btn-ac btn-sm" style="font-size:11px;"><i class="fas fa-clipboard-check"></i> Take Eligibility Test</a></div>
+@endif
+</div>
+<div style="text-align:center;flex-shrink:0;"><div style="width:80px;height:80px;border-radius:50%;background:rgba(255,255,255,.15);display:flex;flex-direction:column;align-items:center;justify-content:center;"><div style="font-family:'JetBrains Mono',monospace;font-size:22px;font-weight:800;color:#fff;">{{ $aiScore }}%</div><div style="font-size:9px;color:rgba(255,255,255,.7);">{{ $hasTest?'Test Score':'AI Score' }}</div></div></div>
 </div>
 <div class="sg" style="grid-template-columns:repeat(4,1fr);margin-bottom:20px;">
 <div class="sc an d1"><div class="si y"><i class="fas fa-award"></i></div><div class="sv"><div class="lbl">Open Programs</div><div class="val">{{ $openScholarships->count() }}</div><div class="chg">Available now</div></div></div>
@@ -17,6 +27,20 @@
 <div class="sc an d3"><div class="si dg"><i class="fas fa-check-circle"></i></div><div class="sv"><div class="lbl">Approved</div><div class="val">{{ $myApplications->where('status','Approved')->count() }}</div><div class="chg">Active grants</div></div></div>
 <div class="sc an d4"><div class="si t"><i class="fas fa-heart"></i></div><div class="sv"><div class="lbl">Counseling</div><div class="val">{{ \App\Models\CounselingSession::where('student_id',auth()->user()->student?->id??0)->count() }}</div><div class="chg">Sessions</div></div></div>
 </div>
+@if($hasTest)
+<div class="card an mb3"><div class="ch"><i class="fas fa-clipboard-check" style="color:var(--gm);"></i><h2>My Eligibility Test Data</h2>
+<div class="ch-acts"><span class="tm" style="font-size:11px;margin-right:10px;"><i class="fas fa-clock" style="margin-right:4px;"></i>Updated {{ $profile->updated_at?->format('M d, Y h:i A') }}</span><a href="{{ route('student.eligibility') }}" class="btn btn-o btn-sm"><i class="fas fa-pen"></i> Edit Data</a></div></div>
+<div style="padding:18px;display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:12px;">
+<div style="background:var(--bg);border:1px solid var(--bd);border-radius:var(--rs);padding:12px 14px;"><div class="tm" style="font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;">GWA</div><div class="fws" style="font-size:17px;margin-top:3px;">{{ number_format((float)$profile->gwa,2) }}</div></div>
+<div style="background:var(--bg);border:1px solid var(--bd);border-radius:var(--rs);padding:12px 14px;"><div class="tm" style="font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;">Year Level</div><div class="fws" style="font-size:14px;margin-top:5px;">{{ $profile->year_level }}</div></div>
+<div style="background:var(--bg);border:1px solid var(--bd);border-radius:var(--rs);padding:12px 14px;"><div class="tm" style="font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;">Enrollment Type</div><div class="fws" style="font-size:14px;margin-top:5px;">{{ $profile->enrollment_type }}</div></div>
+<div style="background:var(--bg);border:1px solid var(--bd);border-radius:var(--rs);padding:12px 14px;"><div class="tm" style="font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;">Annual Family Income</div><div class="fws" style="font-size:14px;margin-top:5px;">{{ $bracketLabels[$profile->income_bracket] ?? $profile->income_bracket }}</div></div>
+<div style="background:var(--bg);border:1px solid var(--bd);border-radius:var(--rs);padding:12px 14px;"><div class="tm" style="font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;">Academic Honors</div><div class="fws" style="font-size:14px;margin-top:5px;">{{ $profile->academic_honors }}</div></div>
+<div style="background:var(--bg);border:1px solid var(--bd);border-radius:var(--rs);padding:12px 14px;"><div class="tm" style="font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;">Failing Grades</div><div class="fws" style="font-size:14px;margin-top:5px;color:{{ $profile->has_failing?'var(--danger)':'var(--gm)' }};">{{ $profile->has_failing?'Yes':'No' }}</div></div>
+<div style="background:var(--bg);border:1px solid var(--bd);border-radius:var(--rs);padding:12px 14px;"><div class="tm" style="font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;">Disciplinary Case</div><div class="fws" style="font-size:14px;margin-top:5px;color:{{ $profile->has_discipline?'var(--danger)':'var(--gm)' }};">{{ $profile->has_discipline?'Yes':'No' }}</div></div>
+<div style="background:var(--gp);border:1px solid var(--gm);border-radius:var(--rs);padding:12px 14px;"><div class="tm" style="font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--g);">Best Test Score</div><div class="fws" style="font-size:17px;margin-top:3px;color:var(--g);">{{ $aiScore }}%</div><div style="font-size:10.5px;color:var(--tm);margin-top:2px;">Eligible for {{ $eligibleCount }}</div></div>
+</div></div>
+@endif
 <div class="g2 mb3">
 <div class="card an"><div class="ch"><i class="fas fa-award" style="color:var(--yd);"></i><h2>Open Scholarships</h2><div class="ch-acts"><a href="{{ route('student.scholarships') }}" class="btn btn-o btn-sm">Browse All</a></div></div>
 <div class="cb" style="padding:0;">
