@@ -178,7 +178,7 @@ body[data-theme="dark"] ::-webkit-scrollbar-thumb{background:#28405e;}
 <div class="sb-sec"><div class="sb-lbl">Scholarship</div>
 <a href="{{ route('student.scholarships') }}" class="nav-a {{ request()->routeIs('student.scholarships*')?'active':'' }}"><i class="fas fa-award"></i> Scholarships</a>
 <a href="{{ route('student.applications') }}" class="nav-a {{ request()->routeIs('student.applications*')?'active':'' }}"><i class="fas fa-file-alt"></i> My Applications</a>
-<a href="{{ route('student.eligibility') }}" class="nav-a {{ request()->routeIs('student.eligibility*')?'active':'' }}"><i class="fas fa-robot"></i> AI Eligibility<span class="nav-badge">AI</span></a></div>
+<a href="{{ route('student.eligibility') }}" class="nav-a {{ request()->routeIs('student.eligibility*')?'active':'' }}"><i class="fas fa-clipboard-check"></i> Eligibility Test<span class="nav-badge">AI</span></a></div>
 <div class="sb-sec"><div class="sb-lbl">Services</div>
 <a href="{{ route('student.counseling.index') }}" class="nav-a {{ request()->routeIs('student.counseling*')?'active':'' }}"><i class="fas fa-heart"></i> Counseling</a>
 <a href="{{ route('student.complaints') }}" class="nav-a {{ request()->routeIs('student.complaints*')?'active':'' }}"><i class="fas fa-exclamation-circle"></i> Complaints and Reports</a>

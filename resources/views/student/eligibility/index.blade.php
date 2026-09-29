@@ -1,13 +1,14 @@
 @extends('student.layouts.app')
-@section('title','AI Scholarship Passport')
-@section('page-title','AI Scholarship Passport')
-@section('page-sub','Your personalized scholarship readiness report — bring this when applying physically')
+@section('title','Eligibility Test')
+@section('page-title','Eligibility Test')
+@section('page-sub','Fill in your scholarship data, run the test, and see which scholarships you qualify for')
 @section('content')
 
 @php
-$gwa        = (float)($student?->gwa ?? 5.0);
-$isRegular  = strtolower($student?->enrollment_type ?? '') === 'regular';
-$bracket    = $student?->income_bracket ?? '';
+$hasProfile = $profile !== null;
+$gwa        = (float)($profile?->gwa ?? 0);
+$isRegular  = strtolower($profile?->enrollment_type ?? '') === 'regular';
+$bracket    = $profile?->income_bracket ?? '';
 $bannerClass= $overallEligibility==='Eligible'?'eligible':($overallEligibility==='For Review'?'review':'not');
 $bannerIcon = $overallEligibility==='Eligible'?'check-circle':($overallEligibility==='For Review'?'exclamation-circle':'times-circle');
 
@@ -34,12 +35,138 @@ foreach($scholarships as $s){
 }
 usort($mapped, function($a,$b){ return $b['score'] - $a['score']; });
 
-$top = count($mapped) > 0 ? $mapped[0] : null;
 $eligible_count = count(array_filter($mapped, fn($x) => $x['eligibility']==='Eligible'));
 $review_count   = count(array_filter($mapped, fn($x) => $x['eligibility']==='For Review'));
+
+$bracketLabels = \App\Http\Controllers\Student\EligibilityController::INCOME_BRACKETS;
+$yearLevels    = \App\Http\Controllers\Student\EligibilityController::YEAR_LEVELS;
+$enrollTypes   = \App\Http\Controllers\Student\EligibilityController::ENROLLMENT_TYPES;
+$honorLevels   = \App\Http\Controllers\Student\EligibilityController::ACADEMIC_HONORS;
 @endphp
 
-{{-- OVERALL BANNER --}}
+{{-- STEP INDICATOR --}}
+<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:20px;" class="an">
+    @php
+        $steps = $hasProfile
+            ? [['1','Fill Up Your Data','done'],['2','Run the Eligibility Test','done'],['3','See Your Results','active']]
+            : [['1','Fill Up Your Data','active'],['2','Run the Eligibility Test',''],['3','See Your Results','']];
+    @endphp
+    @foreach($steps as $i => $st)
+    <div style="display:flex;align-items:center;gap:8px;">
+        <div style="width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px;flex-shrink:0;{{ $st[2]==='done' ? 'background:var(--g);color:#fff;' : ($st[2]==='active' ? 'background:var(--y);color:#0d3318;' : 'background:var(--bg);border:1.5px solid var(--bd);color:var(--tm);') }}">
+            @if($st[2]==='done')<i class="fas fa-check"></i>@else{{ $st[0] }}@endif
+        </div>
+        <span style="font-size:12.5px;font-weight:700;color:{{ $st[2] ? 'var(--tx)' : 'var(--tm)' }};">{{ $st[1] }}</span>
+        @if($i < 2)<i class="fas fa-chevron-right" style="font-size:11px;color:var(--tm);margin:0 4px;"></i>@endif
+    </div>
+    @endforeach
+</div>
+
+{{-- ═══ STEP 1 — STUDENT DATA FORM ═══ --}}
+<div class="card an mb3" id="dataCard" style="{{ $hasProfile ? 'display:none;' : '' }}border:2px solid var(--g);">
+    <div class="ch" style="background:linear-gradient(135deg,#0d3318,#1a6b2f);padding:16px 20px;">
+        <div style="width:42px;height:42px;background:linear-gradient(135deg,var(--y),var(--yd));border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:19px;color:#0d3318;"><i class="fas fa-user-edit"></i></div>
+        <div>
+            <h2 style="color:#fff;font-size:16px;">@if($hasProfile) Edit Your Eligibility Data @else Step 1 — Fill Up Your Scholarship Data @endif</h2>
+            <div style="font-size:11px;color:rgba(255,255,255,.6);">These are the common requirements scholarships look at. The system uses them to determine which scholarships you are eligible for.</div>
+        </div>
+    </div>
+    <div style="padding:22px 24px;">
+        @if($errors->any())
+        <div style="background:#fde8e6;border:1.5px solid var(--danger);border-radius:var(--rs);padding:12px 14px;font-size:13px;color:#7a1a14;margin-bottom:16px;">
+            <i class="fas fa-exclamation-circle" style="margin-right:6px;"></i>Please complete all fields correctly before running the test.
+        </div>
+        @endif
+
+        <form method="POST" action="{{ route('student.eligibility.profile') }}">
+        @csrf
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:16px;">
+
+            <div>
+                <label style="display:block;font-size:12px;font-weight:700;color:var(--tx);margin-bottom:6px;">GWA (General Weighted Average) <span style="color:var(--danger);">*</span></label>
+                <input type="number" name="gwa" value="{{ old('gwa', $profile?->gwa) }}" step="0.01" min="1" max="5" required
+                    placeholder="e.g., 1.75"
+                    style="width:100%;padding:10px 12px;border:1.5px solid var(--bd);border-radius:var(--rs);background:var(--card);color:var(--tx);font-size:14px;font-family:'Sora',sans-serif;">
+                <div style="font-size:11px;color:var(--tm);margin-top:4px;">Philippine scale: 1.00 is highest, 5.00 is lowest.</div>
+            </div>
+
+            <div>
+                <label style="display:block;font-size:12px;font-weight:700;color:var(--tx);margin-bottom:6px;">Year Level <span style="color:var(--danger);">*</span></label>
+                <select name="year_level" required
+                    style="width:100%;padding:10px 12px;border:1.5px solid var(--bd);border-radius:var(--rs);background:var(--card);color:var(--tx);font-size:14px;">
+                    <option value="" disabled {{ old('year_level', $profile?->year_level) ? '' : 'selected' }}>Select year level</option>
+                    @foreach($yearLevels as $yl)
+                    <option value="{{ $yl }}" {{ old('year_level', $profile?->year_level) === $yl ? 'selected' : '' }}>{{ $yl }}</option>
+                    @endforeach
+                </select>
+            </div>
+
+            <div>
+                <label style="display:block;font-size:12px;font-weight:700;color:var(--tx);margin-bottom:6px;">Enrollment Type <span style="color:var(--danger);">*</span></label>
+                <select name="enrollment_type" required
+                    style="width:100%;padding:10px 12px;border:1.5px solid var(--bd);border-radius:var(--rs);background:var(--card);color:var(--tx);font-size:14px;">
+                    @foreach($enrollTypes as $et)
+                    <option value="{{ $et }}" {{ old('enrollment_type', $profile?->enrollment_type ?? 'Regular') === $et ? 'selected' : '' }}>{{ $et }}</option>
+                    @endforeach
+                </select>
+                <div style="font-size:11px;color:var(--tm);margin-top:4px;">Regular = complete load per curriculum.</div>
+            </div>
+
+            <div>
+                <label style="display:block;font-size:12px;font-weight:700;color:var(--tx);margin-bottom:6px;">Annual Family Income <span style="color:var(--danger);">*</span></label>
+                <select name="income_bracket" required
+                    style="width:100%;padding:10px 12px;border:1.5px solid var(--bd);border-radius:var(--rs);background:var(--card);color:var(--tx);font-size:14px;">
+                    @foreach($bracketLabels as $key => $label)
+                    <option value="{{ $key }}" {{ old('income_bracket', $profile?->income_bracket ?? 'below_200') === $key ? 'selected' : '' }}>{{ $label }}</option>
+                    @endforeach
+                </select>
+            </div>
+
+            <div>
+                <label style="display:block;font-size:12px;font-weight:700;color:var(--tx);margin-bottom:6px;">Academic Honors <span style="color:var(--danger);">*</span></label>
+                <select name="academic_honors" required
+                    style="width:100%;padding:10px 12px;border:1.5px solid var(--bd);border-radius:var(--rs);background:var(--card);color:var(--tx);font-size:14px;">
+                    @foreach($honorLevels as $h)
+                    <option value="{{ $h }}" {{ old('academic_honors', $profile?->academic_honors ?? 'None') === $h ? 'selected' : '' }}>{{ $h }}</option>
+                    @endforeach
+                </select>
+                <div style="font-size:11px;color:var(--tm);margin-top:4px;">Honors received in your last completed level.</div>
+            </div>
+
+            <div>
+                <label style="display:block;font-size:12px;font-weight:700;color:var(--tx);margin-bottom:6px;">Do you have failing grades this semester? <span style="color:var(--danger);">*</span></label>
+                <select name="has_failing" required
+                    style="width:100%;padding:10px 12px;border:1.5px solid var(--bd);border-radius:var(--rs);background:var(--card);color:var(--tx);font-size:14px;">
+                    <option value="0" {{ old('has_failing', $profile?->has_failing ? '1' : '0') === '0' ? 'selected' : '' }}>No</option>
+                    <option value="1" {{ old('has_failing', $profile?->has_failing ? '1' : '0') === '1' ? 'selected' : '' }}>Yes</option>
+                </select>
+            </div>
+
+            <div>
+                <label style="display:block;font-size:12px;font-weight:700;color:var(--tx);margin-bottom:6px;">Do you have an active disciplinary case? <span style="color:var(--danger);">*</span></label>
+                <select name="has_discipline" required
+                    style="width:100%;padding:10px 12px;border:1.5px solid var(--bd);border-radius:var(--rs);background:var(--card);color:var(--tx);font-size:14px;">
+                    <option value="0" {{ old('has_discipline', $profile?->has_discipline ? '1' : '0') === '0' ? 'selected' : '' }}>No</option>
+                    <option value="1" {{ old('has_discipline', $profile?->has_discipline ? '1' : '0') === '1' ? 'selected' : '' }}>Yes</option>
+                </select>
+            </div>
+        </div>
+
+        <div style="margin-top:22px;display:flex;align-items:center;gap:14px;flex-wrap:wrap;">
+            <button type="submit" class="btn btn-ac" style="font-size:14px;padding:12px 26px;">
+                <i class="fas fa-magic"></i> @if($hasProfile) Update &amp; Re-run Eligibility Test @else Take Eligibility Test @endif
+            </button>
+            @if($hasProfile)
+            <button type="button" onclick="cancelEdit()" class="btn btn-o" style="font-size:13px;">Cancel</button>
+            @endif
+            <span style="font-size:12px;color:var(--tm);"><i class="fas fa-lock" style="margin-right:5px;"></i>Your data is saved so you can edit it and re-run the test anytime.</span>
+        </div>
+        </form>
+    </div>
+</div>
+
+@if($hasProfile)
+{{-- OVERALL BANNER (Step 3 — results) --}}
 <div class="elig-banner {{ $bannerClass }} an" style="margin-bottom:20px;">
     <div class="elig-icon"><i class="fas fa-{{ $bannerIcon }}" style="font-size:28px;color:#fff;"></i></div>
     <div style="flex:1;">
@@ -49,16 +176,23 @@ $review_count   = count(array_filter($mapped, fn($x) => $x['eligibility']==='For
             @else Not Yet Qualified — Follow Your Action Plan Below
             @endif
         </div>
-        <div class="elig-sub">AI evaluated your profile against {{ count($mapped) }} active scholarship programs. Applications are done physically at the Student Affairs Office.</div>
+        <div class="elig-sub">The Eligibility Test evaluated your data against {{ count($mapped) }} active scholarship programs. Applications are done physically at the Student Affairs Office.</div>
         <div style="font-size:12px;color:rgba(255,255,255,.65);margin-top:5px;">
             GWA: <strong style="color:#fff;">{{ number_format($gwa,2) }}</strong> &nbsp;·&nbsp;
-            {{ $student?->enrollment_type ?? 'N/A' }} &nbsp;·&nbsp;
-            {{ \Illuminate\Support\Str::limit($student?->course ?? 'N/A',30) }}
+            {{ $profile?->year_level }} &nbsp;·&nbsp;
+            {{ $profile?->enrollment_type }} &nbsp;·&nbsp;
+            {{ $bracketLabels[$bracket] ?? 'N/A' }} &nbsp;·&nbsp;
+            {{ $profile?->academic_honors }}
         </div>
     </div>
-    <div class="chance-circle" style="flex-shrink:0;">
-        <div class="chance-val">{{ $overallScore }}%</div>
-        <div class="chance-lbl">Best Score</div>
+    <div style="flex-shrink:0;display:flex;flex-direction:column;align-items:center;gap:8px;">
+        <div class="chance-circle">
+            <div class="chance-val">{{ $overallScore }}%</div>
+            <div class="chance-lbl">Best Score</div>
+        </div>
+        <button type="button" onclick="editData()" class="btn btn-o" style="border-color:rgba(255,255,255,.4);color:#fff;font-size:12px;">
+            <i class="fas fa-pen"></i> Edit Data
+        </button>
     </div>
 </div>
 
@@ -67,101 +201,43 @@ $review_count   = count(array_filter($mapped, fn($x) => $x['eligibility']==='For
     <div class="sc an d1"><div class="si g"><i class="fas fa-check-circle"></i></div><div class="sv"><div class="lbl">Eligible For</div><div class="val">{{ $eligible_count }}</div><div class="chg">scholarships</div></div></div>
     <div class="sc an d2"><div class="si o"><i class="fas fa-exclamation-circle"></i></div><div class="sv"><div class="lbl">For Review</div><div class="val">{{ $review_count }}</div><div class="chg">need verification</div></div></div>
     <div class="sc an d3"><div class="si y"><i class="fas fa-star"></i></div><div class="sv"><div class="lbl">Best AI Score</div><div class="val">{{ $overallScore }}%</div><div class="chg">out of 100</div></div></div>
-    <div class="sc an d4"><div class="si t"><i class="fas fa-id-card"></i></div><div class="sv"><div class="lbl">Passport</div><div class="val">Ready</div><div class="chg">to print</div></div></div>
+    <div class="sc an d4"><div class="si t"><i class="fas fa-clipboard-check"></i></div><div class="sv"><div class="lbl">Test Data</div><div class="val">Saved</div><div class="chg">updated {{ $profile?->updated_at?->format('M d, Y') ?? '—' }}</div></div></div>
 </div>
 
-{{-- ═══ SCHOLARSHIP PASSPORT CARD (printable) ═══ --}}
-<div class="card an mb3" id="passportCard" style="border:2px solid var(--g);">
-    <div class="ch" style="background:linear-gradient(135deg,#0d3318,#1a6b2f);padding:16px 20px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;">
-        <div style="display:flex;align-items:center;gap:12px;">
-            <div style="width:42px;height:42px;background:linear-gradient(135deg,var(--y),var(--yd));border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:19px;color:#0d3318;"><i class="fas fa-id-card"></i></div>
-            <div>
-                <h2 style="color:#fff;font-size:16px;">AI Scholarship Passport</h2>
-                <div style="font-size:11px;color:rgba(255,255,255,.6);">Print and bring this to the Student Affairs Office when applying physically</div>
-            </div>
-        </div>
-        <div style="display:flex;gap:8px;">
-            <button type="button" onclick="generatePassport()" id="genBtn" class="btn btn-ac" style="font-size:13px;">
-                <i class="fas fa-magic"></i> Generate AI Passport
-            </button>
-            <button type="button" onclick="printPassport()" class="btn btn-o" style="border-color:rgba(255,255,255,.3);color:#fff;font-size:13px;">
-                <i class="fas fa-print"></i> Print
-            </button>
+{{-- ═══ ELIGIBILITY RESULTS ═══ --}}
+<div class="card an mb3">
+    <div class="ch" style="background:linear-gradient(135deg,#0d3318,#1a6b2f);">
+        <div style="width:42px;height:42px;background:linear-gradient(135deg,var(--y),var(--yd));border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:19px;color:#0d3318;"><i class="fas fa-poll"></i></div>
+        <div><h2 style="color:#fff;font-size:16px;">Your Eligibility Results</h2>
+        <div style="font-size:11px;color:rgba(255,255,255,.6);">Based on the data you entered — scholarships ranked by your AI score</div></div>
+        <div class="ch-acts">
+            <span style="font-size:11px;color:rgba(255,255,255,.6);">Tested {{ $profile?->updated_at?->format('M d, Y h:i A') }}</span>
         </div>
     </div>
-    <div style="padding:22px 24px;">
-
-        {{-- Static passport info (always shown) --}}
-        <div id="passportStatic" style="background:#f8fdf8;border:2px dashed var(--gm);border-radius:12px;padding:20px;">
-            <div style="display:flex;align-items:flex-start;gap:18px;flex-wrap:wrap;">
-                <div style="width:70px;height:70px;background:linear-gradient(135deg,var(--g),var(--gm));border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Sora',sans-serif;font-weight:800;font-size:28px;color:var(--y);flex-shrink:0;">
-                    {{ strtoupper(substr(auth()->user()->name ?? 'S', 0, 1)) }}
-                </div>
-                <div style="flex:1;">
-                    <div style="font-family:'Sora',sans-serif;font-size:18px;font-weight:800;color:var(--g);">{{ auth()->user()->name ?? 'Student' }}</div>
-                    <div style="font-size:13px;color:var(--tm);margin-top:2px;">{{ $student?->course ?? 'N/A' }} — {{ $student?->year_level ?? 'N/A' }}</div>
-                    <div style="font-size:12px;color:var(--tm);margin-top:1px;">{{ auth()->user()->email ?? '' }}</div>
-                    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;">
-                        <span style="background:var(--gp);color:var(--g);padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;">GWA: {{ number_format($gwa,2) }}</span>
-                        <span style="background:{{ $isRegular?'#d0f0d8':'#fef3cd' }};color:{{ $isRegular?'#0d6624':'#a07c00' }};padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;">{{ $student?->enrollment_type ?? 'N/A' }}</span>
-                        <span style="background:{{ $overallScore>=75?'#d0f0d8':($overallScore>=50?'#fef3cd':'#fde8e6') }};color:{{ $overallScore>=75?'#0d6624':($overallScore>=50?'#a07c00':'#c0392b') }};padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;">AI Score: {{ $overallScore }}%</span>
-                        <span style="background:{{ $eligible_count>0?'#d0f0d8':'#fde8e6' }};color:{{ $eligible_count>0?'#0d6624':'#c0392b' }};padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;">Eligible for {{ $eligible_count }} scholarship{{ $eligible_count!=1?'s':'' }}</span>
-                    </div>
-                </div>
-                <div style="text-align:center;flex-shrink:0;">
-                    <div style="font-size:10px;color:var(--tm);font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px;">Generated</div>
-                    <div style="font-size:12px;font-weight:700;color:var(--g);">{{ now()->format('M d, Y') }}</div>
-                    <div style="font-size:10px;color:var(--tm);">{{ now()->format('h:i A') }}</div>
-                </div>
+    <div style="padding:20px;">
+        <div style="display:flex;flex-direction:column;gap:9px;">
+        @foreach($mapped as $s)
+        @php $sfC = $s['score']>=75?'var(--gm)':($s['score']>=50?'var(--warn)':'var(--danger)'); @endphp
+        <div style="display:flex;align-items:center;gap:10px;">
+            <div style="flex:1;min-width:0;">
+                <div style="font-size:12.5px;font-weight:700;color:var(--tx);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{ $s['name'] }} @if($s['applied'])<span style="font-size:10px;font-weight:700;color:var(--gm);">· Applied</span>@endif</div>
+                <div style="font-size:11px;color:var(--tm);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{ \Illuminate\Support\Str::limit($s['reasoning'],90) }}</div>
             </div>
-
-            {{-- Per-scholarship scores summary --}}
-            <div style="margin-top:18px;border-top:1px solid var(--bd);padding-top:14px;">
-                <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--tm);margin-bottom:10px;"><i class="fas fa-chart-bar" style="margin-right:5px;"></i>Scholarship Eligibility Summary</div>
-                <div style="display:flex;flex-direction:column;gap:7px;">
-                @foreach($mapped as $s)
-                @php $sfC = $s['score']>=75?'var(--gm)':($s['score']>=50?'var(--warn)':'var(--danger)'); @endphp
-                <div style="display:flex;align-items:center;gap:10px;">
-                    <div style="flex:1;min-width:0;font-size:12px;font-weight:600;color:var(--tx);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{ $s['name'] }}</div>
-                    <div style="width:120px;height:8px;background:#e0e0e0;border-radius:20px;overflow:hidden;flex-shrink:0;">
-                        <div style="width:{{ $s['score'] }}%;height:100%;background:{{ $sfC }};border-radius:20px;"></div>
-                    </div>
-                    <div style="font-weight:800;font-size:12px;color:{{ $sfC }};width:34px;text-align:right;flex-shrink:0;">{{ $s['score'] }}%</div>
-                    <span style="font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;flex-shrink:0;background:{{ $s['eligibility']==='Eligible'?'#d0f0d8':($s['eligibility']==='For Review'?'#fef3cd':'#fde8e6') }};color:{{ $s['eligibility']==='Eligible'?'#0d6624':($s['eligibility']==='For Review'?'#a07c00':'#c0392b') }};">{{ $s['eligibility'] }}</span>
-                </div>
-                @endforeach
-                </div>
+            <div style="width:120px;height:8px;background:#e0e0e0;border-radius:20px;overflow:hidden;flex-shrink:0;">
+                <div style="width:{{ $s['score'] }}%;height:100%;background:{{ $sfC }};border-radius:20px;"></div>
             </div>
-
-            {{-- Physical application note --}}
-            <div style="margin-top:14px;background:linear-gradient(135deg,#0d3318,#1a6b2f);border-radius:10px;padding:13px 16px;display:flex;align-items:center;gap:12px;">
-                <i class="fas fa-map-marker-alt" style="color:var(--y);font-size:20px;flex-shrink:0;"></i>
-                <div>
-                    <div style="font-size:13px;font-weight:700;color:#fff;">Apply Physically at the Student Affairs Office</div>
-                    <div style="font-size:12px;color:rgba(255,255,255,.7);margin-top:2px;">Saint Columban College — Pagadian City, Zamboanga del Sur &nbsp;·&nbsp; Present this passport and your original documents</div>
-                </div>
-            </div>
+            <div style="font-weight:800;font-size:12px;color:{{ $sfC }};width:34px;text-align:right;flex-shrink:0;">{{ $s['score'] }}%</div>
+            <span style="font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;flex-shrink:0;background:{{ $s['eligibility']==='Eligible'?'#d0f0d8':($s['eligibility']==='For Review'?'#fef3cd':'#fde8e6') }};color:{{ $s['eligibility']==='Eligible'?'#0d6624':($s['eligibility']==='For Review'?'#a07c00':'#c0392b') }};">{{ $s['eligibility'] }}</span>
+        </div>
+        @endforeach
         </div>
 
-        {{-- AI-Generated Passport Content (appears after Generate is clicked) --}}
-        <div id="passportLoading" style="display:none;text-align:center;padding:28px;background:var(--bg);border-radius:var(--rs);margin-top:16px;">
-            <div style="display:inline-flex;align-items:center;gap:12px;">
-                <div style="width:20px;height:20px;border:3px solid var(--gm);border-top-color:transparent;border-radius:50%;animation:aiSpin .7s linear infinite;"></div>
-                <span style="font-size:13px;color:var(--tm);">Groq AI is generating your personalized Scholarship Passport...</span>
+        <div style="margin-top:16px;background:linear-gradient(135deg,#0d3318,#1a6b2f);border-radius:10px;padding:13px 16px;display:flex;align-items:center;gap:12px;">
+            <i class="fas fa-map-marker-alt" style="color:var(--y);font-size:20px;flex-shrink:0;"></i>
+            <div>
+                <div style="font-size:13px;font-weight:700;color:#fff;">Apply Physically at the Student Affairs Office</div>
+                <div style="font-size:12px;color:rgba(255,255,255,.7);margin-top:2px;">Saint Columban College — Pagadian City, Zamboanga del Sur &nbsp;·&nbsp; Bring your original documents</div>
             </div>
-        </div>
-
-        <div id="passportAI" style="display:none;margin-top:16px;border:1.5px solid var(--y);border-radius:12px;overflow:hidden;">
-            <div style="background:linear-gradient(135deg,#0d3318,#1a6b2f);padding:12px 18px;display:flex;align-items:center;gap:10px;">
-                <div style="width:28px;height:28px;background:linear-gradient(135deg,var(--y),var(--yd));border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:12px;color:#0d3318;flex-shrink:0;"><i class="fas fa-robot"></i></div>
-                <span style="font-size:13px;font-weight:700;color:#fff;">AI-Generated Scholarship Passport — Powered by Groq AI</span>
-                <button type="button" onclick="document.getElementById('passportAI').style.display='none'" style="margin-left:auto;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);border-radius:8px;padding:4px 10px;font-size:11px;color:rgba(255,255,255,.7);cursor:pointer;">Close</button>
-            </div>
-            <div id="passportAIContent" style="padding:20px 24px;font-size:13.5px;color:var(--tx);line-height:1.9;white-space:pre-wrap;background:var(--card);"></div>
-        </div>
-
-        <div id="passportError" style="display:none;background:#fde8e6;border:1.5px solid var(--danger);border-radius:var(--rs);padding:12px 14px;font-size:13px;color:#7a1a14;margin-top:12px;">
-            <i class="fas fa-exclamation-circle" style="margin-right:6px;"></i><span id="passportErrorMsg"></span>
         </div>
     </div>
 </div>
@@ -171,7 +247,7 @@ $review_count   = count(array_filter($mapped, fn($x) => $x['eligibility']==='For
     <div class="ch" style="background:linear-gradient(135deg,#1a3a6b,#0038a8);">
         <div style="width:42px;height:42px;background:rgba(255,255,255,.15);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:19px;color:#fff;flex-shrink:0;"><i class="fas fa-chart-line"></i></div>
         <div><h2 style="color:#fff;font-size:16px;">Gap Analysis — What You Need to Qualify</h2>
-        <div style="font-size:11px;color:rgba(255,255,255,.6);">Exact requirements vs your current profile for each scholarship</div></div>
+        <div style="font-size:11px;color:rgba(255,255,255,.6);">Exact requirements vs your current data for each scholarship</div></div>
         <div class="ch-acts">
             <button type="button" onclick="generateGapAnalysis()" id="gapBtn" class="btn btn-ac" style="font-size:12px;">
                 <i class="fas fa-search"></i> Run AI Gap Analysis
@@ -251,15 +327,15 @@ $review_count   = count(array_filter($mapped, fn($x) => $x['eligibility']==='For
     </div>
     <div style="padding:18px 20px;">
 
-        {{-- Static action items based on profile --}}
+        {{-- Static action items based on test data --}}
         <div style="display:flex;flex-direction:column;gap:10px;" id="staticPlan">
         @php
             $actions = [];
             if($gwa > 1.75) $actions[] = ['high','Improve GWA to 1.75 or better','Your GWA of '.number_format($gwa,2).' is above the cutoff for most scholarships. Focus on your academic performance this semester.','fas fa-star'];
             if(!$isRegular) $actions[] = ['high','Shift to Regular Enrollment','Irregular students lose 10 points on every scholarship score. Shifting to Regular doubles your enrollment score.','fas fa-id-badge'];
-            if($bracket==='above_400'||$bracket==='') $actions[] = ['medium','Update your income bracket in your profile','Income bracket affects up to 15 points of your AI score. Make sure it is accurate.','fas fa-hand-holding-usd'];
+            if($bracket==='above_400'||$bracket==='') $actions[] = ['medium','Update your income bracket','Income bracket affects up to 15 points of your AI score. Click Edit Data to make sure yours is accurate.','fas fa-hand-holding-usd'];
             if($gwa > 1.25 && $gwa <= 1.75) $actions[] = ['low','Push GWA to 1.25 for Excellence Bonus','You are close to qualifying for the +5 point Excellence Bonus on all scholarships.','fas fa-trophy'];
-            $actions[] = ['high','Visit SAO Office to get the official scholarship application form','Physical applications are required. Bring your Scholarship Passport, transcript, and proof of income.','fas fa-map-marker-alt'];
+            $actions[] = ['high','Visit SAO Office to get the official scholarship application form','Physical applications are required. Bring your Eligibility Test results, transcript, and proof of income.','fas fa-map-marker-alt'];
             $actions[] = ['medium','Prepare supporting documents','Requirements typically include: transcript of records, certificate of enrollment, income tax return or certificate of indigency, and 2x2 ID photos.','fas fa-file-alt'];
             $actions[] = ['low','Monitor scholarship deadlines','Check with the SAO office regularly for opening and closing dates of each scholarship program.','fas fa-calendar-check'];
         @endphp
@@ -311,8 +387,8 @@ $review_count   = count(array_filter($mapped, fn($x) => $x['eligibility']==='For
     <div style="padding:18px 20px;">
         <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px;">
         @foreach([
-            ['1','fas fa-robot','Check AI Score Here','Review your AI eligibility score on this page to know which scholarships you qualify for.','t'],
-            ['2','fas fa-print','Print Your Passport','Click "Generate AI Passport" then print the full passport card to bring to the office.','y'],
+            ['1','fas fa-user-edit','Fill Up Your Data','Enter your GWA, income bracket, enrollment type, year level, honors, and status on this page.','t'],
+            ['2','fas fa-robot','Run the Eligibility Test','Click the Eligibility Test button to see which scholarships you qualify for.','y'],
             ['3','fas fa-file-alt','Prepare Documents','Gather your transcript of records, COE, income proof, birth certificate, and 2x2 ID photos.','g'],
             ['4','fas fa-map-marker-alt','Visit SAO Office','Go to the Student Affairs Office at Saint Columban College during office hours.','o'],
             ['5','fas fa-clipboard-list','Submit Application','Fill out the official application form, attach your documents, and submit to the SAO officer.','g'],
@@ -330,37 +406,14 @@ $review_count   = count(array_filter($mapped, fn($x) => $x['eligibility']==='For
         </div>
     </div>
 </div>
-
-{{-- Data for JS --}}
-<div id="jsSchData" style="display:none;">{{ json_encode(array_values($mapped)) }}</div>
-<div id="jsProfileData" style="display:none;">{{ json_encode([
-    'name'       => auth()->user()->name ?? '',
-    'gwa'        => (string)($student?->gwa ?? 'N/A'),
-    'course'     => $student?->course ?? 'N/A',
-    'yearLevel'  => $student?->year_level ?? 'N/A',
-    'enrollment' => $student?->enrollment_type ?? 'N/A',
-    'income'     => $student?->income_bracket ?? 'N/A',
-    'bestScore'  => $overallScore,
-    'eligibility'=> $overallEligibility,
-    'email'      => auth()->user()->email ?? '',
-    'eligible_count' => $eligible_count,
-    'review_count'   => $review_count,
-]) }}</div>
+@endif
 
 <style>
 @keyframes aiSpin{to{transform:rotate(360deg);}}
-@media print{
-    .sidebar,.topbar,.ai-bar,.btn,#passportLoading,#passportAI .btn{display:none!important;}
-    #passportCard{border:2px solid #1a6b2f!important;box-shadow:none!important;}
-    .main{margin-left:0!important;}
-}
 </style>
 
 <script>
 (function(){
-    var SCH  = JSON.parse(document.getElementById('jsSchData').textContent || document.getElementById('jsSchData').innerText || '[]');
-    var PRF  = JSON.parse(document.getElementById('jsProfileData').textContent || document.getElementById('jsProfileData').innerText || '{}');
-
     // AI generation runs server-side (student/eligibility/ai) — the API key
     // stays in .env and the prompt/model live in EligibilityController.
     function callAI(action, onSuccess, onError){
@@ -382,27 +435,16 @@ $review_count   = count(array_filter($mapped, fn($x) => $x['eligibility']==='For
         .catch(function(e){ onError('Network error: '+e.message); });
     }
 
-    window.generatePassport = function(){
-        var btn = document.getElementById('genBtn');
-        btn.disabled = true;
-        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generating...';
-        document.getElementById('passportLoading').style.display='block';
-        document.getElementById('passportAI').style.display='none';
-        document.getElementById('passportError').style.display='none';
+    // Step 3 — edit function: reveal the pre-filled data form so the
+    // student can update their entries and re-run the test.
+    window.editData = function(){
+        var card = document.getElementById('dataCard');
+        card.style.display = 'block';
+        card.scrollIntoView({behavior:'smooth', block:'start'});
+    };
 
-        callAI('passport', function(text){
-            document.getElementById('passportLoading').style.display='none';
-            document.getElementById('passportAIContent').textContent = text;
-            document.getElementById('passportAI').style.display='block';
-            btn.disabled = false;
-            btn.innerHTML = '<i class="fas fa-magic"></i> Regenerate Passport';
-        }, function(err){
-            document.getElementById('passportLoading').style.display='none';
-            document.getElementById('passportErrorMsg').textContent = err;
-            document.getElementById('passportError').style.display='block';
-            btn.disabled = false;
-            btn.innerHTML = '<i class="fas fa-magic"></i> Generate AI Passport';
-        });
+    window.cancelEdit = function(){
+        document.getElementById('dataCard').style.display = 'none';
     };
 
     window.generateGapAnalysis = function(){
@@ -443,10 +485,6 @@ $review_count   = count(array_filter($mapped, fn($x) => $x['eligibility']==='For
             document.getElementById('planError').style.display='block';
             btn.disabled=false; btn.innerHTML='<i class="fas fa-robot"></i> Generate AI Plan';
         });
-    };
-
-    window.printPassport = function(){
-        window.print();
     };
 })();
 </script>

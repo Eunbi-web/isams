@@ -2,78 +2,140 @@
 namespace App\Http\Controllers\Student;
 use App\Http\Controllers\Controller;
 use App\Models\Scholarship;
+use App\Models\EligibilityProfile;
 use App\Http\Controllers\Admin\AiController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 
 class EligibilityController extends Controller {
 
+    // Common scholarship requirements the student inputs before running
+    // the Eligibility Test (step 1 of the page flow).
+    public const YEAR_LEVELS = ['1st Year','2nd Year','3rd Year','4th Year','5th Year'];
+    public const ENROLLMENT_TYPES = ['Regular','Irregular'];
+    public const INCOME_BRACKETS = [
+        'below_200' => 'Below ₱200,000',
+        '200_400'   => '₱200,000 – ₱400,000',
+        'above_400' => 'Above ₱400,000',
+    ];
+    public const ACADEMIC_HONORS = ['None','With Honors','With High Honors','With Highest Honors'];
+
     public function index() {
         $user    = auth()->user();
         $student = $user->student;
 
-        $scholarships = Scholarship::with(['applications' => function($q) use ($student) {
-            if ($student) $q->where('student_id', $student->id);
-        }])->where('status','Active')->latest()->get();
+        // Step 1 — the student must input their data first. Until a profile
+        // exists, the page shows only the data form (no test results yet).
+        $profile = $student
+            ? EligibilityProfile::where('student_id', $student->id)->first()
+            : null;
 
+        $scholarships = collect();
         $eligibilityMap  = [];
         $overallScore    = 0;
         $overallEligibility = 'Not Eligible';
-        $aiCtrl          = new AiController();
 
-        foreach ($scholarships as $sch) {
-            $existing = $student
-                ? $sch->applications->where('student_id', $student->id)->first()
-                : null;
+        if ($profile) {
+            $scholarships = Scholarship::with(['applications' => function($q) use ($student) {
+                if ($student) $q->where('student_id', $student->id);
+            }])->where('status','Active')->latest()->get();
 
-            if ($existing && $existing->ai_score !== null) {
-                $eligibilityMap[$sch->id] = [
-                    'score'       => $existing->ai_score,
-                    'eligibility' => $existing->ai_eligibility,
-                    'tag'         => $existing->ai_tag,
-                    'reasoning'   => $existing->ai_reasoning,
-                    'applied'     => true,
-                    'status'      => $existing->status,
-                ];
-            } else {
-                // Run AI evaluation without saving
-                $mockApp = new \App\Models\ScholarshipApplication([
-                    'gwa'             => $student?->gwa ?? 2.5,
-                    'enrollment_type' => $student?->enrollment_type ?? 'Regular',
-                    'has_failing'     => false,
-                    'has_discipline'  => false,
-                    'income_bracket'  => $student?->income_bracket ?? '200_400',
-                ]);
-                $mockApp->scholarship = $sch;
+            $aiCtrl = new AiController();
 
-                $result = $aiCtrl->evaluate($mockApp);
-                $eligibilityMap[$sch->id] = [
-                    'score'       => $result['score'],
-                    'eligibility' => $result['eligibility'],
-                    'tag'         => $result['tag'],
-                    'reasoning'   => $result['reasoning'],
-                    'applied'     => false,
-                    'status'      => null,
-                ];
-            }
+            foreach ($scholarships as $sch) {
+                $existing = $student
+                    ? $sch->applications->where('student_id', $student->id)->first()
+                    : null;
 
-            if ($eligibilityMap[$sch->id]['score'] > $overallScore) {
-                $overallScore       = $eligibilityMap[$sch->id]['score'];
-                $overallEligibility = $eligibilityMap[$sch->id]['eligibility'];
+                if ($existing && $existing->ai_score !== null) {
+                    $eligibilityMap[$sch->id] = [
+                        'score'       => $existing->ai_score,
+                        'eligibility' => $existing->ai_eligibility,
+                        'tag'         => $existing->ai_tag,
+                        'reasoning'   => $existing->ai_reasoning,
+                        'applied'     => true,
+                        'status'      => $existing->status,
+                    ];
+                } else {
+                    // Run AI evaluation using the student's test data
+                    $mockApp = new \App\Models\ScholarshipApplication([
+                        'gwa'             => $profile->gwa ?? 2.5,
+                        'enrollment_type' => $profile->enrollment_type,
+                        'has_failing'     => $profile->has_failing,
+                        'has_discipline'  => $profile->has_discipline,
+                        'income_bracket'  => $profile->income_bracket,
+                    ]);
+                    $mockApp->scholarship = $sch;
+
+                    $result = $aiCtrl->evaluate($mockApp);
+                    $eligibilityMap[$sch->id] = [
+                        'score'       => $result['score'],
+                        'eligibility' => $result['eligibility'],
+                        'tag'         => $result['tag'],
+                        'reasoning'   => $result['reasoning'],
+                        'applied'     => false,
+                        'status'      => null,
+                    ];
+                }
+
+                if ($eligibilityMap[$sch->id]['score'] > $overallScore) {
+                    $overallScore       = $eligibilityMap[$sch->id]['score'];
+                    $overallEligibility = $eligibilityMap[$sch->id]['eligibility'];
+                }
             }
         }
 
         return view('student.eligibility.index', compact(
             'scholarships','eligibilityMap','overallScore',
-            'overallEligibility','student'
+            'overallEligibility','student','profile'
         ));
     }
 
     /**
-     * Server-side Groq generation for the AI Eligibility page
-     * (passport / gap analysis / action plan). The API key never
-     * reaches the browser — the old page called Groq from JS with a
-     * model that has since been decommissioned.
+     * Step 1/3 — save (or update) the student's eligibility test data,
+     * then re-run the test. The saved row powers the Edit function:
+     * the form is pre-filled from it on every visit.
+     */
+    public function saveProfile(Request $request) {
+        $user    = auth()->user();
+        $student = $user->student;
+
+        if (!$student) {
+            return back()->with('error', 'No student record is linked to your account.');
+        }
+
+        $data = $request->validate([
+            'gwa'             => ['required','numeric','min:1','max:5'],
+            'year_level'      => ['required','in:'.implode(',', self::YEAR_LEVELS)],
+            'enrollment_type' => ['required','in:'.implode(',', self::ENROLLMENT_TYPES)],
+            'income_bracket'  => ['required','in:'.implode(',', array_keys(self::INCOME_BRACKETS))],
+            'academic_honors' => ['required','in:'.implode(',', self::ACADEMIC_HONORS)],
+            'has_failing'     => ['required','in:0,1'],
+            'has_discipline'  => ['required','in:0,1'],
+        ]);
+
+        EligibilityProfile::updateOrCreate(
+            ['student_id' => $student->id],
+            [
+                'gwa'             => $data['gwa'],
+                'year_level'      => $data['year_level'],
+                'enrollment_type' => $data['enrollment_type'],
+                'income_bracket'  => $data['income_bracket'],
+                'academic_honors' => $data['academic_honors'],
+                'has_failing'     => (bool) $data['has_failing'],
+                'has_discipline'  => (bool) $data['has_discipline'],
+            ]
+        );
+
+        return redirect()
+            ->route('student.eligibility')
+            ->with('success', 'Your data has been saved and the Eligibility Test has been run.');
+    }
+
+    /**
+     * Server-side Groq generation for the Eligibility Test page
+     * (gap analysis / action plan). The API key never
+     * reaches the browser — the page calls this endpoint from JS.
      */
     public function aiGenerate(Request $request) {
         $data = $request->validate([
@@ -82,7 +144,14 @@ class EligibilityController extends Controller {
 
         $user    = auth()->user();
         $student = $user->student;
+        $profile = $student ? EligibilityProfile::where('student_id', $student->id)->first() : null;
         $aiCtrl  = new AiController();
+
+        if (!$profile) {
+            return response()->json([
+                'message' => 'Please fill in your eligibility test data first.',
+            ], 422);
+        }
 
         $scholarships = Scholarship::where('status','Active')->latest()->get();
 
@@ -91,11 +160,11 @@ class EligibilityController extends Controller {
         $bestElig = 'Not Eligible';
         foreach ($scholarships as $i => $sch) {
             $mockApp = new \App\Models\ScholarshipApplication([
-                'gwa'             => $student?->gwa ?? 2.5,
-                'enrollment_type' => $student?->enrollment_type ?? 'Regular',
-                'has_failing'     => false,
-                'has_discipline'  => false,
-                'income_bracket'  => $student?->income_bracket ?? '200_400',
+                'gwa'             => $profile->gwa ?? 2.5,
+                'enrollment_type' => $profile->enrollment_type,
+                'has_failing'     => $profile->has_failing,
+                'has_discipline'  => $profile->has_discipline,
+                'income_bracket'  => $profile->income_bracket,
             ]);
             $mockApp->scholarship = $sch;
             $r = $aiCtrl->evaluate($mockApp);
@@ -109,19 +178,16 @@ class EligibilityController extends Controller {
                 .' | '.\Illuminate\Support\Str::limit($r['reasoning'], 80);
         }
 
-        $bracketLabel = [
-            'below_200' => 'Below 200,000 PHP',
-            '200_400'   => '200,000 - 400,000 PHP',
-            'above_400' => 'Above 400,000 PHP',
-        ][$student?->income_bracket ?? ''] ?? ($student?->income_bracket ?? 'N/A');
+        $bracketLabel = self::INCOME_BRACKETS[$profile->income_bracket] ?? ($profile->income_bracket ?? 'N/A');
 
         $nl = "\n";
 
-        $profile = 'STUDENT PROFILE:'.$nl
+        $profileText = 'STUDENT PROFILE:'.$nl
             .'Name: '.($user->name ?? 'Student').$nl
-            .'Course: '.($student?->course ?? 'N/A').' '.($student?->year_level ?? '').$nl
-            .'GWA: '.number_format((float)($student?->gwa ?? 5.0), 2).$nl
-            .'Enrollment: '.($student?->enrollment_type ?? 'N/A').$nl
+            .'Course: '.($student?->course ?? 'N/A').' '.($profile->year_level ?? '').$nl
+            .'GWA: '.number_format((float)($profile->gwa ?? 5.0), 2).$nl
+            .'Enrollment: '.($profile->enrollment_type ?? 'N/A').$nl
+            .'Academic Honors: '.($profile->academic_honors ?? 'None').$nl
             .'Income Bracket: '.$bracketLabel.$nl
             .'Best AI Score: '.$best.'% ('.$bestElig.')'.$nl;
 
@@ -131,7 +197,7 @@ class EligibilityController extends Controller {
 
         $prompts = [
             'passport' => $base.'Generate a formal SCHOLARSHIP PASSPORT document for this student.'.$nl.$nl
-                .$profile.$schList
+                .$profileText.$schList
                 .'Generate a formal scholarship passport with these sections:'.$nl
                 .'1. ELIGIBILITY SUMMARY: Overall status and best matches in 2 sentences.'.$nl
                 .'2. TOP RECOMMENDED SCHOLARSHIPS: List the top 1-3 with score and why they qualify. Say "Visit SAO Office to apply physically."'.$nl
@@ -140,8 +206,8 @@ class EligibilityController extends Controller {
                 .'5. NEXT STEPS: 3 concrete actions for this semester.'.$nl.$nl
                 .'Write formally. Plain text only. No asterisks or hashtags. This will be printed.',
             'gap' => $base.'Generate a detailed GAP ANALYSIS for this student.'.$nl.$nl
-                .'STUDENT: '.($user->name ?? 'Student').' | GWA:'.number_format((float)($student?->gwa ?? 5.0),2)
-                .' | '.($student?->enrollment_type ?? 'N/A').' | Income:'.$bracketLabel.$nl.$nl
+                .'STUDENT: '.($user->name ?? 'Student').' | GWA:'.number_format((float)($profile->gwa ?? 5.0),2)
+                .' | '.($profile->enrollment_type ?? 'N/A').' | Income:'.$bracketLabel.$nl.$nl
                 .$schList
                 .'For each scholarship, provide:'.$nl
                 .'- Current score vs needed score (75% to be eligible)'.$nl
@@ -150,8 +216,8 @@ class EligibilityController extends Controller {
                 .'- Timeline estimate (e.g., "Achievable next semester if GWA improves")'.$nl.$nl
                 .'Be specific with numbers. Plain text only. No asterisks, no markdown, no tables. Helpful and encouraging tone.',
             'plan' => $base.'Generate a PRIORITY ACTION PLAN for this student to maximize scholarship eligibility.'.$nl.$nl
-                .'STUDENT: '.($user->name ?? 'Student').' | GWA:'.number_format((float)($student?->gwa ?? 5.0),2)
-                .' | '.($student?->enrollment_type ?? 'N/A').' | Income:'.$bracketLabel.' | Best Score:'.$best.'%'.$nl.$nl
+                .'STUDENT: '.($user->name ?? 'Student').' | GWA:'.number_format((float)($profile->gwa ?? 5.0),2)
+                .' | '.($profile->enrollment_type ?? 'N/A').' | Income:'.$bracketLabel.' | Best Score:'.$best.'%'.$nl.$nl
                 .$schList
                 .'Create a numbered action plan with:'.$nl
                 .'1. Immediate actions (this week) - e.g., visit SAO for forms, update profile'.$nl

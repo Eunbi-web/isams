@@ -27,7 +27,7 @@
         <button type="button" class="isams-chat-chip">What can you do</button>
         <button type="button" class="isams-chat-chip">How do I apply for a scholarship</button>
         <button type="button" class="isams-chat-chip">How is my AI score calculated</button>
-        <button type="button" class="isams-chat-chip">What is the Scholarship Passport</button>
+        <button type="button" class="isams-chat-chip">How does the Eligibility Test work</button>
         <button type="button" class="isams-chat-chip">How to request counseling</button>
         <button type="button" class="isams-chat-chip">What are the eligibility levels</button>
         <button type="button" class="isams-chat-chip">How does PH Sync work</button>
