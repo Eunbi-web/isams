@@ -34,6 +34,11 @@
                 </div>
 
                 <div class="g2">
+                    <div class="fg"><label class="fl">Middle Name</label><input id="studentMiddleName" type="text" name="middle_name" class="fc"></div>
+                    <div class="fg"><label class="fl">Sex</label><select name="sex" class="fc"><option value="">Select sex</option><option value="Male">Male</option><option value="Female">Female</option></select></div>
+                </div>
+
+                <div class="g2">
                     <div class="fg"><label class="fl">Student ID <span style="color:var(--danger);">*</span></label><input id="studentStudentId" type="text" name="student_id" class="fc mono" required placeholder="2024-0001"></div>
                     <div class="fg"><label class="fl">GWA</label><input type="number" name="gwa" class="fc mono" step="0.01" min="1" max="5" placeholder="1.75"></div>
                 </div>
@@ -91,8 +96,9 @@ function lookupStudent(){
             setLookupMsg('error', data.message || 'Student not found.');
             return;
         }
-        // Fill only: first/last/student_id
+        // Fill only: first/middle/last/student_id
         document.getElementById('studentFirstName').value = data.student.first_name || '';
+        document.getElementById('studentMiddleName').value = data.student.middle_name || '';
         document.getElementById('studentLastName').value  = data.student.last_name || '';
         document.getElementById('studentStudentId').value = data.student.student_id || '';
         setLookupMsg('success', 'Student details filled from import list.');

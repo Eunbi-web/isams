@@ -11,6 +11,10 @@
 <div class="fg"><label class="fl">Last Name</label><input type="text" name="last_name" class="fc" value="{{ $student->last_name }}" required></div>
 </div>
 <div class="g2">
+<div class="fg"><label class="fl">Middle Name</label><input type="text" name="middle_name" class="fc" value="{{ $student->middle_name }}"></div>
+<div class="fg"><label class="fl">Sex</label><select name="sex" class="fc"><option value="">Select sex</option><option value="Male" {{ $student->sex==='Male'?'selected':'' }}>Male</option><option value="Female" {{ $student->sex==='Female'?'selected':'' }}>Female</option></select></div>
+</div>
+<div class="g2">
 <div class="fg"><label class="fl">GWA</label><input type="number" name="gwa" class="fc mono" step="0.01" min="1" max="5" value="{{ $student->gwa }}"></div>
 <div class="fg"><label class="fl">Enrollment Type</label><select name="enrollment_type" class="fc"><option value="Regular" {{ $student->enrollment_type==='Regular'?'selected':'' }}>Regular</option><option value="Irregular" {{ $student->enrollment_type==='Irregular'?'selected':'' }}>Irregular</option></select></div>
 </div>

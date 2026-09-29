@@ -41,6 +41,7 @@ class StudentController extends Controller {
             'ok' => true,
             'student' => [
                 'first_name' => $student->first_name,
+                'middle_name' => $student->middle_name,
                 'last_name' => $student->last_name,
                 'student_id' => $student->student_id,
             ]
@@ -76,6 +77,7 @@ class StudentController extends Controller {
         $data = $r->validate([
             'first_name'         => 'required|string|max:100',
             'middle_name'        => 'nullable|string|max:100',
+            'sex'                => 'nullable|string|in:Male,Female',
             'last_name'          => 'required|string|max:100',
             'student_id'         => 'required|string|unique:students,student_id|max:30',
             'course'             => 'required|string|max:100',
