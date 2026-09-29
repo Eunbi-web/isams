@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><script src="{{ asset('js/pjax.js?v=1') }}"></script>
 <link rel="icon" type="image/x-icon" href="{{ asset('favicon.ico') }}">
 <link rel="icon" type="image/png" sizes="32x32" href="{{ asset('favicon-32x32.png') }}">
 <link rel="icon" type="image/png" sizes="16x16" href="{{ asset('favicon-16x16.png') }}">
@@ -102,8 +102,8 @@ select.fc option{background:var(--card);}
 @media(max-width:900px){.sidebar{transform:translateX(-100%)}.sidebar.open{transform:translateX(0)}.main{margin-left:0}.mob-toggle{display:flex}.g2,.g3{grid-template-columns:1fr}.topbar{padding:0 14px;gap:10px}.page{padding:14px}.tp-sub{display:none}}
 .sb-backdrop{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:99;backdrop-filter:blur(2px);}
 .sb-backdrop.open{display:block;}
-</style>@stack('styles')</head>
-<body data-theme="light">
+</style><!--pjax-styles-start-->@stack('styles')<!--pjax-styles-end--></head>
+<body data-theme="light" data-pjax-layout="superadmin">
 <aside class="sidebar" id="sidebar">
 <div class="sb-brand"><div class="sb-logo"><div class="sb-icon"><img src="{{ asset('images/SCC_NEW_LOGO.png') }}" alt="Logo"></div><div><div class="sb-name">ISAMS</div><div class="sb-sub">⚡ Super Admin</div></div></div></div>
 <div class="sa-badge"><div class="sa-dot"></div><span>Super Admin Panel</span><span class="sa-v">v2.1</span></div>
@@ -125,7 +125,7 @@ select.fc option{background:var(--card);}
 <div class="main">
 <header class="topbar">
 <button class="mob-toggle" id="sbToggle"><i class="fas fa-bars"></i></button>
-<div><div class="tp-title">@yield('page-title','Dashboard')</div><div class="tp-sub">@yield('page-sub','ISAMS Super Admin Portal')</div></div>
+<div data-pjax="title"><div class="tp-title">@yield('page-title','Dashboard')</div><div class="tp-sub">@yield('page-sub','ISAMS Super Admin Portal')</div></div>
 <div class="tp-right"><span class="sa-chip"><img src="{{ asset('images/SCC_NEW_LOGO.png') }}" alt="Logo">Super Admin</span>
 
 {{-- Theme toggle (System → Light → Dark) --}}
@@ -133,7 +133,7 @@ select.fc option{background:var(--card);}
 
 <a href="{{ route('superadmin.logs') }}" class="tp-btn"><i class="fas fa-history"></i></a><a href="{{ route('superadmin.settings') }}" class="tp-btn"><i class="fas fa-cog"></i></a></div></header>
 
-<div class="page">
+<div class="page" id="pjax-container">
 @if(session('success'))<div class="alert al-s an"><i class="fas fa-check-circle"></i> {{ session('success') }}</div>@endif
 @if(session('error'))<div class="alert al-d an"><i class="fas fa-exclamation-circle"></i> {{ session('error') }}</div>@endif
 @if(session('info'))<div class="alert al-y an"><i class="fas fa-info-circle"></i> {{ session('info') }}</div>@endif
@@ -205,7 +205,7 @@ document.addEventListener('click',e=>{if(e.target.classList.contains('mo'))e.tar
         });
     }
 })();
-</script>@stack('scripts')
+</script><div id="pjax-scripts">@stack('scripts')</div>
 
 <script src="{{ asset('js/isams-ajax.js') }}"></script>
 @include('chatbot.chatbot-widget')

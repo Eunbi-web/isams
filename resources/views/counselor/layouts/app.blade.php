@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><script src="{{ asset('js/pjax.js?v=1') }}"></script>
 <link rel="icon" type="image/x-icon" href="{{ asset('favicon.ico') }}">
 <link rel="icon" type="image/png" sizes="32x32" href="{{ asset('favicon-32x32.png') }}">
 <link rel="icon" type="image/png" sizes="16x16" href="{{ asset('favicon-16x16.png') }}">
@@ -164,8 +164,8 @@ body[data-theme="light"]{--bg:#f2f7f3;--card:#fff;--sb:#0d3318;--st:#90c8a0;--tx
 .notif-item:last-child{border-bottom:none;}
 .notif-icon{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0;}
 @keyframes notifSpin{to{transform:rotate(360deg);}}
-</style>@stack('styles')</head>
-<body data-theme="{{ (auth()->user()->theme ?? 'system') === 'dark' ? 'dark' : 'light' }}">
+</style><!--pjax-styles-start-->@stack('styles')<!--pjax-styles-end--></head>
+<body data-theme="{{ (auth()->user()->theme ?? 'system') === 'dark' ? 'dark' : 'light' }}" data-pjax-layout="counselor">
 <aside class="sidebar" id="sidebar" style="background:#0a1f2e;">
 <div class="sb-brand"><div class="sb-logo"><div class="sb-icon"><img src="{{ asset('images/SCC_NEW_LOGO.png') }}" alt="Logo"></div><div><div class="sb-name">ISAMS</div><div class="sb-sub" style="color:#90b8c8;">Counselor Portal</div></div></div></div>
 <div class="sb-sec"><div class="sb-lbl">Main</div>
@@ -183,7 +183,7 @@ body[data-theme="light"]{--bg:#f2f7f3;--card:#fff;--sb:#0d3318;--st:#90c8a0;--tx
 <div class="main">
 <header class="topbar">
 <button class="mob-toggle" id="sbToggle"><i class="fas fa-bars"></i></button>
-<div><div class="tp-title">@yield('page-title','Dashboard')</div><div class="tp-sub">@yield('page-sub','Guidance Counseling Staff Portal')</div></div>
+<div data-pjax="title"><div class="tp-title">@yield('page-title','Dashboard')</div><div class="tp-sub">@yield('page-sub','Guidance Counseling Staff Portal')</div></div>
 <div class="tp-right">
 <span class="school-chip"><img src="{{ asset('images/SCC_NEW_LOGO.png') }}" alt="Logo">ISAMS</span>
 
@@ -225,7 +225,7 @@ body[data-theme="light"]{--bg:#f2f7f3;--card:#fff;--sb:#0d3318;--st:#90c8a0;--tx
 <a href="{{ route('counselor.settings') }}" class="tp-btn"><i class="fas fa-cog"></i></a>
 </div>
 </header>
-<div class="page">
+<div class="page" id="pjax-container">
 @if(session('success'))<div class="alert al-s an"><i class="fas fa-check-circle"></i> {{ session('success') }}</div>@endif
 @if(session('error'))<div class="alert al-d an"><i class="fas fa-exclamation-circle"></i> {{ session('error') }}</div>@endif
 @yield('content')
@@ -338,7 +338,7 @@ document.addEventListener('click',e=>{if(e.target.classList.contains('mo'))e.tar
 })();
 </script>
 
-@stack('scripts')
+<div id="pjax-scripts">@stack('scripts')</div>
 <script src="{{ asset('js/isams-ajax.js') }}"></script>
 @include('chatbot.chatbot-widget')
 </body></html>

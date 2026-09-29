@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>{{ config('app.name', 'ISAMS') }} — @yield('title', 'Dashboard')</title>
+    <script src="{{ asset('js/pjax.js?v=1') }}"></script>
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -456,9 +457,11 @@
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: #c0d0de; border-radius: 10px; }
     </style>
+    <!--pjax-styles-start-->
     @stack('styles')
+    <!--pjax-styles-end-->
 </head>
-<body data-theme="light">
+<body data-theme="light" data-pjax-layout="app">
 
 
 <!-- SIDEBAR -->
@@ -543,12 +546,12 @@
         <button class="topbar-btn" id="sidebarToggle" style="display:none;">
             <i class="fas fa-bars"></i>
         </button>
-        <div>
+        <div data-pjax="title">
             <div class="topbar-title">@yield('page-title', 'Dashboard')</div>
             <div class="topbar-subtitle text-muted" style="font-size:12px;">@yield('page-subtitle', 'Integrated Student Affairs Management System')</div>
         </div>
         <div class="topbar-right">
-            <span class="school-badge"><i class="fas fa-university" style="margin-right:6px;"></i>@yield('school', 'University')</span>
+            <span class="school-badge" data-pjax="badge"><i class="fas fa-university" style="margin-right:6px;"></i>@yield('school', 'University')</span>
             <a href="{{ route('notifications.index') }}" class="topbar-btn" style="position:relative;">
                 <i class="fas fa-bell"></i>
                 <span style="position:absolute;top:6px;right:6px;width:8px;height:8px;background:var(--accent);border-radius:50%;border:2px solid #fff;"></span>
@@ -563,7 +566,7 @@
     </header>
 
     <!-- PAGE CONTENT -->
-    <div class="page-content">
+    <div class="page-content" id="pjax-container">
         @if(session('success'))
             <div class="alert alert-success animate"><i class="fas fa-check-circle"></i> {{ session('success') }}</div>
         @endif
@@ -649,6 +652,6 @@
         else { toggle.style.display = 'none'; sidebar.classList.remove('open'); }
     });
 </script>
-@stack('scripts')
+<div id="pjax-scripts">@stack('scripts')</div>
 </body>
 </html>

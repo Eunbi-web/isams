@@ -1,11 +1,11 @@
 <!DOCTYPE html><html lang="en">
-    <head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+    <head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><script src="{{ asset('js/pjax.js?v=1') }}"></script>
     <link rel="icon" type="image/x-icon" href="{{ asset('favicon.ico') }}">
 <link rel="icon" type="image/png" sizes="32x32" href="{{ asset('favicon-32x32.png') }}">
 <link rel="icon" type="image/png" sizes="16x16" href="{{ asset('favicon-16x16.png') }}">
 <link rel="apple-touch-icon" sizes="180x180" href="{{ asset('favicon-180x180.png') }}">
 <title>ISAMS — Sign In</title><link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet"><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-<style>
+<!--pjax-styles-start--><style>
 :root{--g:#1a6b2f;--gm:#2d9e4f;--y:#f0c020;--yd:#c9a010;--danger:#c0392b;}
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
 html,body{height:100%;}
@@ -134,8 +134,9 @@ body::before{
     font-size:13px;
     color:#7a9a80;
 }
-</style></head>
-<body>
+</style><!--pjax-styles-end--></head>
+<body data-pjax-layout="auth">
+<div id="pjax-container" style="display:contents;">
 <div class="login-card">
 
     <div class="logo-wrap">
@@ -184,6 +185,7 @@ body::before{
         Confidential - Do Not Distribute
     </div>
 
+</div>
 </div>
 
 <script>
