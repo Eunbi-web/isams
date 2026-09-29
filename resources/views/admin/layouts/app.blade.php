@@ -178,6 +178,8 @@ body[data-theme="light"]{--bg:#f2f7f3;--card:#fff;--sb:#0d3318;--st:#90c8a0;--tx
 <a href="{{ route('admin.students.index') }}" class="nav-a {{ request()->routeIs('admin.students*')?'active':'' }}"><i class="fas fa-users"></i> Students</a>
 @php $pendingComplaints = \App\Models\Complaint::where('status','Pending')->count(); @endphp
 <a href="{{ route('admin.complaints.index') }}" class="nav-a {{ request()->routeIs('admin.complaints*')?'active':'' }}"><i class="fas fa-inbox"></i> Complaints @if($pendingComplaints > 0)<span class="nav-badge">{{ $pendingComplaints }}</span>@endif</a>
+@php $pendingLetters = \App\Models\ConfiscatedItemLetter::where('status','Submitted')->count(); @endphp
+<a href="{{ route('admin.letters.index') }}" class="nav-a {{ request()->routeIs('admin.letters*')?'active':'' }}"><i class="fas fa-box"></i> Confiscated Letters @if($pendingLetters > 0)<span class="nav-badge">{{ $pendingLetters }}</span>@endif</a>
 <a href="{{ route('admin.messages.index') }}" class="nav-a {{ request()->routeIs('admin.messages*')?'active':'' }}"><i class="fas fa-envelope"></i> Messages</a>
 <a href="{{ route('admin.reports.index') }}" class="nav-a {{ request()->routeIs('admin.reports*')?'active':'' }}"><i class="fas fa-chart-bar"></i> Reports</a></div>
 <div class="sb-sec"><div class="sb-lbl">Account</div>

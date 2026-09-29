@@ -1,7 +1,7 @@
 <?php
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
-use App\Http\Controllers\Admin\{DashboardController as AdminDash, ScholarshipController as AdminScholarship, ApplicationController as AdminApp, AiController as AdminAi, StudentController as AdminStudent, ReportController as AdminReport, AnnouncementController as AdminAnn, NotificationController as AdminNotif, SettingsController as AdminSettings, ScraperController as AdminScraper, ComplaintController as AdminComplaint, MessageController as AdminMessage};
+use App\Http\Controllers\Admin\{DashboardController as AdminDash, ScholarshipController as AdminScholarship, ApplicationController as AdminApp, AiController as AdminAi, StudentController as AdminStudent, ReportController as AdminReport, AnnouncementController as AdminAnn, NotificationController as AdminNotif, SettingsController as AdminSettings, ScraperController as AdminScraper, ComplaintController as AdminComplaint, MessageController as AdminMessage, ConfiscatedItemLetterController as AdminLetter};
 use App\Http\Controllers\Counselor\{DashboardController as CounselorDash, CounselingController as CounselorCounseling, AnnouncementController as CounselorAnn, DisciplineController as CounselorDiscipline, NotificationController as CounselorNotif, SettingsController as CounselorSettings};
 use App\Http\Controllers\Student\{DashboardController as StudentDash, ScholarshipController as StudentScholarship, ApplicationController as StudentApp, EligibilityController as StudentEligibility, CounselingController as StudentCounseling, AnnouncementController as StudentAnn, NotificationController as StudentNotif, ProfileController as StudentProfile, ComplaintController as StudentComplaint, ConfiscatedItemLetterController as StudentLetter, MessageController as StudentMessage};
 use App\Http\Controllers\SuperAdmin\{DashboardController as SADash, UserController as SAUser, LogController as SALog, MonitoringController as SAMonitor};
@@ -153,6 +153,11 @@ Route::middleware(['auth','role:admin,officer'])->prefix('admin')->name('admin.'
     Route::get('complaints/{complaint}',       [AdminComplaint::class,'show'])->name('complaints.show');
     Route::post('complaints/{complaint}/reply',[AdminComplaint::class,'reply'])->name('complaints.reply');
     Route::patch('complaints/{complaint}/status', [AdminComplaint::class,'updateStatus'])->name('complaints.status');
+
+    // Confiscated Item Letters review
+    Route::get('letters',                     [AdminLetter::class,'index'])->name('letters.index');
+    Route::get('letters/{letter}',            [AdminLetter::class,'show'])->name('letters.show');
+    Route::patch('letters/{letter}/status',   [AdminLetter::class,'updateStatus'])->name('letters.status');
 
     // Counseling requests monitoring (admin)
     Route::get('counseling',                                        [\App\Http\Controllers\Admin\CounselingController::class,'index'])->name('counseling.index');
