@@ -172,6 +172,14 @@
                 <div style="font-size:12px;color:var(--tm);">Status: {{ $myApp->status }}</div>
             </div>
         </div>
+        @elseif($sch->end_date && $sch->end_date->isPast())
+        <div style="background:#fde8e6;border:1px solid #f5b5b0;border-radius:var(--rs);padding:12px 14px;display:flex;align-items:center;gap:10px;">
+            <i class="fas fa-ban" style="color:var(--danger);font-size:18px;"></i>
+            <div>
+                <div style="font-size:13px;font-weight:700;color:var(--tx);">Applications Closed</div>
+                <div style="font-size:12px;color:var(--tm);">The deadline for this scholarship was {{ $sch->end_date->format('M d, Y') }}. Applications are no longer accepted.</div>
+            </div>
+        </div>
         @else
             <a href="{{ route('student.apply',$sch->id) }}" class="btn btn-p" style="width:100%;justify-content:center;border-radius:14px;" onclick="event.stopPropagation();">
                 <i class="fas fa-paper-plane"></i> Apply
@@ -248,7 +256,15 @@
         <div style="background:var(--yp);border:1px solid var(--yd);border-radius:var(--rs);padding:11px 14px;font-size:13px;color:#6b4a00;margin-bottom:14px;">
             <i class="fas fa-info-circle" style="margin-right:6px;color:var(--yd);"></i>This scholarship is sourced from an official Philippine website. Visit the official site for requirements and to apply.
         </div>
-@if(!$myApp)
+@if(!$myApp && $s->deadline && \Carbon\Carbon::parse($s->deadline)->isPast())
+        <div style="background:#fde8e6;border:1px solid #f5b5b0;border-radius:var(--rs);padding:12px 14px;display:flex;align-items:center;gap:10px;margin-bottom:14px;">
+            <i class="fas fa-ban" style="color:var(--danger);font-size:18px;"></i>
+            <div>
+                <div style="font-size:13px;font-weight:700;color:var(--tx);">Applications Closed</div>
+                <div style="font-size:12px;color:var(--tm);">The deadline for this scholarship was {{ \Carbon\Carbon::parse($s->deadline)->format('M d, Y') }}. Applications are no longer accepted.</div>
+            </div>
+        </div>
+        @elseif(!$myApp)
         <a href="{{ route('student.apply',$s->scholarship_id ?? $s->id) }}" class="btn btn-p" style="justify-content:center;border-radius:14px;width:100%;" onclick="event.stopPropagation();">
             <i class="fas fa-paper-plane"></i> Apply
         </a>

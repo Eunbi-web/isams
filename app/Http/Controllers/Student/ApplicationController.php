@@ -10,12 +10,18 @@ class ApplicationController extends Controller {
         $applications = $student ? ScholarshipApplication::where('student_id',$student->id)->with('scholarship')->latest()->get() : collect();
         return view('student.applications.index',compact('applications'));
     }
-    public function create(int $scholarship) { $scholarship=Scholarship::findOrFail($scholarship); return view('student.applications.apply',compact('scholarship')); }
+    public function create(int $scholarship) {
+        $scholarship=Scholarship::findOrFail($scholarship);
+        if ($scholarship->end_date && $scholarship->end_date->isPast()) return redirect()->route('student.scholarships')->with('error','Applications for this scholarship are closed — the deadline ('.$scholarship->end_date->format('M d, Y').') has already passed.');
+        return view('student.applications.apply',compact('scholarship'));
+    }
     public function store(Request $request) {
         $student = auth()->user()->student;
         if (!$student) return back()->with('error','Student profile not found.');
         $data = $request->validate(['scholarship_id'=>'required|exists:scholarships,id','gwa'=>'required|numeric|min:1|max:5','enrollment_type'=>'required|string','year_level'=>'required|string','academic_load'=>'required|string','application_type'=>'required|string','academic_honors'=>'nullable|string','parent_employment_status'=>'nullable|string','siblings_in_college'=>'nullable|integer|min:0|max:20','has_failing'=>'nullable','has_discipline'=>'nullable','income_bracket'=>'nullable|string','essay'=>'nullable|string','remarks'=>'nullable|string']);
         if (ScholarshipApplication::where('student_id',$student->id)->where('scholarship_id',$data['scholarship_id'])->exists()) return back()->with('error','You have already applied for this scholarship.');
+        $scholarship = Scholarship::find($data['scholarship_id']);
+        if ($scholarship && $scholarship->end_date && $scholarship->end_date->isPast()) return back()->with('error','Applications for this scholarship are closed — the deadline ('.$scholarship->end_date->format('M d, Y').') has already passed.');
         $app = new ScholarshipApplication($data);
         $app->student_id     = $student->id;
         $app->has_failing    = $request->boolean('has_failing');
