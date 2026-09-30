@@ -1,7 +1,7 @@
 @extends('student.layouts.app')
 @section('title','Apply')
 @section('page-title','Apply for Scholarship')
-@section('page-sub','{{ $scholarship->name ?? "Scholarship" }}')
+@section('page-sub', $scholarship->name ?? 'Scholarship')
 @section('content')
 <div style="max-width:700px;">
 <div style="margin-bottom:14px;"><a href="{{ route('student.scholarships') }}" class="btn btn-o btn-sm"><i class="fas fa-arrow-left"></i> Back</a></div>
