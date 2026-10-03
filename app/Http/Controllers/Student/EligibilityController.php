@@ -66,7 +66,7 @@ class EligibilityController extends Controller {
                     ]);
                     $mockApp->scholarship = $sch;
 
-                    $result = $aiCtrl->evaluate($mockApp);
+                    $result = $aiCtrl->evaluate($mockApp, $profile);
                     $eligibilityMap[$sch->id] = [
                         'score'       => $result['score'],
                         'eligibility' => $result['eligibility'],
@@ -203,7 +203,7 @@ class EligibilityController extends Controller {
                 'income_bracket'  => $profile->income_bracket,
             ]);
             $mockApp->scholarship = $sch;
-            $r = $aiCtrl->evaluate($mockApp);
+            $r = $aiCtrl->evaluate($mockApp, $profile);
 
             if ($r['score'] > $best) { $best = $r['score']; $bestElig = $r['eligibility']; }
 

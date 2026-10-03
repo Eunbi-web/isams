@@ -29,7 +29,7 @@ class DashboardController extends Controller {
                     'income_bracket'  => $profile->income_bracket,
                 ]);
                 $mockApp->scholarship = $sch;
-                $r = $aiCtrl->evaluate($mockApp);
+                $r = $aiCtrl->evaluate($mockApp, $profile);
                 if ($r['score'] > $aiScore) { $aiScore = $r['score']; $eligibility = $r['eligibility']; }
                 if ($r['eligibility'] === 'Eligible') $eligibleCount++;
             }

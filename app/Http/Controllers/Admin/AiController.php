@@ -122,9 +122,12 @@ class AiController extends Controller {
 
     /**
      * Core AI evaluation — called by ApplicationController and EligibilityController.
+     * $profile (the student's Eligibility Test data) is passed by the student
+     * portal so incomplete test data lowers the score; officer-recorded
+     * applications omit it.
      * Returns score, eligibility, tag, reasoning.
      */
-    public function evaluate($application): array {
+    public function evaluate($application, $profile = null): array {
         $sch      = $application->scholarship;
         $criteria = is_array($sch->ai_criteria)
             ? $sch->ai_criteria
@@ -196,12 +199,24 @@ class AiController extends Controller {
 
         // No GWA on file → the max reachable raw score is 65
         // (enrollment 20 + no-failing 20 + income 15 + discipline 10).
-        // Rescaled against 95 instead of 100 so a perfect test still tops
-        // out below 100% — the GWA (and full verification) happens only
-        // at the SAO, so the online score is never "complete".
+        // Rescale to 100 so the missing GWA itself costs nothing — GWA is
+        // verified at the SAO and is not part of the online test.
         if ($gwa === null) {
-            $score    = min(95, (int) round($score / 65 * 95));
-            $issues[] = 'GWA not yet verified — will be checked at the SAO';
+            $score = min(100, (int) round($score / 65 * 100));
+        }
+
+        // Completeness of the online Eligibility Test data: 100% is only
+        // possible when everything was provided — School ID photo, COE and
+        // family income. Each missing item costs 10 pts.
+        if ($profile !== null) {
+            $missing = [];
+            if (empty($profile->school_id_photo)) $missing[] = 'School ID photo';
+            if (empty($profile->coe_file))        $missing[] = 'Certificate of Enrollment';
+            if ($profile->family_income === null) $missing[] = 'annual family income';
+            if ($missing) {
+                $score    = max(0, $score - 10 * count($missing));
+                $issues[] = 'Incomplete test data — missing: '.implode(', ', $missing);
+            }
         }
 
         $score = min(100, max(0, $score));
