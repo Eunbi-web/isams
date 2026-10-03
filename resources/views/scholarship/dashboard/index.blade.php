@@ -14,7 +14,6 @@
 <div class="g2 mb3">
 <div class="card an"><div class="ch"><i class="fas fa-bolt" style="color:var(--yd);"></i><h2>Quick Actions</h2></div>
 <div class="cb" style="display:flex;flex-wrap:wrap;gap:9px;">
-<a href="{{ route('scholarship.applications.index') }}" class="btn btn-p btn-sm"><i class="fas fa-file-alt"></i> Applications</a>
 <a href="{{ route('scholarship.ai.index') }}" class="btn btn-ai btn-sm"><i class="fas fa-robot"></i> AI Filter</a>
 <form method="POST" action="{{ route('scholarship.ai.run') }}">@csrf<button class="btn btn-ac btn-sm"><i class="fas fa-play"></i> Run AI Scan</button></form>
 <a href="{{ route('scholarship.programs.create') }}" class="btn btn-o btn-sm"><i class="fas fa-award"></i> Add Program</a>

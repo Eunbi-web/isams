@@ -9,7 +9,7 @@ class ProgramController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Scholarship::withCount('applications');
+        $query = Scholarship::withCount(['applications','updates']);
         if ($request->filled('search')) $query->where('name','like','%'.$request->search.'%');
         if ($request->filled('type'))   $query->where('type', $request->type);
         if ($request->filled('status')) $query->where('status', $request->status);

@@ -18,7 +18,9 @@ use App\Http\Controllers\Scholarship\SettingsController as ScholSettings;
 use App\Http\Controllers\Scholarship\ScholarController as ScholScholar;
 use App\Http\Controllers\Scholarship\MonitoringController as ScholMonitor;
 use App\Http\Controllers\Admin\DsaReportController as AdminDsaReport;
+use App\Http\Controllers\Admin\NarrativeReportController as AdminNarrative;
 use App\Http\Controllers\Counselor\NarrativeReportController as CounselorNarrative;
+use App\Http\Controllers\Scholarship\ProgramUpdateController as ScholProgramUpdate;
 
 Route::middleware('guest')->group(function () {
     Route::get('/', [AuthController::class,'showLogin']);
@@ -149,6 +151,9 @@ Route::middleware(['auth','role:admin,officer'])->prefix('admin')->name('admin.'
     Route::get('dsa-report',        [AdminDsaReport::class,'index'])->name('dsa-report.index');
     Route::get('dsa-report/export', [AdminDsaReport::class,'export'])->name('dsa-report.export');
 
+    // AI-assisted Narrative Report (Groq) — DSA portal
+    Route::post('counseling/{counseling}/narrative', [AdminNarrative::class,'generate'])->name('counseling.narrative');
+
     // Discipline Records (Admin)
     Route::get('discipline/export', [\App\Http\Controllers\Admin\DisciplineAdminController::class,'export'])->name('discipline.export');
     Route::get('discipline', [\App\Http\Controllers\Admin\DisciplineAdminController::class,'index'])->name('discipline.index');
@@ -193,6 +198,13 @@ Route::middleware(['auth','role:scholarship'])->prefix('scholarship')->name('sch
     Route::delete('programs/scraper/{scraped}',         [ScholScraper::class,'destroySynced'])->name('scraper.destroy');
 
     Route::resource('programs', ScholProgram::class);
+
+    // Program Updates — staff post/edit scholarship news from government,
+    // private or institutional sources (shown on the Programs page)
+    Route::get('programs/{program}/updates',    [ScholProgramUpdate::class,'index'])->name('programs.updates.index');
+    Route::post('programs/{program}/updates',   [ScholProgramUpdate::class,'store'])->name('programs.updates.store');
+    Route::patch('program-updates/{update}',    [ScholProgramUpdate::class,'update'])->name('program-updates.update');
+    Route::delete('program-updates/{update}',   [ScholProgramUpdate::class,'destroy'])->name('program-updates.destroy');
 
     // Bulk routes MUST come before resource to avoid {application} wildcard conflicts
     Route::post('applications/bulk-approve', [ScholApp::class,'bulkApprove'])->name('applications.bulk-approve');

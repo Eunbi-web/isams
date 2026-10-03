@@ -1,5 +1,5 @@
 <?php
-namespace App\Http\Controllers\Counselor;
+namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\CounselingSession;
 use App\Services\NarrativeReportService;
@@ -8,16 +8,11 @@ use Illuminate\Http\Request;
 class NarrativeReportController extends Controller {
     public function __construct(private NarrativeReportService $reports) {}
 
-    /**
-     * Generate a detailed formatted narrative report for a counseling session
-     * with Groq AI (session data + scholarship monitoring data).
-     */
+    /** DSA portal: AI-assisted narrative report for a counseling session. */
     public function generate(Request $r, CounselingSession $counseling) {
         try {
             $html = $this->reports->generate($counseling);
         } catch (\Throwable $e) {
-            $status = $e instanceof \Illuminate\Http\Exceptions\HttpResponseException ? 500
-                : ($e->getCode() >= 400 && $e->getCode() < 600 ? (int)$e->getCode() : 502);
             return response()->json([
                 'message' => str_contains($e->getMessage(), 'Groq')
                     ? $e->getMessage()
