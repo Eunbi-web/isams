@@ -196,8 +196,12 @@ class AiController extends Controller {
 
         // No GWA on file → the max reachable raw score is 65
         // (enrollment 20 + no-failing 20 + income 15 + discipline 10).
+        // Rescaled against 95 instead of 100 so a perfect test still tops
+        // out below 100% — the GWA (and full verification) happens only
+        // at the SAO, so the online score is never "complete".
         if ($gwa === null) {
-            $score = (int) round($score / 65 * 100);
+            $score    = min(95, (int) round($score / 65 * 95));
+            $issues[] = 'GWA not yet verified — will be checked at the SAO';
         }
 
         $score = min(100, max(0, $score));
