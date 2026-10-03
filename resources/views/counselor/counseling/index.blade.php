@@ -43,6 +43,7 @@
 <button type="button" onclick="openModal('scheduleModal-{{ $session->id }}')" class="btn btn-sm" style="background:#1a4a6b;color:#fff;" title="Schedule"><i class="fas fa-calendar-plus"></i></button>
 <button type="button" onclick="openModal('completeModal-{{ $session->id }}')" class="btn btn-s btn-sm" title="Complete"><i class="fas fa-check"></i></button>
 @endif
+<button type="button" class="btn btn-o btn-sm" style="background:var(--gp);color:var(--gm);" onclick="openNarrative({{ $session->id }})" title="AI Narrative Report"><i class="fas fa-robot"></i></button>
 <button type="button" class="btn btn-d btn-sm" data-ajax-delete="true" data-url="{{ route('counselor.counseling.destroy', $session->id) }}" data-confirm="Remove this counseling request?" title="Delete"><i class="fas fa-trash"></i></button>
 </div></td>
 </tr>
@@ -93,6 +94,24 @@
 @endif
 @endforeach
 
+{{-- AI Narrative Report Modal --}}
+<div class="mo" id="narrativeModal">
+<div class="mb" style="max-width:720px;">
+<div class="mh"><div class="si g" style="width:40px;height:40px;border-radius:11px;font-size:16px;flex-shrink:0;"><i class="fas fa-robot"></i></div><div><h3>AI Narrative Report</h3><div class="tm" style="font-size:12px;" id="narrativeSub">—</div></div><button class="mc" onclick="closeModal('narrativeModal')"><i class="fas fa-times"></i></button></div>
+<div class="mbody">
+<div id="narrativeLoading" style="text-align:center;padding:26px 10px;color:var(--tm);font-size:13px;">
+<div style="display:inline-flex;align-items:center;gap:9px;"><div style="width:15px;height:15px;border:2px solid var(--gm);border-top-color:transparent;border-radius:50%;animation:narSpin .7s linear infinite;"></div> Generating report with Groq AI...</div>
+</div>
+<div id="narrativeError" style="display:none;" class="alert al-d"><i class="fas fa-exclamation-circle"></i> <span id="narrativeErrorText"></span></div>
+<div id="narrativeReport" style="display:none;background:var(--bg);border:1px solid var(--bd);border-radius:var(--rs);padding:20px 22px;max-height:420px;overflow-y:auto;font-size:13.5px;line-height:1.75;white-space:pre-wrap;"></div>
+</div>
+<div class="mfoot"><button type="button" onclick="closeModal('narrativeModal')" class="btn btn-o btn-sm">Close</button><button type="button" id="narrativePrintBtn" style="display:none;" onclick="printNarrative()" class="btn btn-p btn-sm"><i class="fas fa-print"></i> Print Report</button></div>
+</div>
+</div>
+<style>
+@keyframes narSpin{to{transform:rotate(360deg);}}
+</style>
+
 <style>
 @media print{
 .sidebar,.topbar,.ai-bar,.card:first-of-type,.c-pagination,.btn,.mob-toggle{display:none !important;}
@@ -122,5 +141,48 @@ document.addEventListener('change',function(e){
         if(target) target.style.display=cb.checked?'':'none';
     }
 });
+// AI Narrative Report (Groq)
+var narrativeId = null, narrativeText = '', narrativeMeta = '';
+function openNarrative(id){
+    narrativeId = id;
+    openModal('narrativeModal');
+    document.getElementById('narrativeLoading').style.display='';
+    document.getElementById('narrativeError').style.display='none';
+    document.getElementById('narrativeReport').style.display='none';
+    document.getElementById('narrativePrintBtn').style.display='none';
+    document.getElementById('narrativeSub').textContent='Generating...';
+    var csrf=document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+    fetch('{{ route('counselor.counseling.narrative', '__ID__') }}'.replace('__ID__', id), {
+        method:'POST', headers:{'Content-Type':'application/json','X-CSRF-TOKEN':csrf,'X-Requested-With':'XMLHttpRequest','Accept':'application/json'}
+    }).then(function(r){ return r.json().catch(function(){ return {}; }); })
+      .then(function(d){
+          document.getElementById('narrativeLoading').style.display='none';
+          if(d.report){
+              narrativeText = d.report;
+              document.getElementById('narrativeReport').textContent = d.report;
+              document.getElementById('narrativeReport').style.display='';
+              document.getElementById('narrativePrintBtn').style.display='';
+              document.getElementById('narrativeSub').textContent='Generated with Groq AI — review before filing.';
+              window.isamsToast ? isamsToast(d.message || 'Narrative report generated.', 'success') : null;
+          } else {
+              document.getElementById('narrativeErrorText').textContent = d.message || 'Could not generate the report. Please try again.';
+              document.getElementById('narrativeError').style.display='';
+          }
+      }).catch(function(){
+          document.getElementById('narrativeLoading').style.display='none';
+          document.getElementById('narrativeErrorText').textContent='Network error while contacting the AI service.';
+          document.getElementById('narrativeError').style.display='';
+      });
+}
+function printNarrative(){
+    var w = window.open('', '_blank', 'width=820,height=900');
+    w.document.write('<html><head><title>Narrative Report</title><style>body{font-family:Georgia,serif;font-size:13px;line-height:1.8;color:#111;max-width:700px;margin:40px auto;padding:0 20px;white-space:pre-wrap;}h1{text-align:center;font-size:16px;}</style></head><body>');
+    w.document.write('<div style="text-align:center;font-weight:bold;">SAINT COLUMBAN COLLEGE</div><div style="text-align:center;font-size:11px;margin-bottom:18px;">Guidance Counseling Office — Narrative Report</div>');
+    w.document.write(document.getElementById('narrativeReport').textContent.replace(/&/g,'&amp;').replace(/</g,'&lt;'));
+    w.document.write('</body></html>');
+    w.document.close();
+    w.focus();
+    setTimeout(function(){ w.print(); }, 400);
+}
 </script>
 @endpush

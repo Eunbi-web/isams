@@ -15,6 +15,10 @@ use App\Http\Controllers\Scholarship\ReportController as ScholReport;
 use App\Http\Controllers\Scholarship\AnnouncementController as ScholAnn;
 use App\Http\Controllers\Scholarship\NotificationController as ScholNotif;
 use App\Http\Controllers\Scholarship\SettingsController as ScholSettings;
+use App\Http\Controllers\Scholarship\ScholarController as ScholScholar;
+use App\Http\Controllers\Scholarship\MonitoringController as ScholMonitor;
+use App\Http\Controllers\Admin\DsaReportController as AdminDsaReport;
+use App\Http\Controllers\Counselor\NarrativeReportController as CounselorNarrative;
 
 Route::middleware('guest')->group(function () {
     Route::get('/', [AuthController::class,'showLogin']);
@@ -141,6 +145,10 @@ Route::middleware(['auth','role:admin,officer'])->prefix('admin')->name('admin.'
     Route::get('notifications/dropdown',  [AdminNotif::class,'dropdown'])->name('notifications.dropdown');
     Route::post('notifications/mark-all', [AdminNotif::class,'markAllRead'])->name('notifications.mark-all');
 
+    // DSA Report — active scholars (printable / exportable, DSA portal only)
+    Route::get('dsa-report',        [AdminDsaReport::class,'index'])->name('dsa-report.index');
+    Route::get('dsa-report/export', [AdminDsaReport::class,'export'])->name('dsa-report.export');
+
     // Discipline Records (Admin)
     Route::get('discipline/export', [\App\Http\Controllers\Admin\DisciplineAdminController::class,'export'])->name('discipline.export');
     Route::get('discipline', [\App\Http\Controllers\Admin\DisciplineAdminController::class,'index'])->name('discipline.index');
@@ -224,6 +232,16 @@ Route::middleware(['auth','role:scholarship'])->prefix('scholarship')->name('sch
     // Notification dropdown routes
     Route::get('notifications/dropdown',  [ScholNotif::class,'dropdown'])->name('notifications.dropdown');
     Route::post('notifications/mark-all', [ScholNotif::class,'markAllRead'])->name('notifications.mark-all');
+
+    // Scholar List Management (maintained by the Accounting staff in the Scholarship Portal)
+    Route::get('scholars/import-external',  [ScholScholar::class,'importExternal'])->name('scholars.import-external');
+    Route::post('scholars/import-external', [ScholScholar::class,'importExternal'])->name('scholars.import-external.post');
+    Route::post('scholars/import-excel',    [ScholScholar::class,'importExcel'])->name('scholars.import-excel');
+    Route::resource('scholars', ScholScholar::class);
+
+    // Scholar Performance Monitoring (scholarship portal access only)
+    Route::get('monitoring',             [ScholMonitor::class,'index'])->name('monitoring.index');
+    Route::patch('monitoring/{scholar}', [ScholMonitor::class,'update'])->name('monitoring.update');
 });
 
 // COUNSELOR — Guidance Counseling Portal
@@ -253,6 +271,12 @@ Route::middleware(['auth','role:counselor'])->prefix('counselor')->name('counsel
 
     Route::get('settings', [CounselorSettings::class,'index'])->name('settings');
     Route::post('settings', [CounselorSettings::class,'update'])->name('settings.update');
+
+    // Scheduling mode toggle: queue-based vs time slot booking
+    Route::post('settings/scheduling', [CounselorSettings::class,'updateScheduling'])->name('settings.scheduling');
+
+    // AI-assisted Narrative Report (Groq)
+    Route::post('counseling/{counseling}/narrative', [CounselorNarrative::class,'generate'])->name('counseling.narrative');
 });
 
 // STUDENT
@@ -272,6 +296,9 @@ Route::middleware(['auth','role:student'])->prefix('student')->name('student.')-
     Route::post('notifications/mark-all', [StudentNotif::class,'markAllRead'])->name('notifications.mark-all');
 
     Route::get('counseling', [StudentCounseling::class,'index'])->name('counseling.index');
+    // Slot booking calendar availability (time slot scheduling mode)
+    Route::get('counseling/calendar', [StudentCounseling::class,'calendar'])->name('counseling.calendar');
+    Route::get('counseling/slots',    [StudentCounseling::class,'slots'])->name('counseling.slots');
     Route::post('counseling', [StudentCounseling::class,'store'])->name('counseling.store');
     // ADDED: student can cancel their counseling request
     Route::delete('counseling/{session}', [StudentCounseling::class,'destroy'])->name('counseling.destroy');

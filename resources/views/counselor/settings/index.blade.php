@@ -5,6 +5,30 @@
 @section('content')
 <div style="max-width:680px;">
 
+{{-- Scheduling Mode --}}
+<div class="card an mb3" style="border:2px solid var(--info);">
+<div class="ch" style="background:linear-gradient(135deg,#0a1f2e,#14507a);gap:12px;">
+<div class="si g" style="width:42px;height:42px;border-radius:12px;font-size:17px;"><i class="fas fa-calendar-check"></i></div>
+<div><h2 style="color:#fff;">Counseling Scheduling Mode</h2><div style="font-size:12px;color:rgba(255,255,255,.65);">How students request counseling sessions</div></div>
+</div>
+<div class="cb">
+<label class="fl">Active Mode</label>
+<div style="display:flex;gap:10px;flex-wrap:wrap;margin:8px 0 14px;">
+<button type="button" id="modeQueueBtn" onclick="setSchedulingMode('queue')" class="btn {{ $setting->scheduling_mode==='queue'?'btn-p':'btn-o' }}"><i class="fas fa-stream"></i> Queue-Based</button>
+<button type="button" id="modeSlotsBtn" onclick="setSchedulingMode('slots')" class="btn {{ $setting->scheduling_mode==='slots'?'btn-p':'btn-o' }}"><i class="fas fa-calendar-days"></i> Time Slot Booking</button>
+</div>
+<div id="queueModeInfo" class="alert al-i" style="font-size:12px;{{ $setting->scheduling_mode==='queue'?'':'display:none;' }}"><i class="fas fa-stream"></i><span><strong>Queue-Based:</strong> students submit a request and are automatically placed in the queue. You schedule each session manually.</span></div>
+<div id="slotsModeInfo" class="alert al-i" style="font-size:12px;{{ $setting->scheduling_mode==='slots'?'':'display:none;' }}"><i class="fas fa-calendar-days"></i><span><strong>Time Slot Booking:</strong> students pick a date on the calendar and book an open time slot. Fully booked dates and slots are greyed out and cannot be selected.</span></div>
+<div class="fg" id="capacityWrap" style="{{ $setting->scheduling_mode==='slots'?'':'display:none;' }}max-width:260px;"><label class="fl">Students per Time Slot</label>
+<select id="slotCapacity" class="fc">
+@for($c = 1; $c <= 5; $c++)
+<option value="{{ $c }}" {{ $setting->slot_capacity == $c ? 'selected' : '' }}>{{ $c }} student{{ $c > 1 ? 's' : '' }} per slot</option>
+@endfor
+</select></div>
+<div class="tm" style="font-size:12px;">The mode applies instantly to the student counseling page.</div>
+</div>
+</div>
+
 {{-- Appearance --}}
 <div class="card an mb3" style="border:2px solid var(--y);">
 <div class="ch" style="background:linear-gradient(135deg,#0d3318,#1a6b2f);gap:12px;">
@@ -49,8 +73,7 @@
 @endsection
 @push('scripts')
 <script>
-function isamsSetTheme(mode){
-    var resolved=mode;
+function isamsSetTheme(mode){    var resolved=mode;
     if(mode==='system'){
         var prefersDark=window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches;
         resolved=prefersDark?'dark':'light';
@@ -67,5 +90,28 @@ function isamsSetTheme(mode){
         body:JSON.stringify({theme:mode})
     }).catch(function(){});
 }
+
+var schedulingMode = '{{ $setting->scheduling_mode }}';
+function setSchedulingMode(mode){
+    var capacity = document.getElementById('slotCapacity').value;
+    var csrf = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+    document.getElementById('modeQueueBtn').className = 'btn ' + (mode==='queue'?'btn-p':'btn-o');
+    document.getElementById('modeSlotsBtn').className = 'btn ' + (mode==='slots'?'btn-p':'btn-o');
+    document.getElementById('queueModeInfo').style.display = mode==='queue' ? '' : 'none';
+    document.getElementById('slotsModeInfo').style.display = mode==='slots' ? '' : 'none';
+    document.getElementById('capacityWrap').style.display = mode==='slots' ? '' : 'none';
+    fetch('{{ route('counselor.settings.scheduling') }}', {
+        method:'POST',
+        headers:{'Content-Type':'application/json','X-CSRF-TOKEN':csrf,'X-Requested-With':'XMLHttpRequest','Accept':'application/json'},
+        body: JSON.stringify({ scheduling_mode: mode, slot_capacity: capacity })
+    }).then(function(r){ return r.json().catch(function(){ return {}; }); })
+      .then(function(d){
+          schedulingMode = mode;
+          window.isamsToast ? isamsToast(d.message || 'Scheduling mode updated.', 'success') : alert(d.message || 'Scheduling mode updated.');
+      }).catch(function(){ window.isamsToast ? isamsToast('Could not save the scheduling mode.', 'error') : null; });
+}
+document.addEventListener('change', function(e){
+    if (e.target && e.target.id === 'slotCapacity') setSchedulingMode(schedulingMode || 'queue');
+});
 </script>
 @endpush

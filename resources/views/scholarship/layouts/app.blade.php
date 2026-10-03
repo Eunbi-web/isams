@@ -174,9 +174,11 @@ body[data-theme="light"]{--bg:#f2f7f3;--card:#fff;--sb:#0d3318;--st:#90c8a0;--tx
 <a href="{{ route('scholarship.dashboard') }}" class="nav-a {{ request()->routeIs('scholarship.dashboard')?'active':'' }}"><i class="fas fa-th-large"></i> Dashboard</a></div>
 <div class="sb-sec"><div class="sb-lbl">Scholarship</div>
 <a href="{{ route('scholarship.programs.index') }}" class="nav-a {{ request()->routeIs('scholarship.programs*')?'active':'' }}"><i class="fas fa-award"></i> Programs</a>
-<a href="{{ route('scholarship.scraper.index') }}" class="nav-a {{ request()->routeIs('scholarship.scraper*')?'active':'' }}"><i class="fas fa-flag"></i> PH Scholarship Sync<span class="nav-badge ph">PH</span></a>
 <a href="{{ route('scholarship.applications.index') }}" class="nav-a {{ request()->routeIs('scholarship.applications*')?'active':'' }}"><i class="fas fa-file-alt"></i> Applications</a>
 <a href="{{ route('scholarship.ai.index') }}" class="nav-a {{ request()->routeIs('scholarship.ai*')?'active':'' }}"><i class="fas fa-robot"></i> AI Filter<span class="nav-badge">AI</span></a></div>
+<div class="sb-sec"><div class="sb-lbl">Scholars</div>
+<a href="{{ route('scholarship.scholars.index') }}" class="nav-a {{ request()->routeIs('scholarship.scholars*')?'active':'' }}"><i class="fas fa-list-check"></i> Scholar List</a>
+<a href="{{ route('scholarship.monitoring.index') }}" class="nav-a {{ request()->routeIs('scholarship.monitoring*')?'active':'' }}"><i class="fas fa-chart-line"></i> Performance Monitoring</a></div>
 <div class="sb-sec"><div class="sb-lbl">Students and Reports</div>
 <a href="{{ route('scholarship.students.index') }}" class="nav-a {{ request()->routeIs('scholarship.students*')?'active':'' }}"><i class="fas fa-users"></i> Students</a>
 <a href="{{ route('scholarship.reports.index') }}" class="nav-a {{ request()->routeIs('scholarship.reports*')?'active':'' }}"><i class="fas fa-chart-bar"></i> Reports</a></div>

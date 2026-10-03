@@ -18,7 +18,6 @@
 <a href="{{ route('scholarship.ai.index') }}" class="btn btn-ai btn-sm"><i class="fas fa-robot"></i> AI Filter</a>
 <form method="POST" action="{{ route('scholarship.ai.run') }}">@csrf<button class="btn btn-ac btn-sm"><i class="fas fa-play"></i> Run AI Scan</button></form>
 <a href="{{ route('scholarship.programs.create') }}" class="btn btn-o btn-sm"><i class="fas fa-award"></i> Add Program</a>
-<a href="{{ route('scholarship.scraper.index') }}" class="btn btn-o btn-sm"><i class="fas fa-flag"></i> PH Scholarship Sync</a>
 <a href="{{ route('scholarship.reports.index') }}" class="btn btn-ac btn-sm"><i class="fas fa-chart-bar"></i> Reports</a>
 </div></div>
 <div class="card an"><div class="ch"><i class="fas fa-robot" style="color:var(--yd);"></i><h2>AI Eligibility Summary</h2><div class="ch-acts"><a href="{{ route('scholarship.ai.index') }}" class="btn btn-ai btn-sm"><i class="fas fa-robot"></i> Full Filter</a></div></div>
