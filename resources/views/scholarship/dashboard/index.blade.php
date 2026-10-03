@@ -14,12 +14,11 @@
 <div class="g2 mb3">
 <div class="card an"><div class="ch"><i class="fas fa-bolt" style="color:var(--yd);"></i><h2>Quick Actions</h2></div>
 <div class="cb" style="display:flex;flex-wrap:wrap;gap:9px;">
-<a href="{{ route('scholarship.ai.index') }}" class="btn btn-ai btn-sm"><i class="fas fa-robot"></i> AI Filter</a>
-<form method="POST" action="{{ route('scholarship.ai.run') }}">@csrf<button class="btn btn-ac btn-sm"><i class="fas fa-play"></i> Run AI Scan</button></form>
+<a href="{{ route('scholarship.ai.index') }}" class="btn btn-ai btn-sm"><i class="fas fa-wand-magic-sparkles"></i> AI Narrative Report</a>
 <a href="{{ route('scholarship.programs.create') }}" class="btn btn-o btn-sm"><i class="fas fa-award"></i> Add Program</a>
 <a href="{{ route('scholarship.reports.index') }}" class="btn btn-ac btn-sm"><i class="fas fa-chart-bar"></i> Reports</a>
 </div></div>
-<div class="card an"><div class="ch"><i class="fas fa-robot" style="color:var(--yd);"></i><h2>AI Eligibility Summary</h2><div class="ch-acts"><a href="{{ route('scholarship.ai.index') }}" class="btn btn-ai btn-sm"><i class="fas fa-robot"></i> Full Filter</a></div></div>
+<div class="card an"><div class="ch"><i class="fas fa-robot" style="color:var(--yd);"></i><h2>AI Eligibility Summary</h2><div class="ch-acts"><a href="{{ route('scholarship.ai.index') }}" class="btn btn-ai btn-sm"><i class="fas fa-wand-magic-sparkles"></i> AI Narrative Report</a></div></div>
 <div class="cb">
 @foreach([['Eligible',$stats['eligible'],'g','check-circle','ash'],['For Review',$stats['for_review'],'y','exclamation-circle','asm']] as $c)
 <div style="display:flex;align-items:center;gap:13px;padding:13px 0;border-bottom:1px solid var(--bd);">
@@ -27,11 +26,11 @@
 <div style="flex:1;"><div style="display:flex;justify-content:space-between;margin-bottom:5px;"><span class="fws">{{ $c[0] }}</span><span class="fwb">{{ $c[1] }}</span></div><div class="asb"><div class="asf {{ $c[4] }}" style="width:{{ $stats['eligible'] + $stats['for_review'] > 0 ? round($c[1] / max($stats['eligible'] + $stats['for_review'],1) * 100) : 0 }}%;"></div></div></div>
 </div>
 @endforeach
-<div class="alert al-ai mt3" style="margin-bottom:0;font-size:12px;"><i class="fas fa-lightbulb"></i><span><strong>AI Insight:</strong> Run a fresh AI scan to update all eligibility scores.</span></div>
+<div class="alert al-ai mt3" style="margin-bottom:0;font-size:12px;"><i class="fas fa-lightbulb"></i><span><strong>AI Insight:</strong> Generate an AI Narrative Report for a formal, ready-to-print summary of scholar monitoring.</span></div>
 </div></div>
 </div>
 <div class="card an">
-<div class="ch"><i class="fas fa-file-alt" style="color:var(--gm);"></i><h2>Recent Applications</h2><div class="ch-acts"><a href="{{ route('scholarship.applications.index') }}" class="btn btn-o btn-sm">View All</a><a href="{{ route('scholarship.ai.index') }}" class="btn btn-ai btn-sm"><i class="fas fa-robot"></i> AI Filter</a></div></div>
+<div class="ch"><i class="fas fa-file-alt" style="color:var(--gm);"></i><h2>Recent Applications</h2><div class="ch-acts"><a href="{{ route('scholarship.applications.index') }}" class="btn btn-o btn-sm">View All</a><a href="{{ route('scholarship.ai.index') }}" class="btn btn-ai btn-sm"><i class="fas fa-wand-magic-sparkles"></i> AI Narrative Report</a></div></div>
 <div class="tw"><table><thead><tr><th>Student</th><th>Scholarship</th><th>GWA</th><th>AI Score</th><th>Eligibility</th><th>Status</th><th>Actions</th></tr></thead>
 <tbody>
 @php $recentApps = \App\Models\ScholarshipApplication::with(['student','scholarship'])->latest()->take(8)->get(); @endphp

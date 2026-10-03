@@ -9,7 +9,7 @@ use App\Http\Controllers\Scholarship\DashboardController as ScholDash;
 use App\Http\Controllers\Scholarship\ProgramController as ScholProgram;
 use App\Http\Controllers\Scholarship\ScraperController as ScholScraper;
 use App\Http\Controllers\Scholarship\ApplicationController as ScholApp;
-use App\Http\Controllers\Scholarship\AiController as ScholAi;
+use App\Http\Controllers\Scholarship\AiReportController as ScholAiReport;
 use App\Http\Controllers\Scholarship\StudentController as ScholStudent;
 use App\Http\Controllers\Scholarship\ReportController as ScholReport;
 use App\Http\Controllers\Scholarship\AnnouncementController as ScholAnn;
@@ -19,6 +19,7 @@ use App\Http\Controllers\Scholarship\ScholarController as ScholScholar;
 use App\Http\Controllers\Scholarship\MonitoringController as ScholMonitor;
 use App\Http\Controllers\Admin\DsaReportController as AdminDsaReport;
 use App\Http\Controllers\Admin\NarrativeReportController as AdminNarrative;
+use App\Http\Controllers\Admin\AiReportController as AdminAiReport;
 use App\Http\Controllers\Counselor\NarrativeReportController as CounselorNarrative;
 use App\Http\Controllers\Scholarship\ProgramUpdateController as ScholProgramUpdate;
 
@@ -154,6 +155,14 @@ Route::middleware(['auth','role:admin,officer'])->prefix('admin')->name('admin.'
     // AI-assisted Narrative Report (Groq) — DSA portal
     Route::post('counseling/{counseling}/narrative', [AdminNarrative::class,'generate'])->name('counseling.narrative');
 
+    // ISAMS AI Comprehensive Report Generator — one Groq-powered narrative +
+    // summative report combining scholarship monitoring and counseling data
+    Route::get('ai-reports',               [AdminAiReport::class,'index'])->name('ai-reports.index');
+    Route::post('ai-reports/generate',     [AdminAiReport::class,'generate'])->name('ai-reports.generate');
+    Route::get('ai-reports/{report}/view', [AdminAiReport::class,'view'])->name('ai-reports.view');
+    Route::get('ai-reports/{report}/pdf',  [AdminAiReport::class,'pdf'])->name('ai-reports.pdf');
+    Route::get('ai-reports/{report}/word', [AdminAiReport::class,'word'])->name('ai-reports.word');
+
     // Discipline Records (Admin)
     Route::get('discipline/export', [\App\Http\Controllers\Admin\DisciplineAdminController::class,'export'])->name('discipline.export');
     Route::get('discipline', [\App\Http\Controllers\Admin\DisciplineAdminController::class,'index'])->name('discipline.index');
@@ -217,11 +226,13 @@ Route::middleware(['auth','role:scholarship'])->prefix('scholarship')->name('sch
     Route::patch('applications/{application}/reject',  [ScholApp::class,'reject'])->name('applications.reject');
     Route::patch('applications/{application}/status',  [ScholApp::class,'updateStatus'])->name('applications.updateStatus');
 
-    Route::get('ai', [ScholAi::class,'index'])->name('ai.index');
-    Route::post('ai/run',                      [ScholAi::class,'index'])->name('ai.run');
-    Route::get('ai/results',                   [ScholAi::class,'index'])->name('ai.results');
-    Route::post('ai/{application}/run-single', [ScholAi::class,'runSingle'])->name('ai.runSingle');
-    Route::patch('ai/{application}/status',    [ScholAi::class,'updateStatus'])->name('ai.updateStatus');
+    // AI-assisted Narrative Report (Groq) — Scholarship Portal.
+    // Replaces the former "AI Filter" screening page.
+    Route::get('ai',               [ScholAiReport::class,'index'])->name('ai.index');
+    Route::post('ai/generate',     [ScholAiReport::class,'generate'])->name('ai.generate');
+    Route::get('ai/{report}/view', [ScholAiReport::class,'view'])->name('ai.view');
+    Route::get('ai/{report}/pdf',  [ScholAiReport::class,'pdf'])->name('ai.pdf');
+    Route::get('ai/{report}/word', [ScholAiReport::class,'word'])->name('ai.word');
 
     Route::get('students/export', [ScholStudent::class,'export'])->name('students.export');
     Route::get('students/import', [ScholStudent::class,'importForm'])->name('students.import-form');

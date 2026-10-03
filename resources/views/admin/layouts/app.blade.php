@@ -181,7 +181,8 @@ body[data-theme="light"]{--bg:#f2f7f3;--card:#fff;--sb:#0d3318;--st:#90c8a0;--tx
 <a href="{{ route('admin.letters.index') }}" class="nav-a {{ request()->routeIs('admin.letters*')?'active':'' }}"><i class="fas fa-box"></i> Confiscated Letters @if($pendingLetters > 0)<span class="nav-badge">{{ $pendingLetters }}</span>@endif</a>
 <a href="{{ route('admin.messages.index') }}" class="nav-a {{ request()->routeIs('admin.messages*')?'active':'' }}"><i class="fas fa-envelope"></i> Messages</a>
 <a href="{{ route('admin.reports.index') }}" class="nav-a {{ request()->routeIs('admin.reports*')?'active':'' }}"><i class="fas fa-chart-bar"></i> Reports</a>
-<a href="{{ route('admin.dsa-report.index') }}" class="nav-a {{ request()->routeIs('admin.dsa-report*')?'active':'' }}"><i class="fas fa-award"></i> DSA Report</a></div>
+<a href="{{ route('admin.dsa-report.index') }}" class="nav-a {{ request()->routeIs('admin.dsa-report*')?'active':'' }}"><i class="fas fa-award"></i> DSA Report</a>
+<a href="{{ route('admin.ai-reports.index') }}" class="nav-a {{ request()->routeIs('admin.ai-reports*')?'active':'' }}"><i class="fas fa-wand-magic-sparkles"></i> AI Comprehensive Report<span class="nav-badge">AI</span></a></div>
 <div class="sb-sec"><div class="sb-lbl">Account</div>
 {{-- Notifications removed from sidebar — now in topbar bell icon --}}
 <a href="{{ route('admin.settings.index') }}" class="nav-a {{ request()->routeIs('admin.settings*')?'active':'' }}"><i class="fas fa-cog"></i> Settings</a></div>

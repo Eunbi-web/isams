@@ -13,7 +13,7 @@
 </form>
 <div style="display:flex;gap:8px;">
 <a href="{{ route('scholarship.applications.create') }}" class="btn btn-p btn-sm"><i class="fas fa-plus"></i> New Application</a>
-<a href="{{ route('scholarship.ai.index') }}" class="btn btn-ai btn-sm"><i class="fas fa-robot"></i> AI Filter</a>
+<a href="{{ route('scholarship.ai.index') }}" class="btn btn-ai btn-sm"><i class="fas fa-wand-magic-sparkles"></i> AI Narrative Report</a>
 </div>
 </div>
 <div class="card an">
