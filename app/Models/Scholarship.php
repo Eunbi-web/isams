@@ -8,5 +8,21 @@ class Scholarship extends Model {
     protected $casts    = ['start_date'=>'date','end_date'=>'date','amount'=>'decimal:2','ai_criteria'=>'array'];
     public function applications() { return $this->hasMany(ScholarshipApplication::class); }
     public function grantees()     { return $this->belongsToMany(Student::class,'scholarship_grantees')->withPivot(['status','gwa_at_award','awarded_at','remarks'])->withTimestamps(); }
-    public function getSlotsRemainingAttribute(): int { return max(0, ($this->slots ?? 0) - $this->applications()->where('status','Approved')->count()); }
+
+    // A slot is consumed as soon as an application is recorded (Pending or
+    // Approved); a rejected application releases its slot. Null slots means
+    // unlimited — returns -1 so callers can distinguish "none left" from
+    // "not capped".
+    public function getSlotsRemainingAttribute(): int {
+        if ($this->slots === null) return -1;
+        $used = $this->applications->where('status','!=','Rejected')->count();
+        return max(0, $this->slots - $used);
+    }
+
+    // Closed once the deadline passed or all slots are taken. Scholarships
+    // with no end date stay open (Open / TBA).
+    public function getIsClosedAttribute(): bool {
+        if ($this->end_date && $this->end_date->isPast()) return true;
+        return $this->slots !== null && $this->slots_remaining <= 0;
+    }
 }

@@ -139,14 +139,19 @@ class AiController extends Controller {
         $issues = [];
         $tags   = [];
 
-        // GWA — 40 pts
-        $gwa = (float) ($application->gwa ?? 5.0);
-        if ($gwa <= $gwaMax) {
-            $gwaScore = round(40 * ($gwaMax / max($gwa, 0.01)));
-            $score += min(40, $gwaScore);
-            if ($gwa <= 1.25) { $score += 5; $tags[] = 'Excellence GWA'; }
-        } else {
-            $issues[] = "GWA {$gwa} exceeds required {$gwaMax}";
+        // GWA — 40 pts. When no GWA is on file (the student's online
+        // Eligibility Test no longer collects it — it is verified physically
+        // at the SAO), the GWA component is skipped and the remaining 65 pts
+        // are rescaled to 100 at the bottom.
+        $gwa = $application->gwa !== null ? (float) $application->gwa : null;
+        if ($gwa !== null) {
+            if ($gwa <= $gwaMax) {
+                $gwaScore = round(40 * ($gwaMax / max($gwa, 0.01)));
+                $score += min(40, $gwaScore);
+                if ($gwa <= 1.25) { $score += 5; $tags[] = 'Excellence GWA'; }
+            } else {
+                $issues[] = "GWA {$gwa} exceeds required {$gwaMax}";
+            }
         }
 
         // Enrollment — 20 pts
@@ -187,6 +192,12 @@ class AiController extends Controller {
             }
         } else {
             $score += 10;
+        }
+
+        // No GWA on file → the max reachable raw score is 65
+        // (enrollment 20 + no-failing 20 + income 15 + discipline 10).
+        if ($gwa === null) {
+            $score = (int) round($score / 65 * 100);
         }
 
         $score = min(100, max(0, $score));

@@ -59,7 +59,6 @@ class EligibilityController extends Controller {
                 } else {
                     // Run AI evaluation using the student's test data
                     $mockApp = new \App\Models\ScholarshipApplication([
-                        'gwa'             => $profile->gwa ?? 2.5,
                         'enrollment_type' => $profile->enrollment_type,
                         'has_failing'     => $profile->has_failing,
                         'has_discipline'  => $profile->has_discipline,
@@ -95,6 +94,12 @@ class EligibilityController extends Controller {
      * Step 1/3 — save (or update) the student's eligibility test data,
      * then re-run the test. The saved row powers the Edit function:
      * the form is pre-filled from it on every visit.
+     *
+     * GWA is deliberately NOT collected here (students could mistype or
+     * misstate it) — it is verified physically at the SAO. Documents
+     * (School ID photo, Certificate of Enrollment) arrive as compressed
+     * base64 data URLs from the page JS and are stored in the DB so they
+     * persist on Vercel's ephemeral filesystem.
      */
     public function saveProfile(Request $request) {
         $user    = auth()->user();
@@ -104,26 +109,58 @@ class EligibilityController extends Controller {
             return back()->with('error', 'No student record is linked to your account.');
         }
 
+        $existing = EligibilityProfile::where('student_id', $student->id)->first();
+
         $data = $request->validate([
-            'gwa'             => ['required','numeric','min:1','max:5'],
             'year_level'      => ['required','in:'.implode(',', self::YEAR_LEVELS)],
             'enrollment_type' => ['required','in:'.implode(',', self::ENROLLMENT_TYPES)],
-            'income_bracket'  => ['required','in:'.implode(',', array_keys(self::INCOME_BRACKETS))],
+            'family_income'   => ['required','numeric','min:0','max:99999999'],
             'academic_honors' => ['required','in:'.implode(',', self::ACADEMIC_HONORS)],
             'has_failing'     => ['required','in:0,1'],
             'has_discipline'  => ['required','in:0,1'],
+            'school_id_data'  => [$existing?->school_id_photo ? 'nullable' : 'required','string','max:2800000'],
+            'coe_data'        => [$existing?->coe_file       ? 'nullable' : 'required','string','max:2800000'],
+        ], [
+            'school_id_data.required' => 'Please upload or take a photo of your School ID.',
+            'coe_data.required'       => 'Please upload your Certificate of Enrollment.',
+            'school_id_data.max'      => 'The School ID photo is too large (max ~2 MB).',
+            'coe_data.max'            => 'The Certificate of Enrollment file is too large (max ~2 MB).',
         ]);
+
+        $imageTypes  = ['data:image/jpeg;base64,', 'data:image/png;base64,', 'data:image/webp;base64,'];
+        $allowedMime = $imageTypes;
+        foreach (['school_id_data' => 'school_id_photo', 'coe_data' => 'coe_file'] as $field => $column) {
+            if (!empty($data[$field])) {
+                if ($field === 'coe_data') {
+                    $allowedMime = array_merge($imageTypes, ['data:application/pdf;base64,']);
+                }
+                $payload = substr($data[$field], strpos($data[$field], ',') + 1);
+                $valid = str_starts_with($data[$field], 'data:')
+                    && in_array(substr($data[$field], 0, strpos($data[$field], ',') + 1), $allowedMime, true)
+                    && base64_decode($payload, true) !== false;
+                if (!$valid) {
+                    return back()->withInput()->with('error', 'Invalid file format. Please upload a photo'.($field === 'coe_data' ? ' or PDF' : '').' of your document.');
+                }
+            }
+        }
+
+        // Derive the income bracket used by the AI scoring from the actual
+        // family income the student typed in.
+        $income = (float) $data['family_income'];
+        $bracket = $income <= 200000 ? 'below_200' : ($income <= 400000 ? '200_400' : 'above_400');
 
         EligibilityProfile::updateOrCreate(
             ['student_id' => $student->id],
             [
-                'gwa'             => $data['gwa'],
                 'year_level'      => $data['year_level'],
                 'enrollment_type' => $data['enrollment_type'],
-                'income_bracket'  => $data['income_bracket'],
+                'family_income'   => $income,
+                'income_bracket'  => $bracket,
                 'academic_honors' => $data['academic_honors'],
                 'has_failing'     => (bool) $data['has_failing'],
                 'has_discipline'  => (bool) $data['has_discipline'],
+                'school_id_photo' => $data['school_id_data'] ?? $existing?->school_id_photo,
+                'coe_file'        => $data['coe_data']       ?? $existing?->coe_file,
             ]
         );
 
@@ -160,7 +197,6 @@ class EligibilityController extends Controller {
         $bestElig = 'Not Eligible';
         foreach ($scholarships as $i => $sch) {
             $mockApp = new \App\Models\ScholarshipApplication([
-                'gwa'             => $profile->gwa ?? 2.5,
                 'enrollment_type' => $profile->enrollment_type,
                 'has_failing'     => $profile->has_failing,
                 'has_discipline'  => $profile->has_discipline,
@@ -178,17 +214,14 @@ class EligibilityController extends Controller {
                 .' | '.\Illuminate\Support\Str::limit($r['reasoning'], 80);
         }
 
-        $bracketLabel = self::INCOME_BRACKETS[$profile->income_bracket] ?? ($profile->income_bracket ?? 'N/A');
-
         $nl = "\n";
 
         $profileText = 'STUDENT PROFILE:'.$nl
             .'Name: '.($user->name ?? 'Student').$nl
             .'Course: '.($student?->course ?? 'N/A').' '.($profile->year_level ?? '').$nl
-            .'GWA: '.number_format((float)($profile->gwa ?? 5.0), 2).$nl
             .'Enrollment: '.($profile->enrollment_type ?? 'N/A').$nl
             .'Academic Honors: '.($profile->academic_honors ?? 'None').$nl
-            .'Income Bracket: '.$bracketLabel.$nl
+            .'Annual Family Income: ₱'.number_format((float)($profile->family_income ?? 0)).$nl
             .'Best AI Score: '.$best.'% ('.$bestElig.')'.$nl;
 
         $schList = 'SCHOLARSHIP SCORES:'.$nl.implode($nl, $lines).$nl.$nl;
@@ -206,25 +239,23 @@ class EligibilityController extends Controller {
                 .'5. NEXT STEPS: 3 concrete actions for this semester.'.$nl.$nl
                 .'Write formally. Plain text only. No asterisks or hashtags. This will be printed.',
             'gap' => $base.'Generate a detailed GAP ANALYSIS for this student.'.$nl.$nl
-                .'STUDENT: '.($user->name ?? 'Student').' | GWA:'.number_format((float)($profile->gwa ?? 5.0),2)
-                .' | '.($profile->enrollment_type ?? 'N/A').' | Income:'.$bracketLabel.$nl.$nl
+                .'STUDENT: '.($user->name ?? 'Student').' | Annual Income:₱'.number_format((float)($profile->family_income ?? 0))
+                .' | '.($profile->enrollment_type ?? 'N/A').$nl.$nl
                 .$schList
                 .'For each scholarship, provide:'.$nl
                 .'- Current score vs needed score (75% to be eligible)'.$nl
                 .'- Exact gap in points'.$nl
-                .'- Specific actions to close the gap (e.g., "Improve GWA by 0.10 to gain 8 more points")'.$nl
-                .'- Timeline estimate (e.g., "Achievable next semester if GWA improves")'.$nl.$nl
+                .'- Specific actions to close the gap'.$nl
+                .'- Timeline estimate'.$nl.$nl
                 .'Be specific with numbers. Plain text only. No asterisks, no markdown, no tables. Helpful and encouraging tone.',
             'plan' => $base.'Generate a PRIORITY ACTION PLAN for this student to maximize scholarship eligibility.'.$nl.$nl
-                .'STUDENT: '.($user->name ?? 'Student').' | GWA:'.number_format((float)($profile->gwa ?? 5.0),2)
-                .' | '.($profile->enrollment_type ?? 'N/A').' | Income:'.$bracketLabel.' | Best Score:'.$best.'%'.$nl.$nl
+                .'STUDENT: '.($user->name ?? 'Student').' | Annual Income:₱'.number_format((float)($profile->family_income ?? 0)).' | Best Score:'.$best.'%'.$nl.$nl
                 .$schList
                 .'Create a numbered action plan with:'.$nl
-                .'1. Immediate actions (this week) - e.g., visit SAO for forms, update profile'.$nl
+                .'1. Immediate actions (this week) - e.g., visit SAO for forms, upload School ID and Certificate of Enrollment'.$nl
                 .'2. Short-term actions (this semester) - e.g., academic improvements needed'.$nl
                 .'3. Documents to prepare before applying physically at SAO'.$nl
-                .'4. Specific GWA target needed to unlock more scholarships'.$nl
-                .'5. Which scholarship to prioritize applying for first and why'.$nl.$nl
+                .'4. Which scholarship to prioritize applying for first and why'.$nl.$nl
                 .'Note: All applications are done physically at the Student Affairs Office. Do not say apply online.'.$nl
                 .'Be specific, encouraging, and practical. Plain text only. No asterisks, no markdown, no tables.',
         ];

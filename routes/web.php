@@ -3,7 +3,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\Admin\{DashboardController as AdminDash, ScholarshipController as AdminScholarship, ApplicationController as AdminApp, AiController as AdminAi, StudentController as AdminStudent, ReportController as AdminReport, AnnouncementController as AdminAnn, NotificationController as AdminNotif, SettingsController as AdminSettings, ScraperController as AdminScraper, ComplaintController as AdminComplaint, MessageController as AdminMessage, ConfiscatedItemLetterController as AdminLetter};
 use App\Http\Controllers\Counselor\{DashboardController as CounselorDash, CounselingController as CounselorCounseling, AnnouncementController as CounselorAnn, DisciplineController as CounselorDiscipline, NotificationController as CounselorNotif, SettingsController as CounselorSettings};
-use App\Http\Controllers\Student\{DashboardController as StudentDash, ScholarshipController as StudentScholarship, ApplicationController as StudentApp, EligibilityController as StudentEligibility, CounselingController as StudentCounseling, AnnouncementController as StudentAnn, NotificationController as StudentNotif, ProfileController as StudentProfile, ComplaintController as StudentComplaint, ConfiscatedItemLetterController as StudentLetter, MessageController as StudentMessage};
+use App\Http\Controllers\Student\{DashboardController as StudentDash, ScholarshipController as StudentScholarship, EligibilityController as StudentEligibility, CounselingController as StudentCounseling, AnnouncementController as StudentAnn, NotificationController as StudentNotif, ProfileController as StudentProfile, ComplaintController as StudentComplaint, ConfiscatedItemLetterController as StudentLetter, MessageController as StudentMessage};
 use App\Http\Controllers\SuperAdmin\{DashboardController as SADash, UserController as SAUser, LogController as SALog, MonitoringController as SAMonitor};
 use App\Http\Controllers\Scholarship\DashboardController as ScholDash;
 use App\Http\Controllers\Scholarship\ProgramController as ScholProgram;
@@ -260,10 +260,8 @@ Route::middleware(['auth','role:student'])->prefix('student')->name('student.')-
     Route::get('dashboard', [StudentDash::class,'index'])->name('dashboard');
     Route::get('scholarships', [StudentScholarship::class,'index'])->name('scholarships');
     Route::get('scholarships/{id}', [StudentScholarship::class,'show'])->name('scholarships.show');
-    Route::get('applications', [StudentApp::class,'index'])->name('applications');
-    Route::get('apply/{scholarship}', [StudentApp::class,'create'])->name('apply');
-    Route::post('applications', [StudentApp::class,'store'])->name('applications.store');
-    Route::get('applications/{id}', [StudentApp::class,'show'])->name('applications.show');
+    // Applications are filed physically at the Student Affairs Office — the
+    // student portal is view-only, so there are no online apply routes.
     Route::get('eligibility', [StudentEligibility::class,'index'])->name('eligibility');
     // Eligibility Test: save/update the student's data, then re-run the test
     Route::post('eligibility/profile', [StudentEligibility::class,'saveProfile'])->name('eligibility.profile');

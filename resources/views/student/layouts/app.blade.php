@@ -177,7 +177,6 @@ body[data-theme="dark"] ::-webkit-scrollbar-thumb{background:#28405e;}
 <a href="{{ route('student.dashboard') }}" class="nav-a {{ request()->routeIs('student.dashboard')?'active':'' }}"><i class="fas fa-th-large"></i> Dashboard</a></div>
 <div class="sb-sec"><div class="sb-lbl">Scholarship</div>
 <a href="{{ route('student.scholarships') }}" class="nav-a {{ request()->routeIs('student.scholarships*')?'active':'' }}"><i class="fas fa-award"></i> Scholarships</a>
-<a href="{{ route('student.applications') }}" class="nav-a {{ request()->routeIs('student.applications*')?'active':'' }}"><i class="fas fa-file-alt"></i> My Applications</a>
 <a href="{{ route('student.eligibility') }}" class="nav-a {{ request()->routeIs('student.eligibility*')?'active':'' }}"><i class="fas fa-clipboard-check"></i> Eligibility Test<span class="nav-badge">AI</span></a></div>
 <div class="sb-sec"><div class="sb-lbl">Services</div>
 <a href="{{ route('student.counseling.index') }}" class="nav-a {{ request()->routeIs('student.counseling*')?'active':'' }}"><i class="fas fa-heart"></i> Counseling</a>

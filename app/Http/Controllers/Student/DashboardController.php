@@ -6,7 +6,6 @@ use App\Http\Controllers\Admin\AiController;
 class DashboardController extends Controller {
     public function index() {
         $student = auth()->user()->student;
-        $myApplications = $student ? ScholarshipApplication::where('student_id',$student->id)->with('scholarship')->latest()->take(3)->get() : collect();
         $openScholarships = Scholarship::where('status','Active')->take(3)->get();
         $announcements = Announcement::latest()->take(3)->get();
 
@@ -24,7 +23,6 @@ class DashboardController extends Controller {
             $activeScholarships = Scholarship::where('status','Active')->get();
             foreach ($activeScholarships as $sch) {
                 $mockApp = new ScholarshipApplication([
-                    'gwa'             => $profile->gwa ?? 2.5,
                     'enrollment_type' => $profile->enrollment_type,
                     'has_failing'     => $profile->has_failing,
                     'has_discipline'  => $profile->has_discipline,
@@ -45,7 +43,7 @@ class DashboardController extends Controller {
         }
 
         return view('student.dashboard.index', compact(
-            'myApplications','openScholarships','announcements','student',
+            'openScholarships','announcements','student',
             'profile','aiScore','eligibility','eligibleCount'
         ));
     }

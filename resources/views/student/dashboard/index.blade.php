@@ -4,18 +4,17 @@
 @section('page-sub','Welcome back — ISAMS Student Portal')
 @section('content')
 @php
-$bracketLabels = \App\Http\Controllers\Student\EligibilityController::INCOME_BRACKETS;
 $hasTest = $profile !== null;
 @endphp
 <div style="background:linear-gradient(135deg,#0d5c24,#1a6b2f);border-radius:var(--r);padding:20px 24px;display:flex;align-items:center;gap:18px;margin-bottom:20px;border:1px solid var(--gm);" class="an">
 <div style="width:56px;height:56px;border-radius:16px;background:rgba(255,255,255,.15);display:flex;align-items:center;justify-content:center;font-size:24px;color:#fff;flex-shrink:0;"><i class="fas fa-{{ $eligibility==='Eligible'?'check-circle':($hasTest?'exclamation-circle':'robot') }}"></i></div>
 <div style="flex:1;"><div style="font-family:'Sora',sans-serif;font-size:20px;font-weight:800;color:#fff;">{{ $eligibility==='Eligible'?'You are Eligible!':($eligibility==='For Review'?'Partially Qualified':'Check Your Eligibility') }}</div>
 @if($hasTest)
-<div style="font-size:13px;color:rgba(255,255,255,.75);margin-top:3px;">From your Eligibility Test: GWA <strong style="color:#fff;">{{ number_format((float)$profile->gwa,2) }}</strong> · {{ $profile->year_level }} · {{ $profile->enrollment_type }} · {{ $bracketLabels[$profile->income_bracket] ?? 'N/A' }} · {{ $profile->academic_honors }}</div>
+<div style="font-size:13px;color:rgba(255,255,255,.75);margin-top:3px;">From your Eligibility Test: Annual Family Income <strong style="color:#fff;">₱{{ number_format((float)($profile->family_income ?? 0)) }}</strong> · {{ $profile->year_level }} · {{ $profile->enrollment_type }} · {{ $profile->academic_honors }}</div>
 <div style="font-size:12px;color:rgba(255,255,255,.65);margin-top:2px;">Eligible for <strong style="color:#fff;">{{ $eligibleCount }}</strong> active scholarship{{ $eligibleCount!=1?'s':'' }} · updated {{ $profile->updated_at?->format('M d, Y') }}</div>
 <div style="margin-top:10px;"><a href="{{ route('student.eligibility') }}" class="btn btn-ac btn-sm" style="font-size:11px;"><i class="fas fa-clipboard-check"></i> View Eligibility Test</a></div>
 @else
-<div style="font-size:13px;color:rgba(255,255,255,.75);margin-top:3px;">GWA: <strong style="color:#fff;">{{ number_format($student?->gwa??0,2) }}</strong> · {{ $student?->enrollment_type??'N/A' }} · {{ Str::limit($student?->course??'N/A',30) }}</div>
+<div style="font-size:13px;color:rgba(255,255,255,.75);margin-top:3px;">{{ $student?->enrollment_type??'N/A' }} · {{ Str::limit($student?->course??'N/A',30) }}</div>
 <div style="margin-top:10px;"><a href="{{ route('student.eligibility') }}" class="btn btn-ac btn-sm" style="font-size:11px;"><i class="fas fa-clipboard-check"></i> Take Eligibility Test</a></div>
 @endif
 </div>
@@ -23,18 +22,19 @@ $hasTest = $profile !== null;
 </div>
 <div class="sg" style="grid-template-columns:repeat(4,1fr);margin-bottom:20px;">
 <div class="sc an d1"><div class="si y"><i class="fas fa-award"></i></div><div class="sv"><div class="lbl">Open Programs</div><div class="val">{{ $openScholarships->count() }}</div><div class="chg">Available now</div></div></div>
-<div class="sc an d2"><div class="si g"><i class="fas fa-file-alt"></i></div><div class="sv"><div class="lbl">My Applications</div><div class="val">{{ $myApplications->count() }}</div><div class="chg">{{ $myApplications->where('status','Approved')->count() }} approved</div></div></div>
-<div class="sc an d3"><div class="si dg"><i class="fas fa-check-circle"></i></div><div class="sv"><div class="lbl">Approved</div><div class="val">{{ $myApplications->where('status','Approved')->count() }}</div><div class="chg">Active grants</div></div></div>
+<div class="sc an d2"><div class="si g"><i class="fas fa-check-circle"></i></div><div class="sv"><div class="lbl">Eligible For</div><div class="val">{{ $hasTest ? $eligibleCount : '—' }}</div><div class="chg">{{ $hasTest?'from your test':'take the test' }}</div></div></div>
+<div class="sc an d3"><div class="si dg"><i class="fas fa-file-upload"></i></div><div class="sv"><div class="lbl">Documents</div><div class="val">{{ ($profile?->school_id_photo?1:0)+($profile?->coe_file?1:0) }}/2</div><div class="chg">School ID &amp; COE</div></div></div>
 <div class="sc an d4"><div class="si t"><i class="fas fa-heart"></i></div><div class="sv"><div class="lbl">Counseling</div><div class="val">{{ \App\Models\CounselingSession::where('student_id',auth()->user()->student?->id??0)->count() }}</div><div class="chg">Sessions</div></div></div>
 </div>
 @if($hasTest)
 <div class="card an mb3"><div class="ch"><i class="fas fa-clipboard-check" style="color:var(--gm);"></i><h2>My Eligibility Test Data</h2>
 <div class="ch-acts"><span class="tm" style="font-size:11px;margin-right:10px;"><i class="fas fa-clock" style="margin-right:4px;"></i>Updated {{ $profile->updated_at?->format('M d, Y h:i A') }}</span><a href="{{ route('student.eligibility') }}" class="btn btn-o btn-sm"><i class="fas fa-pen"></i> Edit Data</a></div></div>
 <div style="padding:18px;display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:12px;">
-<div style="background:var(--bg);border:1px solid var(--bd);border-radius:var(--rs);padding:12px 14px;"><div class="tm" style="font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;">GWA</div><div class="fws" style="font-size:17px;margin-top:3px;">{{ number_format((float)$profile->gwa,2) }}</div></div>
+<div style="background:var(--bg);border:1px solid var(--bd);border-radius:var(--rs);padding:12px 14px;"><div class="tm" style="font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;">Annual Family Income</div><div class="fws" style="font-size:17px;margin-top:3px;">₱{{ number_format((float)($profile->family_income ?? 0)) }}</div></div>
+<div style="background:var(--bg);border:1px solid var(--bd);border-radius:var(--rs);padding:12px 14px;"><div class="tm" style="font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;">School ID</div><div class="fws" style="font-size:14px;margin-top:5px;color:{{ $profile->school_id_photo?'var(--gm)':'var(--danger)' }};">{{ $profile->school_id_photo?'Uploaded ✓':'Missing' }}</div></div>
+<div style="background:var(--bg);border:1px solid var(--bd);border-radius:var(--rs);padding:12px 14px;"><div class="tm" style="font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;">Certificate of Enrollment</div><div class="fws" style="font-size:14px;margin-top:5px;color:{{ $profile->coe_file?'var(--gm)':'var(--danger)' }};">{{ $profile->coe_file?'Uploaded ✓':'Missing' }}</div></div>
 <div style="background:var(--bg);border:1px solid var(--bd);border-radius:var(--rs);padding:12px 14px;"><div class="tm" style="font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;">Year Level</div><div class="fws" style="font-size:14px;margin-top:5px;">{{ $profile->year_level }}</div></div>
 <div style="background:var(--bg);border:1px solid var(--bd);border-radius:var(--rs);padding:12px 14px;"><div class="tm" style="font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;">Enrollment Type</div><div class="fws" style="font-size:14px;margin-top:5px;">{{ $profile->enrollment_type }}</div></div>
-<div style="background:var(--bg);border:1px solid var(--bd);border-radius:var(--rs);padding:12px 14px;"><div class="tm" style="font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;">Annual Family Income</div><div class="fws" style="font-size:14px;margin-top:5px;">{{ $bracketLabels[$profile->income_bracket] ?? $profile->income_bracket }}</div></div>
 <div style="background:var(--bg);border:1px solid var(--bd);border-radius:var(--rs);padding:12px 14px;"><div class="tm" style="font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;">Academic Honors</div><div class="fws" style="font-size:14px;margin-top:5px;">{{ $profile->academic_honors }}</div></div>
 <div style="background:var(--bg);border:1px solid var(--bd);border-radius:var(--rs);padding:12px 14px;"><div class="tm" style="font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;">Failing Grades</div><div class="fws" style="font-size:14px;margin-top:5px;color:{{ $profile->has_failing?'var(--danger)':'var(--gm)' }};">{{ $profile->has_failing?'Yes':'No' }}</div></div>
 <div style="background:var(--bg);border:1px solid var(--bd);border-radius:var(--rs);padding:12px 14px;"><div class="tm" style="font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;">Disciplinary Case</div><div class="fws" style="font-size:14px;margin-top:5px;color:{{ $profile->has_discipline?'var(--danger)':'var(--gm)' }};">{{ $profile->has_discipline?'Yes':'No' }}</div></div>
@@ -55,18 +55,6 @@ $hasTest = $profile !== null;
 @endforelse
 </div></div>
 <div>
-<div class="card an mb3"><div class="ch"><i class="fas fa-file-alt" style="color:var(--gm);"></i><h2>My Applications</h2><div class="ch-acts"><a href="{{ route('student.applications') }}" class="btn btn-o btn-sm">View All</a></div></div>
-<div class="cb" style="padding:0;">
-@forelse($myApplications as $app)
-<div style="display:flex;align-items:center;gap:11px;padding:12px 18px;border-bottom:1px solid var(--bd);">
-<div class="si g" style="width:36px;height:36px;font-size:13px;border-radius:9px;flex-shrink:0;"><i class="fas fa-file-alt"></i></div>
-<div style="flex:1;"><div class="fws" style="font-size:13px;">{{ Str::limit($app->scholarship->name??'—',30) }}</div><div class="mono tm" style="font-size:11px;">Score: {{ $app->ai_score }}%</div></div>
-<span class="badge {{ $app->status==='Approved'?'b-s':($app->status==='Rejected'?'b-d':'b-w') }}">{{ $app->status }}</span>
-</div>
-@empty
-<div style="padding:18px;text-align:center;color:var(--tm);font-size:13px;">No applications yet. <a href="{{ route('student.scholarships') }}" style="color:var(--gm);">Browse scholarships</a></div>
-@endforelse
-</div></div>
 <div class="card an"><div class="ch"><i class="fas fa-heart" style="color:#e87070;"></i><h2>Counseling</h2><div class="ch-acts"><a href="{{ route('student.counseling.index') }}" class="btn btn-o btn-sm">Manage</a></div></div>
 <div class="cb"><div style="background:var(--gp);border-radius:var(--rs);padding:12px 14px;margin-bottom:12px;font-size:13px;color:var(--g);"><i class="fas fa-info-circle" style="margin-right:6px;"></i><strong>Auto-Queue:</strong> All requests are accepted and queued.</div>
 <a href="{{ route('student.counseling.index') }}" class="btn btn-p btn-sm" style="width:100%;justify-content:center;"><i class="fas fa-plus"></i> Request Session</a>

@@ -1,7 +1,7 @@
 @extends('student.layouts.app')
 @section('title','Browse Scholarships')
 @section('page-title','Scholarship Programs')
-@section('page-sub','Click any scholarship card to see full details and requirements')
+@section('page-sub','Click any scholarship card to see full details and requirements — applications are filed physically at the SAO Office')
 @section('content')
 
 {{-- Filter & Search Bar --}}
@@ -25,13 +25,12 @@
 {{-- ── ISAMS ACTIVE SCHOLARSHIPS ── --}}
 @forelse($scholarships as $sch)
 @php
-    $slots = $sch->slots ?? 0;
-    $used  = $sch->applications->where('status','Approved')->count();
-    $rem   = max(0, $slots - $used);
+    $rem    = $sch->slots_remaining; // -1 = no slot cap
+    $closed = $sch->is_closed;
 @endphp
 <div class="sch-card an" data-type="{{ $sch->type }}" data-id="sys-{{ $sch->id }}" onclick="openDetail('sys-{{ $sch->id }}')">
     <div style="padding:16px 17px;display:flex;align-items:flex-start;gap:11px;">
-        <div style="width:10px;height:10px;border-radius:50%;background:var(--gm);flex-shrink:0;margin-top:5px;box-shadow:0 0 6px var(--gm);"></div>
+        <div style="width:10px;height:10px;border-radius:50%;background:{{ $closed?'var(--danger)':'var(--gm)' }};flex-shrink:0;margin-top:5px;box-shadow:0 0 6px {{ $closed?'var(--danger)':'var(--gm)' }};"></div>
         <div style="flex:1;min-width:0;">
             <div class="fws" style="font-size:14px;line-height:1.3;">{{ $sch->name }}</div>
             <div class="tm" style="font-size:11px;margin-top:2px;">{{ $sch->source ?? $sch->type }}</div>
@@ -40,7 +39,9 @@
     </div>
     <div style="padding:0 17px 14px;display:flex;gap:14px;align-items:center;">
         <div style="font-size:11px;color:var(--tm);"><i class="fas fa-gift" style="color:var(--gm);margin-right:3px;"></i>{{ Str::limit($sch->benefits??'—',32) }}</div>
-        @if($rem > 0)
+        @if($closed)
+        <div style="font-size:11px;color:var(--danger);margin-left:auto;flex-shrink:0;font-weight:700;white-space:nowrap;"><i class="fas fa-lock" style="margin-right:3px;"></i>Closed</div>
+        @elseif($rem >= 0)
         <div style="font-size:11px;color:{{ $rem<=5?'var(--danger)':'var(--gm)' }};margin-left:auto;flex-shrink:0;font-weight:600;white-space:nowrap;">{{ $rem }} slots</div>
         @endif
         <i class="fas fa-expand-alt" style="color:var(--tm);font-size:11px;flex-shrink:0;"></i>
@@ -79,12 +80,12 @@
 {{-- ISAMS scholarship detail panels --}}
 @foreach($scholarships as $sch)
 @php
-    $slots = $sch->slots ?? 0;
-    $used  = $sch->applications->where('status','Approved')->count();
-    $rem   = max(0, $slots - $used);
-    $pct   = $slots > 0 ? round(($used/$slots)*100) : 0;
+    $rem      = $sch->slots_remaining; // -1 = no slot cap
+    $closed   = $sch->is_closed;
+    $used     = $sch->applications->where('status','!=','Rejected')->count();
+    $slots    = $sch->slots;
+    $pct      = ($slots !== null && $slots > 0) ? round(($used/$slots)*100) : 0;
     $criteria = is_array($sch->ai_criteria) ? $sch->ai_criteria : json_decode($sch->ai_criteria ?? '{}', true);
-    $myApp = auth()->user()->student ? $sch->applications->where('student_id', auth()->user()->student->id)->first() : null;
 @endphp
 <div class="detail-panel" id="detail-sys-{{ $sch->id }}">
     <div class="detail-panel-inner">
@@ -147,9 +148,13 @@
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;">
             <div style="background:var(--bg);border-radius:var(--rs);padding:12px;text-align:center;">
                 <div style="font-size:11px;color:var(--tm);font-weight:600;text-transform:uppercase;letter-spacing:.5px;">Available Slots</div>
+                @if($rem < 0)
+                <div style="font-family:'Sora',sans-serif;font-size:18px;font-weight:800;color:var(--g);margin-top:8px;">No slot limit</div>
+                @else
                 <div style="font-family:'Sora',sans-serif;font-size:24px;font-weight:800;color:{{ $rem<=5?'var(--danger)':'var(--g)' }};">{{ $rem }}</div>
                 <div style="font-size:11px;color:var(--tm);">of {{ $slots }} total</div>
                 <div class="slot-bar" style="margin-top:7px;"><div class="slot-fill" style="width:{{ $pct }}%;background:{{ $pct>=90?'linear-gradient(90deg,var(--danger),#e87070)':($pct>=70?'linear-gradient(90deg,var(--warn),#f0b429)':'linear-gradient(90deg,var(--g),var(--gm))') }};"></div></div>
+                @endif
             </div>
             <div style="background:var(--bg);border-radius:var(--rs);padding:12px;text-align:center;">
                 <div style="font-size:11px;color:var(--tm);font-weight:600;text-transform:uppercase;letter-spacing:.5px;">Deadline</div>
@@ -164,26 +169,28 @@
             </div>
         </div>
 
-        @if($myApp)
-        <div style="background:{{ $myApp->ai_eligibility==='Eligible'?'#d0f0d8':($myApp->ai_eligibility==='For Review'?'#fef3cd':'#fde8e6') }};border-radius:var(--rs);padding:12px 14px;display:flex;align-items:center;gap:10px;">
-            <i class="fas fa-robot" style="color:{{ $myApp->ai_eligibility==='Eligible'?'var(--gm)':($myApp->ai_eligibility==='For Review'?'var(--yd)':'var(--danger)') }};font-size:18px;"></i>
-            <div>
-                <div style="font-size:13px;font-weight:700;color:var(--tx);">Your AI Score: {{ $myApp->ai_score }}% — {{ $myApp->ai_eligibility }}</div>
-                <div style="font-size:12px;color:var(--tm);">Status: {{ $myApp->status }}</div>
-            </div>
-        </div>
-        @elseif($sch->end_date && $sch->end_date->isPast())
-        <div style="background:#fde8e6;border:1px solid #f5b5b0;border-radius:var(--rs);padding:12px 14px;display:flex;align-items:center;gap:10px;">
+        @if($closed)
+        <div style="background:#fde8e6;border:1px solid #f5b5b0;border-radius:var(--rs);padding:12px 14px;display:flex;align-items:center;gap:10px;margin-bottom:14px;">
             <i class="fas fa-ban" style="color:var(--danger);font-size:18px;"></i>
             <div>
                 <div style="font-size:13px;font-weight:700;color:var(--tx);">Applications Closed</div>
-                <div style="font-size:12px;color:var(--tm);">The deadline for this scholarship was {{ $sch->end_date->format('M d, Y') }}. Applications are no longer accepted.</div>
+                <div style="font-size:12px;color:var(--tm);">
+                    @if($sch->end_date && $sch->end_date->isPast())
+                    The deadline for this scholarship was {{ $sch->end_date->format('M d, Y') }}. Applications are no longer accepted.
+                    @else
+                    All {{ $slots }} slots for this scholarship have been taken. Applications are no longer accepted.
+                    @endif
+                </div>
             </div>
         </div>
         @else
-            <a href="{{ route('student.apply',$sch->id) }}" class="btn btn-p" style="width:100%;justify-content:center;border-radius:14px;" onclick="event.stopPropagation();">
-                <i class="fas fa-paper-plane"></i> Apply
-            </a>
+        <div style="background:var(--yp);border:1px solid var(--yd);border-radius:var(--rs);padding:12px 14px;display:flex;align-items:center;gap:10px;">
+            <i class="fas fa-map-marker-alt" style="color:#b8860b;font-size:18px;"></i>
+            <div>
+                <div style="font-size:13px;font-weight:700;color:#6b4a00;">Apply Physically at the SAO Office</div>
+                <div style="font-size:12px;color:#8a6d1a;">Bring your requirements to the Student Affairs Office to file your application. Slots are limited and filled on a first-come, first-served basis.</div>
+            </div>
+        </div>
         @endif
     </div>
 </div>
@@ -191,12 +198,6 @@
 
 {{-- PH Synced detail panels --}}
 @foreach($synced as $s)
-@php
-    $myApp = auth()->user()->student ? 
-        \App\Models\ScholarshipApplication::where('scholarship_id', $s->scholarship_id ?? 0)
-            ->where('student_id', auth()->user()->student->id)
-            ->first() : null;
-@endphp
 <div class="detail-panel" id="detail-syn-{{ $s->id }}">
     <div class="detail-panel-inner">
         <button type="button" class="detail-close" onclick="closeDetail()"><i class="fas fa-times"></i> Close</button>
@@ -256,7 +257,7 @@
         <div style="background:var(--yp);border:1px solid var(--yd);border-radius:var(--rs);padding:11px 14px;font-size:13px;color:#6b4a00;margin-bottom:14px;">
             <i class="fas fa-info-circle" style="margin-right:6px;color:var(--yd);"></i>This scholarship is sourced from an official Philippine website. Visit the official site for requirements and to apply.
         </div>
-@if(!$myApp && $s->deadline && \Carbon\Carbon::parse($s->deadline)->isPast())
+@if($s->deadline && \Carbon\Carbon::parse($s->deadline)->isPast())
         <div style="background:#fde8e6;border:1px solid #f5b5b0;border-radius:var(--rs);padding:12px 14px;display:flex;align-items:center;gap:10px;margin-bottom:14px;">
             <i class="fas fa-ban" style="color:var(--danger);font-size:18px;"></i>
             <div>
@@ -264,15 +265,11 @@
                 <div style="font-size:12px;color:var(--tm);">The deadline for this scholarship was {{ \Carbon\Carbon::parse($s->deadline)->format('M d, Y') }}. Applications are no longer accepted.</div>
             </div>
         </div>
-        @elseif(!$myApp)
-        <a href="{{ route('student.apply',$s->scholarship_id ?? $s->id) }}" class="btn btn-p" style="justify-content:center;border-radius:14px;width:100%;" onclick="event.stopPropagation();">
-            <i class="fas fa-paper-plane"></i> Apply
-        </a>
-        @else
-            <div style="background:#eef6f1;border:1px solid #bfe3c7;border-radius:14px;padding:10px 12px;font-size:12px;color:var(--tm);margin-bottom:14px;">
-                <i class="fas fa-check" style="color:var(--gm);margin-right:6px;"></i>Application already submitted.
-            </div>
-        @endif
+@else
+        <div style="background:var(--gp);border:1px solid var(--gm);border-radius:var(--rs);padding:11px 14px;font-size:13px;color:var(--g);margin-bottom:14px;">
+            <i class="fas fa-map-marker-alt" style="margin-right:6px;"></i>You may also inquire and apply physically at the Student Affairs Office (SAO).
+        </div>
+@endif
 
         <a href="{{ $s->source_url }}" target="_blank" class="btn btn-o" style="justify-content:center;border-color:#0038a8;color:#0038a8;width:100%;">
             <i class="fas fa-external-link-alt"></i> Visit Official Website

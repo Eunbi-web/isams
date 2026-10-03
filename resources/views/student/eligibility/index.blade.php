@@ -6,9 +6,8 @@
 
 @php
 $hasProfile = $profile !== null;
-$gwa        = (float)($profile?->gwa ?? 0);
+$income     = (float)($profile?->family_income ?? 0);
 $isRegular  = strtolower($profile?->enrollment_type ?? '') === 'regular';
-$bracket    = $profile?->income_bracket ?? '';
 $bannerClass= $overallEligibility==='Eligible'?'eligible':($overallEligibility==='For Review'?'review':'not');
 $bannerIcon = $overallEligibility==='Eligible'?'check-circle':($overallEligibility==='For Review'?'exclamation-circle':'times-circle');
 
@@ -38,12 +37,10 @@ usort($mapped, function($a,$b){ return $b['score'] - $a['score']; });
 $eligible_count = count(array_filter($mapped, fn($x) => $x['eligibility']==='Eligible'));
 $review_count   = count(array_filter($mapped, fn($x) => $x['eligibility']==='For Review'));
 
-$bracketLabels = \App\Http\Controllers\Student\EligibilityController::INCOME_BRACKETS;
 $yearLevels    = \App\Http\Controllers\Student\EligibilityController::YEAR_LEVELS;
 $enrollTypes   = \App\Http\Controllers\Student\EligibilityController::ENROLLMENT_TYPES;
 $honorLevels   = \App\Http\Controllers\Student\EligibilityController::ACADEMIC_HONORS;
 @endphp
-
 {{-- STEP INDICATOR --}}
 <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:20px;" class="an">
     @php
@@ -83,11 +80,55 @@ $honorLevels   = \App\Http\Controllers\Student\EligibilityController::ACADEMIC_H
         <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:16px;">
 
             <div>
-                <label style="display:block;font-size:12px;font-weight:700;color:var(--tx);margin-bottom:6px;">GWA (General Weighted Average) <span style="color:var(--danger);">*</span></label>
-                <input type="number" name="gwa" value="{{ old('gwa', $profile?->gwa) }}" step="0.01" min="1" max="5" required
-                    placeholder="e.g., 1.75"
-                    style="width:100%;padding:10px 12px;border:1.5px solid var(--bd);border-radius:var(--rs);background:var(--card);color:var(--tx);font-size:14px;font-family:'Sora',sans-serif;">
-                <div style="font-size:11px;color:var(--tm);margin-top:4px;">Philippine scale: 1.00 is highest, 5.00 is lowest.</div>
+                <label style="display:block;font-size:12px;font-weight:700;color:var(--tx);margin-bottom:6px;">School ID <span style="color:var(--danger);">*</span></label>
+                <input type="hidden" name="school_id_data" id="schoolIdData" value="">
+                <div id="schoolIdPreview" style="margin-bottom:8px;display:{{ $profile?->school_id_photo ? 'flex' : 'none' }};align-items:center;gap:10px;background:var(--bg);border:1px solid var(--bd);border-radius:var(--rs);padding:8px;">
+                    <img id="schoolIdThumb" src="{{ $profile?->school_id_photo }}" alt="School ID" style="width:56px;height:40px;object-fit:cover;border-radius:6px;border:1px solid var(--bd);">
+                    <div style="flex:1;min-width:0;">
+                        <div class="fws" style="font-size:12px;">School ID</div>
+                        <div style="font-size:10.5px;color:var(--gm);font-weight:700;"><i class="fas fa-check-circle" style="margin-right:3px;"></i>Uploaded</div>
+                    </div>
+                    <button type="button" onclick="clearDoc('school')" style="background:none;border:none;color:var(--danger);cursor:pointer;font-size:13px;padding:4px;" title="Remove"><i class="fas fa-trash-alt"></i></button>
+                </div>
+                <div style="display:flex;gap:8px;">
+                    <button type="button" onclick="document.getElementById('schoolIdFile').click()" class="btn btn-o btn-sm" style="flex:1;justify-content:center;"><i class="fas fa-upload"></i> Upload Photo</button>
+                    <button type="button" onclick="openCamera('school')" class="btn btn-o btn-sm" style="flex:1;justify-content:center;"><i class="fas fa-camera"></i> Take Photo</button>
+                </div>
+                <input type="file" id="schoolIdFile" accept="image/*" style="display:none;" onchange="handleFile('school', this)">
+                <div style="font-size:11px;color:var(--tm);margin-top:4px;">Upload or take a clear photo of your School ID.</div>
+            </div>
+
+            <div>
+                <label style="display:block;font-size:12px;font-weight:700;color:var(--tx);margin-bottom:6px;">Certificate of Enrollment (COE) <span style="color:var(--danger);">*</span></label>
+                <input type="hidden" name="coe_data" id="coeData" value="">
+                <div id="coePreview" style="margin-bottom:8px;display:{{ $profile?->coe_file ? 'flex' : 'none' }};align-items:center;gap:10px;background:var(--bg);border:1px solid var(--bd);border-radius:var(--rs);padding:8px;">
+                    @if($profile?->coe_file && str_starts_with($profile->coe_file, 'data:image'))
+                    <img id="coeThumbImg" src="{{ $profile->coe_file }}" alt="COE" style="width:56px;height:40px;object-fit:cover;border-radius:6px;border:1px solid var(--bd);">
+                    @else
+                    <div id="coeThumbImg" style="width:56px;height:40px;border-radius:6px;border:1px solid var(--bd);background:var(--gp);display:flex;align-items:center;justify-content:center;color:var(--g);"><i class="fas fa-file-pdf"></i></div>
+                    @endif
+                    <div style="flex:1;min-width:0;">
+                        <div class="fws" style="font-size:12px;">Certificate of Enrollment</div>
+                        <div style="font-size:10.5px;color:var(--gm);font-weight:700;"><i class="fas fa-check-circle" style="margin-right:3px;"></i>Uploaded</div>
+                    </div>
+                    <button type="button" onclick="clearDoc('coe')" style="background:none;border:none;color:var(--danger);cursor:pointer;font-size:13px;padding:4px;" title="Remove"><i class="fas fa-trash-alt"></i></button>
+                </div>
+                <div style="display:flex;gap:8px;">
+                    <button type="button" onclick="document.getElementById('coeFile').click()" class="btn btn-o btn-sm" style="flex:1;justify-content:center;"><i class="fas fa-upload"></i> Upload File</button>
+                </div>
+                <input type="file" id="coeFile" accept="image/*,application/pdf" style="display:none;" onchange="handleFile('coe', this)">
+                <div style="font-size:11px;color:var(--tm);margin-top:4px;">Upload a photo or PDF of your Certificate of Enrollment.</div>
+            </div>
+
+            <div>
+                <label style="display:block;font-size:12px;font-weight:700;color:var(--tx);margin-bottom:6px;">Annual Family Income <span style="color:var(--danger);">*</span></label>
+                <div style="position:relative;">
+                    <span style="position:absolute;left:12px;top:50%;transform:translateY(-50%);font-size:14px;color:var(--tm);font-weight:700;">₱</span>
+                    <input type="number" name="family_income" value="{{ old('family_income', $profile?->family_income) }}" min="0" step="0.01" required
+                        placeholder="e.g., 150000"
+                        style="width:100%;padding:10px 12px 10px 30px;border:1.5px solid var(--bd);border-radius:var(--rs);background:var(--card);color:var(--tx);font-size:14px;font-family:'Sora',sans-serif;">
+                </div>
+                <div style="font-size:11px;color:var(--tm);margin-top:4px;">Total combined annual household income.</div>
             </div>
 
             <div>
@@ -110,16 +151,6 @@ $honorLevels   = \App\Http\Controllers\Student\EligibilityController::ACADEMIC_H
                     @endforeach
                 </select>
                 <div style="font-size:11px;color:var(--tm);margin-top:4px;">Regular = complete load per curriculum.</div>
-            </div>
-
-            <div>
-                <label style="display:block;font-size:12px;font-weight:700;color:var(--tx);margin-bottom:6px;">Annual Family Income <span style="color:var(--danger);">*</span></label>
-                <select name="income_bracket" required
-                    style="width:100%;padding:10px 12px;border:1.5px solid var(--bd);border-radius:var(--rs);background:var(--card);color:var(--tx);font-size:14px;">
-                    @foreach($bracketLabels as $key => $label)
-                    <option value="{{ $key }}" {{ old('income_bracket', $profile?->income_bracket ?? 'below_200') === $key ? 'selected' : '' }}>{{ $label }}</option>
-                    @endforeach
-                </select>
             </div>
 
             <div>
@@ -165,6 +196,26 @@ $honorLevels   = \App\Http\Controllers\Student\EligibilityController::ACADEMIC_H
     </div>
 </div>
 
+{{-- ═══ CAMERA CAPTURE MODAL (School ID photo) ═══ --}}
+<div id="cameraModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:1200;align-items:center;justify-content:center;padding:20px;">
+    <div style="background:var(--card);border-radius:16px;max-width:480px;width:100%;overflow:hidden;box-shadow:0 30px 80px rgba(0,0,0,.4);">
+        <div style="background:linear-gradient(135deg,#0d3318,#1a6b2f);padding:13px 18px;display:flex;align-items:center;gap:10px;">
+            <i class="fas fa-camera" style="color:var(--y);font-size:16px;"></i>
+            <span style="font-size:14px;font-weight:700;color:#fff;">Take a Photo of Your School ID</span>
+            <button type="button" onclick="closeCamera()" style="margin-left:auto;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.25);border-radius:8px;padding:4px 12px;font-size:12px;color:#fff;cursor:pointer;">Close</button>
+        </div>
+        <div style="background:#000;">
+            <video id="camVideo" autoplay playsinline style="width:100%;max-height:340px;object-fit:contain;display:block;"></video>
+            <canvas id="camCanvas" style="display:none;"></canvas>
+        </div>
+        <div id="camError" style="display:none;background:#fde8e6;padding:10px 16px;font-size:12.5px;color:#7a1a14;"></div>
+        <div style="padding:14px 18px;display:flex;gap:10px;">
+            <button type="button" onclick="capturePhoto()" class="btn btn-p" style="flex:1;justify-content:center;"><i class="fas fa-camera"></i> Capture</button>
+            <button type="button" onclick="closeCamera()" class="btn btn-o">Cancel</button>
+        </div>
+    </div>
+</div>
+
 @if($hasProfile)
 {{-- OVERALL BANNER (Step 3 — results) --}}
 <div class="elig-banner {{ $bannerClass }} an" style="margin-bottom:20px;">
@@ -178,10 +229,9 @@ $honorLevels   = \App\Http\Controllers\Student\EligibilityController::ACADEMIC_H
         </div>
         <div class="elig-sub">The Eligibility Test evaluated your data against {{ count($mapped) }} active scholarship programs. Applications are done physically at the Student Affairs Office.</div>
         <div style="font-size:12px;color:rgba(255,255,255,.65);margin-top:5px;">
-            GWA: <strong style="color:#fff;">{{ number_format($gwa,2) }}</strong> &nbsp;·&nbsp;
+            Annual Family Income: <strong style="color:#fff;">₱{{ number_format($income) }}</strong> &nbsp;·&nbsp;
             {{ $profile?->year_level }} &nbsp;·&nbsp;
             {{ $profile?->enrollment_type }} &nbsp;·&nbsp;
-            {{ $bracketLabels[$bracket] ?? 'N/A' }} &nbsp;·&nbsp;
             {{ $profile?->academic_honors }}
         </div>
     </div>
@@ -331,13 +381,12 @@ $honorLevels   = \App\Http\Controllers\Student\EligibilityController::ACADEMIC_H
         <div style="display:flex;flex-direction:column;gap:10px;" id="staticPlan">
         @php
             $actions = [];
-            if($gwa > 1.75) $actions[] = ['high','Improve GWA to 1.75 or better','Your GWA of '.number_format($gwa,2).' is above the cutoff for most scholarships. Focus on your academic performance this semester.','fas fa-star'];
             if(!$isRegular) $actions[] = ['high','Shift to Regular Enrollment','Irregular students lose 10 points on every scholarship score. Shifting to Regular doubles your enrollment score.','fas fa-id-badge'];
-            if($bracket==='above_400'||$bracket==='') $actions[] = ['medium','Update your income bracket','Income bracket affects up to 15 points of your AI score. Click Edit Data to make sure yours is accurate.','fas fa-hand-holding-usd'];
-            if($gwa > 1.25 && $gwa <= 1.75) $actions[] = ['low','Push GWA to 1.25 for Excellence Bonus','You are close to qualifying for the +5 point Excellence Bonus on all scholarships.','fas fa-trophy'];
-            $actions[] = ['high','Visit SAO Office to get the official scholarship application form','Physical applications are required. Bring your Eligibility Test results, transcript, and proof of income.','fas fa-map-marker-alt'];
+            if($income > 400000) $actions[] = ['medium','Check your income bracket','Some scholarships are limited to families earning ₱400,000 or less per year. Click Edit Data to make sure your income entry is accurate.','fas fa-hand-holding-usd'];
+            $actions[] = ['high','Visit SAO Office to get the official scholarship application form','Physical applications are required. Bring your School ID, Certificate of Enrollment, and proof of income.','fas fa-map-marker-alt'];
             $actions[] = ['medium','Prepare supporting documents','Requirements typically include: transcript of records, certificate of enrollment, income tax return or certificate of indigency, and 2x2 ID photos.','fas fa-file-alt'];
-            $actions[] = ['low','Monitor scholarship deadlines','Check with the SAO office regularly for opening and closing dates of each scholarship program.','fas fa-calendar-check'];
+            $actions[] = ['low','Keep your uploaded documents updated','Make sure your School ID photo and Certificate of Enrollment on file are current. Click Edit Data to replace them anytime.','fas fa-camera'];
+            $actions[] = ['low','Monitor scholarship deadlines','Check with the SAO office regularly for opening and closing dates of each scholarship program. Slots are filled on a first-come, first-served basis.','fas fa-calendar-check'];
         @endphp
         @foreach($actions as $idx => $action)
         @php
@@ -387,7 +436,7 @@ $honorLevels   = \App\Http\Controllers\Student\EligibilityController::ACADEMIC_H
     <div style="padding:18px 20px;">
         <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px;">
         @foreach([
-            ['1','fas fa-user-edit','Fill Up Your Data','Enter your GWA, income bracket, enrollment type, year level, honors, and status on this page.','t'],
+            ['1','fas fa-user-edit','Fill Up Your Data','Upload your School ID and Certificate of Enrollment, then enter your family income, year level, enrollment type, honors, and status on this page.','t'],
             ['2','fas fa-robot','Run the Eligibility Test','Click the Eligibility Test button to see which scholarships you qualify for.','y'],
             ['3','fas fa-file-alt','Prepare Documents','Gather your transcript of records, COE, income proof, birth certificate, and 2x2 ID photos.','g'],
             ['4','fas fa-map-marker-alt','Visit SAO Office','Go to the Student Affairs Office at Saint Columban College during office hours.','o'],
@@ -445,6 +494,133 @@ $honorLevels   = \App\Http\Controllers\Student\EligibilityController::ACADEMIC_H
 
     window.cancelEdit = function(){
         document.getElementById('dataCard').style.display = 'none';
+    };
+
+    // ── Document uploads (School ID / COE) ──────────────────────────────
+    // Images are downscaled to max 1200px and re-encoded as JPEG (quality
+    // .8) client-side, then sent as base64 data URLs in hidden inputs —
+    // the files live in the DB so they survive Vercel's ephemeral disk.
+    var MAX_BYTES = 2 * 1024 * 1024; // ~2 MB after encoding
+
+    var docMeta = {
+        school: { input:'schoolIdData', preview:'schoolIdPreview', thumb:'schoolIdThumb', label:'School ID' },
+        coe:    { input:'coeData',      preview:'coePreview',      thumb:'coeThumbImg',   label:'Certificate of Enrollment' }
+    };
+
+    function compressImage(img, callback){
+        var maxW = 1200, scale = Math.min(1, maxW / img.width);
+        var c = document.createElement('canvas');
+        c.width = Math.round(img.width * scale);
+        c.height = Math.round(img.height * scale);
+        c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+        var data = c.toDataURL('image/jpeg', 0.8);
+        if (data.length > MAX_BYTES) { callback(null, 'too-large'); return; }
+        callback(data, null);
+    }
+
+    function setDoc(kind, dataUrl, isImage){
+        var m = docMeta[kind];
+        document.getElementById(m.input).value = dataUrl || '';
+        var pv = document.getElementById(m.preview);
+        var thumb = document.getElementById(m.thumb);
+        if (!dataUrl) {
+            pv.style.display = 'none';
+            return;
+        }
+        if (isImage) {
+            // swap the thumbnail element for an <img> when needed
+            if (thumb.tagName !== 'IMG') {
+                var img = document.createElement('img');
+                img.id = m.thumb; img.alt = m.label;
+                img.style.cssText = 'width:56px;height:40px;object-fit:cover;border-radius:6px;border:1px solid var(--bd);';
+                thumb.parentNode.replaceChild(img, thumb);
+                thumb = img;
+            }
+            thumb.src = dataUrl;
+        } else {
+            if (thumb.tagName === 'IMG') {
+                var div = document.createElement('div');
+                div.id = m.thumb;
+                div.style.cssText = 'width:56px;height:40px;border-radius:6px;border:1px solid var(--bd);background:var(--gp);display:flex;align-items:center;justify-content:center;color:var(--g);';
+                div.innerHTML = '<i class="fas fa-file-pdf"></i>';
+                thumb.parentNode.replaceChild(div, thumb);
+            }
+        }
+        pv.style.display = 'flex';
+    }
+
+    window.clearDoc = function(kind){
+        setDoc(kind, null, true);
+    };
+
+    window.handleFile = function(kind, inputEl){
+        var file = inputEl.files && inputEl.files[0];
+        inputEl.value = '';
+        if (!file) return;
+        if (file.size > MAX_BYTES) {
+            alert('File is too large (max ~2 MB). Please upload a smaller file or take a photo instead.');
+            return;
+        }
+        if (file.type === 'application/pdf') {
+            var r = new FileReader();
+            r.onload = function(e){ setDoc(kind, e.target.result, false); };
+            r.readAsDataURL(file);
+            return;
+        }
+        if (!file.type.startsWith('image/')) {
+            alert('Please upload an image or PDF file.');
+            return;
+        }
+        var img = new Image();
+        img.onload = function(){ compressImage(img, function(data, err){
+            if (err) { alert('Photo is too large even after compression. Please try a smaller file.'); return; }
+            setDoc(kind, data, true);
+        }); };
+        img.onerror = function(){ alert('Could not read that image. Please try another file.'); };
+        img.src = URL.createObjectURL(file);
+    };
+
+    // ── Camera capture (School ID) ──────────────────────────────────────
+    var camStream = null;
+
+    window.openCamera = function(){
+        var modal = document.getElementById('cameraModal');
+        var errBox = document.getElementById('camError');
+        errBox.style.display = 'none';
+        modal.style.display = 'flex';
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+            errBox.textContent = 'Camera is not supported on this device/browser. Use the Upload Photo button instead.';
+            errBox.style.display = 'block';
+            return;
+        }
+        navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment', width: { ideal: 1600 } } })
+            .then(function(stream){
+                camStream = stream;
+                document.getElementById('camVideo').srcObject = stream;
+            })
+            .catch(function(){
+                errBox.textContent = 'Could not access the camera. Please allow camera permission or use the Upload Photo button instead.';
+                errBox.style.display = 'block';
+            });
+    };
+
+    window.closeCamera = function(){
+        document.getElementById('cameraModal').style.display = 'none';
+        if (camStream) { camStream.getTracks().forEach(function(t){ t.stop(); }); camStream = null; }
+    };
+
+    window.capturePhoto = function(){
+        var video = document.getElementById('camVideo');
+        if (!video.videoWidth) { alert('Camera is still starting. Please try again.'); return; }
+        var maxW = 1200, scale = Math.min(1, maxW / video.videoWidth);
+        var c = document.createElement('canvas');
+        c.width = Math.round(video.videoWidth * scale);
+        c.height = Math.round(video.videoHeight * scale);
+        c.getContext('2d').drawImage(video, 0, 0, c.width, c.height);
+        var data = c.toDataURL('image/jpeg', 0.8);
+        if (data.length > MAX_BYTES) { alert('Photo is too large. Please try again.'); return; }
+        setDoc('school', data, true);
+        closeCamera();
     };
 
     window.generateGapAnalysis = function(){
