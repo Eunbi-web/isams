@@ -222,7 +222,7 @@ $honorLevels   = \App\Http\Controllers\Student\EligibilityController::ACADEMIC_H
     <div class="elig-icon"><i class="fas fa-{{ $bannerIcon }}" style="font-size:28px;color:#fff;"></i></div>
     <div style="flex:1;">
         <div class="elig-title">
-            @if($overallEligibility==='Eligible') Scholarship-Ready! Visit the SAO Office to Apply.
+            @if($overallEligibility==='Eligible') Scholarship-Ready! Visit the accounting office.
             @elseif($overallEligibility==='For Review') Partially Qualified — See Improvement Tips Below
             @else Not Yet Qualified — Follow Your Action Plan Below
             @endif
