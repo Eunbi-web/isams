@@ -7,7 +7,7 @@ class DashboardController extends Controller {
     public function index() {
         $student = auth()->user()->student;
         $openScholarships = Scholarship::where('status','Active')->take(3)->get();
-        $announcements = Announcement::latest()->take(3)->get();
+        $announcements = Announcement::where('created_at','>=',now()->subDays(30))->latest()->take(3)->get();
 
         // Eligibility Test data saved by the student (from the Eligibility Test page)
         $profile = $student ? EligibilityProfile::where('student_id',$student->id)->first() : null;

@@ -1,7 +1,7 @@
 @extends('student.layouts.app')
 @section('title','Announcement')
 @section('page-title','Announcement')
-@section('page-sub','{{ $announcement->title }}')
+@section('page-sub', $announcement->title)
 @section('content')
 <div style="max-width:720px;">
 <div style="margin-bottom:14px;"><a href="{{ route('student.announcements') }}" class="btn btn-o btn-sm"><i class="fas fa-arrow-left"></i> Back</a></div>
