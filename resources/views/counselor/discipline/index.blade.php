@@ -44,7 +44,7 @@
 @forelse($records as $i=>$record)
 <tr @if($record->offense_category==='Major')style="background:rgba(192,57,43,0.04);"@endif>
 <td class="mono tm" style="font-size:11px;">{{ ($records->currentPage()-1)*$records->perPage()+$i+1 }}</td>
-<td class="mono" style="font-size:12px;">{{ $record->edp_number }}</td>
+<td class="mono" style="font-size:12px;">{{ edp_short($record->edp_number) }}</td>
 <td class="fws" style="font-size:13px;">{{ $record->student_name }}</td>
 <td style="font-size:12px;color:var(--tm);">{{ $record->department??'—' }}</td>
 <td>@if($record->offense_category==='Major')<span class="badge" style="background:#c0392b;color:#fff;">Major</span>@else<span class="badge" style="background:#d68910;color:#fff;">Minor</span>@endif</td>

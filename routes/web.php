@@ -188,6 +188,7 @@ Route::middleware(['auth','role:admin,officer'])->prefix('admin')->name('admin.'
 
     // Messages (one-way: admin to student)
     Route::get('messages',          [AdminMessage::class,'index'])->name('messages.index');
+    Route::get('messages/lookup',   [AdminMessage::class,'lookup'])->name('messages.lookup');
     Route::get('messages/create',   [AdminMessage::class,'create'])->name('messages.create');
     Route::post('messages',         [AdminMessage::class,'store'])->name('messages.store');
 });

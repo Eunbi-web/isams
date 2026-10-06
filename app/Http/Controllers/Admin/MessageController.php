@@ -13,8 +13,30 @@ class MessageController extends Controller {
         return view('admin.messages.index', compact('messages','total','unread'));
     }
     public function create() {
-        $students = Student::with('user')->orderBy('last_name')->get();
-        return view('admin.messages.create', compact('students'));
+        $selected = old('student_id') ? Student::find(old('student_id')) : null;
+        return view('admin.messages.create', compact('selected'));
+    }
+    // AJAX: find a student by typed EDP (full "2026-099001" or bare 6 digits)
+    public function lookup(Request $request) {
+        $q = trim($request->query('edp', ''));
+        $student = $q === '' ? null : Student::where('student_id', $q)->first();
+        if (!$student && $q !== '') {
+            $digits = preg_replace('/\D+/', '', $q);
+            if (strlen($digits) >= 6) {
+                $student = Student::where('student_id', 'like', '%'.substr($digits, -6))->first();
+            }
+        }
+        if (!$student) {
+            return response()->json(['ok' => false], 404);
+        }
+        return response()->json([
+            'ok' => true,
+            'student' => [
+                'id'         => $student->id,
+                'student_id' => $student->student_id,
+                'full_name'  => $student->full_name,
+            ],
+        ]);
     }
     public function store(Request $request) {
         $data = $request->validate([

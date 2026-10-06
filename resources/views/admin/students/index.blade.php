@@ -46,7 +46,7 @@
 <tbody>
 @forelse($students as $s)
 <tr>
-<td class="mono" style="font-size:12px;">{{ $s->student_id }}</td>
+<td class="mono" style="font-size:12px;">{{ edp_short($s->student_id) }}</td>
 <td class="fws" style="font-size:13px;">{{ $s->last_name }}</td>
 <td style="font-size:13px;">{{ $s->first_name }}</td>
 <td style="font-size:13px;color:var(--tm);">{{ $s->middle_name ?? '—' }}</td>

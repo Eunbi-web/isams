@@ -49,7 +49,7 @@
 <div class="inbox-subject">{{ $l->item_description }}</div>
 <div class="inbox-meta">
 <span>{{ $studentName }}</span>
-<span>· EDP: <span class="mono">{{ $l->student->student_id ?? '—' }}</span></span>
+<span>· EDP: <span class="mono">{{ edp_short($l->student->student_id) }}</span></span>
 <span>· Submitted {{ $l->created_at->format('M d, Y g:i A') }}</span>
 </div>
 </div>

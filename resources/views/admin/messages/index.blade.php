@@ -15,7 +15,7 @@
 @forelse($messages as $m)
 <tr>
 <td><div style="display:flex;align-items:center;gap:7px;"><div class="av av-s">{{ strtoupper(substr($m->student->first_name ?? 'S',0,1)) }}</div><div class="fws" style="font-size:13px;">{{ $m->student->full_name ?? '—' }}</div></div></td>
-<td class="mono tm" style="font-size:12px;">{{ $m->student->student_id ?? '—' }}</td>
+<td class="mono tm" style="font-size:12px;">{{ edp_short($m->student->student_id) }}</td>
 <td class="fws" style="max-width:320px;">{{ $m->subject }}</td>
 <td class="tm" style="font-size:12px;">{{ $m->created_at->format('M d, Y g:i A') }}</td>
 <td>@if($m->is_read)<span class="badge b-s"><i class="fas fa-check"></i> Opened {{ $m->read_at?->format('M d, g:i A') }}</span>@else<span class="badge b-w"><i class="fas fa-clock"></i> Not Yet Read</span>@endif</td>

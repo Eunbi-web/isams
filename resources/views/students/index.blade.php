@@ -73,7 +73,7 @@
                             </div>
                         </div>
                     </td>
-                    <td class="font-mono" style="font-size:13px;">{{ $student->student_id }}</td>
+                    <td class="font-mono" style="font-size:13px;">{{ edp_short($student->student_id) }}</td>
                     <td><div>{{ $student->course }}</div><div class="text-muted" style="font-size:12px;">{{ $student->year_level }}</div></td>
                     <td class="text-muted" style="font-size:13px;">{{ $student->contact_number }}</td>
                     <td>

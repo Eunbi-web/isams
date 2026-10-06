@@ -67,7 +67,7 @@
                     $guardian = $s?->guardian_name;
                 @endphp
                 <tr>
-                    <td class="mono" style="font-size:12px;">{{ $s?->student_id ?? '—' }}</td>
+                    <td class="mono" style="font-size:12px;">{{ edp_short($s?->student_id) }}</td>
                     <td style="max-width:220px;">
                         <div style="display:flex;align-items:center;gap:7px;">
                             <div class="av av-s">{{ strtoupper(substr($s?->first_name ?? 'X',0,1)) }}</div>

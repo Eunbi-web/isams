@@ -48,7 +48,7 @@
 <tr>
 
 <td><div style="display:flex;align-items:center;gap:7px;"><div class="av av-s">{{ strtoupper(substr($s->first_name,0,1)) }}</div><div class="fws" style="font-size:13px;">{{ $s->full_name }}</div></div></td>
-<td class="mono" style="font-size:12px;">{{ $s->student_id }}</td>
+<td class="mono" style="font-size:12px;">{{ edp_short($s->student_id) }}</td>
 <td style="font-size:12px;color:var(--tm);">{{ Str::limit($s->course,25) }}</td>
 <td style="font-size:12px;">{{ $s->year_level }}</td>
 <td class="mono fwb" style="color:{{ (float)($s->gwa??0)<=1.75?'var(--gm)':((float)($s->gwa??0)<=2.25?'var(--warn)':'var(--danger)') }}">{{ number_format($s->gwa??0,2) }}</td>

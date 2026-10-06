@@ -27,7 +27,7 @@
 $stC = ($app->status==='Approved'||$app->status==='Scholarship Granted')?'b-s':($app->status==='Rejected'?'b-d':($app->status==='On Review'?'b-i':($app->status==='Canceled'?'b-gray':'b-w')));
 @endphp
 <tr>
-<td><div style="display:flex;align-items:center;gap:7px;"><div class="av av-s">{{ strtoupper(substr($app->student->first_name??'S',0,1)) }}</div><div><div class="fws" style="font-size:13px;">{{ $app->student->full_name??'—' }}</div><div class="mono tm" style="font-size:10px;">{{ $app->student->student_id??'—' }}</div></div></div></td>
+<td><div style="display:flex;align-items:center;gap:7px;"><div class="av av-s">{{ strtoupper(substr($app->student->first_name??'S',0,1)) }}</div><div><div class="fws" style="font-size:13px;">{{ $app->student->full_name??'—' }}</div><div class="mono tm" style="font-size:10px;">{{ edp_short($app->student->student_id) }}</div></div></div></td>
 <td style="font-size:12px;color:var(--tm);">{{ Str::limit($app->scholarship->name??'—',22) }}</td>
 <td class="mono fwb" style="color:{{ (float)($app->gwa??0)<=1.75?'var(--gm)':'var(--danger)' }}">{{ number_format($app->gwa??0,2) }}</td>
 <td style="min-width:90px;"><div style="display:flex;align-items:center;gap:4px;"><div style="flex:1;"><div class="asb"><div class="asf {{ $sc>=75?'ash':($sc>=50?'asm':'asl') }}" style="width:{{ $sc }}%;"></div></div></div><span class="mono" style="font-size:11px;font-weight:700;">{{ $sc }}%</span></div></td>

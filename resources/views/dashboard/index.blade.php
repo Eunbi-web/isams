@@ -85,7 +85,7 @@
                                 <div class="avatar avatar-sm">{{ strtoupper(substr($student->first_name,0,1)) }}</div>
                                 <div>
                                     <div class="fw-semi">{{ $student->full_name }}</div>
-                                    <div class="text-muted" style="font-size:11px;">{{ $student->student_id }}</div>
+                                    <div class="text-muted" style="font-size:11px;">{{ edp_short($student->student_id) }}</div>
                                 </div>
                             </div>
                         </td>
