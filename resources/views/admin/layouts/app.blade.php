@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><script src="{{ asset('js/pjax.js?v=1') }}"></script>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><script src="{{ asset('js/pjax.js?v=1') }}"></script><script src="{{ asset('js/mdi.js?v=6') }}"></script>
 <link rel="icon" type="image/x-icon" href="{{ asset('favicon.ico') }}">
 <link rel="icon" type="image/png" sizes="32x32" href="{{ asset('favicon-32x32.png') }}">
 <link rel="icon" type="image/png" sizes="16x16" href="{{ asset('favicon-16x16.png') }}">
@@ -186,7 +186,7 @@ body[data-theme="light"]{--bg:#f2f7f3;--card:#fff;--sb:#0d3318;--st:#90c8a0;--tx
 <div class="sb-sec"><div class="sb-lbl">Account</div>
 {{-- Notifications removed from sidebar — now in topbar bell icon --}}
 <a href="{{ route('admin.settings.index') }}" class="nav-a {{ request()->routeIs('admin.settings*')?'active':'' }}"><i class="fas fa-cog"></i> Settings</a></div>
-<div class="sb-footer"><div class="user-card"><div class="u-av">{{ strtoupper(substr(auth()->user()->name??'A',0,1)) }}</div><div><div class="u-name">{{ explode(' ',auth()->user()->name??'Admin')[0] }}</div><div class="u-role">{{ ucfirst(auth()->user()->role??'admin') }}</div></div><a href="{{ route('logout') }}" class="u-out" onclick="event.preventDefault();document.getElementById('alf').submit();" title="Logout"><i class="fas fa-sign-out-alt"></i></a></div><form id="alf" action="{{ route('logout') }}" method="POST" style="display:none;">@csrf</form></div>
+<div class="sb-footer"><div class="user-card"><div class="u-av">{{ strtoupper(substr(auth()->user()->name??'A',0,1)) }}</div><div><div class="u-name">{{ explode(' ',auth()->user()->name??'Admin')[0] }}</div><div class="u-role">{{ ucfirst(auth()->user()->role??'admin') }}</div></div><a href="{{ route('logout') }}" class="u-out" data-no-pjax onclick="event.preventDefault();document.getElementById('alf').submit();" title="Logout"><i class="fas fa-sign-out-alt"></i></a></div><form id="alf" action="{{ route('logout') }}" method="POST" style="display:none;">@csrf</form></div>
 </aside>
 <div class="sb-backdrop" id="sbBackdrop"></div>
 <div class="main">

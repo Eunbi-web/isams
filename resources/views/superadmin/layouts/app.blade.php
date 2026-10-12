@@ -119,7 +119,7 @@ select.fc option{background:var(--card);}
 <div class="sb-sec"><div class="sb-lbl">System</div>
 <a href="{{ route('admin.dashboard') }}" class="nav-a" target="_blank"><i class="fas fa-external-link-alt"></i> Admin Panel</a>
 <a href="{{ route('superadmin.settings') }}" class="nav-a {{ request()->routeIs('superadmin.settings')?'active':'' }}"><i class="fas fa-cog"></i> Settings</a></div>
-<div class="sb-footer"><div class="user-card"><div class="u-av">{{ strtoupper(substr(auth()->user()->name??'S',0,1)) }}</div><div><div class="u-name">{{ auth()->user()->name??'Super Admin' }}</div><div class="u-role">⚡ SUPER ADMIN</div></div><a href="{{ route('logout') }}" class="u-out" onclick="event.preventDefault();document.getElementById('salf').submit();" title="Logout"><i class="fas fa-sign-out-alt"></i></a></div><form id="salf" action="{{ route('logout') }}" method="POST" style="display:none;">@csrf</form></div>
+<div class="sb-footer"><div class="user-card"><div class="u-av">{{ strtoupper(substr(auth()->user()->name??'S',0,1)) }}</div><div><div class="u-name">{{ auth()->user()->name??'Super Admin' }}</div><div class="u-role">⚡ SUPER ADMIN</div></div><a href="{{ route('logout') }}" class="u-out" data-no-pjax onclick="event.preventDefault();document.getElementById('salf').submit();" title="Logout"><i class="fas fa-sign-out-alt"></i></a></div><form id="salf" action="{{ route('logout') }}" method="POST" style="display:none;">@csrf</form></div>
 </aside>
 <div class="sb-backdrop" id="sbBackdrop"></div>
 <div class="main">

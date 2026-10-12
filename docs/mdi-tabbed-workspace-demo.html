@@ -1,0 +1,935 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ISAMS — MDI without the tab strip (dock + peek/split) Demo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<style>
+:root{
+    --primary:#1a3a5c; --primary-light:#2a5298; --accent:#e8b84b; --accent-light:#f5d07a;
+    --danger:#c0392b; --success:#1a7a4a; --warning:#d68910;
+    --bg:#f0f4f8; --bg-card:#ffffff; --sidebar-bg:#0d2137; --sidebar-text:#a8c0d6;
+    --sidebar-hover:#1a3a5c; --text:#1c2b3a; --text-muted:#5a7a94; --border:#d0dce8;
+    --shadow:0 2px 12px rgba(26,58,92,0.10); --radius:12px; --radius-sm:8px;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);height:100vh;display:flex;font-size:15px;overflow:hidden;}
+
+/* ── SIDEBAR (same look as the real layout) ── */
+.sidebar{width:260px;min-width:260px;background:var(--sidebar-bg);display:flex;flex-direction:column;position:fixed;top:0;left:0;bottom:0;z-index:100;overflow-y:auto;}
+.sidebar-brand{padding:28px 20px 20px;border-bottom:1px solid rgba(255,255,255,0.07);}
+.brand-logo{display:flex;align-items:center;gap:12px;}
+.brand-icon{width:44px;height:44px;background:linear-gradient(135deg,var(--accent),#c8972b);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:20px;color:#fff;box-shadow:0 4px 14px rgba(232,184,75,0.4);}
+.brand-text .name{font-family:'Sora',sans-serif;font-size:16px;font-weight:700;color:#fff;line-height:1.1;}
+.brand-text .sub{font-size:10px;color:var(--sidebar-text);text-transform:uppercase;letter-spacing:1px;}
+.sidebar-section{padding:18px 12px 6px;}
+.sidebar-section-label{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:1.5px;color:rgba(168,192,214,0.45);padding:0 8px 8px;}
+.nav-item{display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:var(--radius-sm);color:var(--sidebar-text);text-decoration:none;font-size:14px;font-weight:500;transition:all .2s ease;margin-bottom:2px;cursor:pointer;user-select:none;}
+.nav-item i{width:18px;text-align:center;font-size:15px;}
+.nav-item:hover,.nav-item.active{background:var(--sidebar-hover);color:#fff;}
+.nav-item.active{color:var(--accent);}
+.sidebar-footer{margin-top:auto;padding:16px 12px;border-top:1px solid rgba(255,255,255,0.07);}
+.user-card{display:flex;align-items:center;gap:10px;padding:10px 12px;background:rgba(255,255,255,0.05);border-radius:var(--radius-sm);}
+.user-avatar{width:36px;height:36px;background:linear-gradient(135deg,var(--accent),var(--primary-light));border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;color:#fff;}
+.user-info .uname{font-size:13px;font-weight:600;color:#fff;}
+.user-info .urole{font-size:11px;color:var(--sidebar-text);}
+
+/* ── MAIN ── */
+.main{margin-left:260px;flex:1;min-width:0;display:flex;flex-direction:column;height:100vh;}
+
+/* ── TOPBAR ── */
+.topbar{background:var(--bg-card);border-bottom:1px solid var(--border);padding:0 28px;height:64px;display:flex;align-items:center;gap:16px;position:sticky;top:0;z-index:90;box-shadow:0 1px 8px rgba(0,0,0,0.05);flex-shrink:0;}
+.topbar-title{font-family:'Sora',sans-serif;font-size:18px;font-weight:700;color:var(--primary);}
+.topbar-subtitle{font-size:12px;color:var(--text-muted);}
+.topbar-right{margin-left:auto;display:flex;align-items:center;gap:14px;}
+.topbar-btn{width:38px;height:38px;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-sm);display:flex;align-items:center;justify-content:center;color:var(--text-muted);cursor:pointer;transition:all .2s;}
+.topbar-btn:hover{background:var(--primary);color:#fff;border-color:var(--primary);}
+.topbar-btn.active{background:var(--primary);color:#fff;border-color:var(--primary);}
+.school-badge{background:linear-gradient(135deg,var(--primary),var(--primary-light));color:#fff;padding:6px 14px;border-radius:20px;font-size:12px;font-weight:600;}
+
+/* ── WINDOW MENU (topbar dropdown — the classic MDI “Window” menu) ── */
+.win-wrap{position:relative;display:inline-flex;}
+.win-count{position:absolute;top:-6px;right:-6px;background:var(--accent);color:var(--primary);font-size:10px;font-weight:800;min-width:17px;height:17px;border-radius:9px;display:none;align-items:center;justify-content:center;padding:0 4px;z-index:2;}
+.win-count.show{display:flex;}
+.win-menu{position:absolute;top:46px;right:0;background:#fff;border:1px solid var(--border);border-radius:12px;box-shadow:0 16px 44px rgba(13,33,55,0.22);min-width:310px;z-index:260;display:none;overflow:hidden;padding-bottom:4px;}
+.win-menu.open{display:block;}
+.win-menu-head{padding:11px 14px 8px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1.2px;color:var(--text-muted);border-bottom:1px solid var(--border);margin-bottom:4px;}
+.win-item{display:flex;align-items:center;gap:10px;padding:9px 14px;cursor:pointer;font-size:13.5px;}
+.win-item:hover{background:#f2f6fa;}
+.win-item.active{background:#eef4fb;font-weight:600;}
+.win-item .check{width:14px;color:var(--accent);visibility:hidden;font-size:12px;}
+.win-item.active .check{visibility:visible;}
+.win-item .wlabel{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.win-item .wbadge{margin-left:0;margin-right:2px;background:#fef3cd;color:#a07c00;font-size:10.5px;font-weight:700;padding:2px 8px;border-radius:10px;flex-shrink:0;}
+.win-item .wx{margin-left:auto;width:22px;height:22px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:13px;opacity:.45;color:var(--text);flex-shrink:0;}
+.win-item .wx:hover{background:var(--danger);color:#fff;opacity:1;}
+.win-menu-empty{padding:18px 14px;color:var(--text-muted);font-size:13px;}
+
+/* ── WORKSPACE: pages area + optional docked pane (split view) ── */
+.workspace{flex:1;display:flex;min-height:0;position:relative;}
+.pages{flex:1;min-width:0;position:relative;height:100%;}
+.page{display:none;height:100%;overflow-y:auto;padding:28px;animation:fadeInUp .3s ease both;}
+.page.active{display:block;}
+@keyframes fadeInUp{from{opacity:0;transform:translateY(12px);}to{opacity:1;transform:translateY(0);}}
+.dock-pane{display:none;flex-direction:column;width:460px;min-width:340px;border-left:1px solid var(--border);background:var(--bg-card);flex-shrink:0;}
+.workspace.split .dock-pane{display:flex;}
+@media (max-width:900px){ .dock-pane{width:100%;} }
+
+/* ── BOTTOM DOCK (the switcher — replaces the top tab strip) ── */
+.dock{background:var(--sidebar-bg);display:none;align-items:center;gap:6px;padding:7px 12px;overflow-x:auto;scrollbar-width:none;flex-shrink:0;}
+.dock.show{display:flex;}
+.dock.force-hidden{display:none;}
+.dock::-webkit-scrollbar{display:none;}
+.dock-caption{font-size:10px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:rgba(168,192,214,0.5);margin-right:8px;flex-shrink:0;}
+.dock-item{display:flex;align-items:center;gap:8px;padding:7px 9px 7px 12px;border-radius:9px;background:rgba(255,255,255,0.07);color:var(--sidebar-text);border:none;cursor:pointer;font-family:inherit;font-size:12.5px;font-weight:500;white-space:nowrap;flex-shrink:0;transition:background .15s,color .15s;}
+.dock-item:hover{background:rgba(255,255,255,0.14);color:#fff;}
+.dock-item.active{background:var(--bg);color:var(--text);}
+.dock-item .dock-ic{font-size:12px;width:15px;text-align:center;}
+.dock-item .dock-ic.loading{animation:spin 1s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg);}}
+.dock-item .dlabel{overflow:hidden;text-overflow:ellipsis;max-width:170px;}
+.dock-item .dx{width:18px;height:18px;border-radius:5px;display:flex;align-items:center;justify-content:center;font-size:12px;opacity:.55;flex-shrink:0;}
+.dock-item .dx:hover{background:var(--danger);color:#fff;opacity:1;}
+.dbadge{background:rgba(232,184,75,0.2);color:var(--accent);font-size:10px;font-weight:800;min-width:17px;height:17px;padding:0 5px;border-radius:9px;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;}
+.dock-item.active .dbadge{background:#fef6e0;color:#c8972b;}
+
+/* ── PEEK PANEL (overlay) — slides in from the right; pin → docks as split view ── */
+.peek{position:fixed;top:0;right:0;bottom:0;width:460px;max-width:100vw;background:var(--bg-card);border-left:1px solid var(--border);box-shadow:-18px 0 50px rgba(13,33,55,0.28);z-index:240;transform:translateX(106%);transition:transform .3s cubic-bezier(.2,.7,.3,1);display:flex;flex-direction:column;}
+.peek.open{transform:none;}
+@media (max-width:900px){ .peek{width:100vw;} }
+.peek-head{padding:14px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;background:#fff;flex-shrink:0;}
+.peek-head h3{font-family:'Sora',sans-serif;font-size:15px;color:var(--primary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.peek-head .sub{font-size:11.5px;color:var(--text-muted);}
+.peek-body{flex:1;overflow-y:auto;padding:20px;}
+.icon-btn{width:32px;height:32px;border-radius:8px;border:1px solid var(--border);background:var(--bg);color:var(--text-muted);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:13px;flex-shrink:0;transition:all .2s;}
+.icon-btn:hover{background:var(--primary);color:#fff;border-color:var(--primary);}
+.icon-btn.pin:hover{background:var(--accent);color:var(--primary);border-color:var(--accent);}
+
+/* row that opens a peek */
+tr.rowlink{cursor:pointer;}
+tr.rowlink td:last-child::after{content:'\f105';font-family:'Font Awesome 6 Free';font-weight:900;float:right;color:var(--text-muted);opacity:.5;font-size:12px;}
+
+/* detail content inside peek / docked pane */
+.dv-hero{display:flex;align-items:center;gap:14px;padding:16px;background:linear-gradient(135deg,#f4f8fc,#eef3f9);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:16px;}
+.dv-avatar{width:54px;height:54px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--primary-light));color:#fff;font-family:'Sora',sans-serif;font-weight:800;font-size:18px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.dv-hero h4{font-family:'Sora',sans-serif;font-size:16px;color:var(--primary);}
+.dv-hero .dsub{font-size:12px;color:var(--text-muted);margin-top:2px;}
+.kv{display:grid;grid-template-columns:135px 1fr;gap:9px 14px;font-size:13.5px;margin:0 0 16px;}
+.kv dt{color:var(--text-muted);}
+.kv dd{margin:0;font-weight:500;}
+
+/* loading skeleton (simulated PJAX fetch) */
+.skeleton{max-width:860px;}
+.sk-line{height:14px;border-radius:6px;background:linear-gradient(90deg,#e2e9f2 25%,#f2f6fa 50%,#e2e9f2 75%);background-size:200% 100%;animation:shimmer 1.1s infinite;margin-bottom:14px;}
+.sk-line.h{height:26px;width:38%;}
+@keyframes shimmer{to{background-position:-200% 0;}}
+
+/* ── PJAX-style progress bar ── */
+#pbar{position:fixed;top:0;left:260px;right:0;height:3px;background:linear-gradient(90deg,var(--accent),#c8972b);transform-origin:left;transform:scaleX(0);opacity:0;transition:transform .25s linear,opacity .25s;z-index:200;}
+
+/* ── cards / tables / buttons (trimmed from the real layout) ── */
+.card{background:var(--bg-card);border-radius:var(--radius);border:1px solid var(--border);box-shadow:var(--shadow);overflow:hidden;}
+.card-header{padding:18px 22px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px;}
+.card-header h2{font-family:'Sora',sans-serif;font-size:15px;font-weight:700;color:var(--primary);}
+.card-header .card-actions{margin-left:auto;display:flex;gap:8px;}
+.card-body{padding:22px;}
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:18px;margin-bottom:24px;}
+.stat-card{background:var(--bg-card);border-radius:var(--radius);border:1px solid var(--border);padding:20px 22px;box-shadow:var(--shadow);display:flex;align-items:center;gap:16px;transition:transform .2s,box-shadow .2s;}
+.stat-card:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(26,58,92,0.13);}
+.stat-icon{width:52px;height:52px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;}
+.stat-icon.blue{background:#e8f0fb;color:var(--primary-light);}
+.stat-icon.gold{background:#fef6e0;color:#c8972b;}
+.stat-icon.green{background:#e2f5ec;color:var(--success);}
+.stat-icon.red{background:#fde8e6;color:var(--danger);}
+.stat-info .label{font-size:12px;color:var(--text-muted);font-weight:500;}
+.stat-info .value{font-family:'Sora',sans-serif;font-size:28px;font-weight:800;color:var(--primary);line-height:1.1;}
+.table-wrap{overflow-x:auto;}
+.table-scroll{max-height:420px;overflow:auto;}
+table{width:100%;border-collapse:collapse;}
+thead th{background:#f7fafc;padding:11px 16px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:var(--text-muted);text-align:left;border-bottom:2px solid var(--border);position:sticky;top:0;}
+tbody tr{transition:background .15s;}
+tbody tr:hover{background:#f7fafc;}
+tbody td{padding:13px 16px;font-size:14px;border-bottom:1px solid var(--border);color:var(--text);}
+tbody tr:last-child td{border-bottom:none;}
+.badge{display:inline-flex;align-items:center;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600;}
+.badge-success{background:#e2f5ec;color:#1a7a4a;}
+.badge-danger{background:#fde8e6;color:#c0392b;}
+.badge-warning{background:#fef3cd;color:#a07c00;}
+.badge-info{background:#e0f3f8;color:#1a6b8a;}
+.badge-primary{background:#e8f0fb;color:#2a5298;}
+.badge-gray{background:#eef1f5;color:#5a7a94;}
+.btn{display:inline-flex;align-items:center;gap:7px;padding:9px 18px;border-radius:var(--radius-sm);font-size:13px;font-weight:600;cursor:pointer;border:none;text-decoration:none;transition:all .2s;}
+.btn-primary{background:var(--primary);color:#fff;}
+.btn-primary:hover{background:var(--primary-light);}
+.btn-accent{background:var(--accent);color:var(--primary);}
+.btn-accent:hover{background:var(--accent-light);}
+.btn-sm{padding:6px 13px;font-size:12px;}
+.form-control{padding:10px 14px;border:1.5px solid var(--border);border-radius:var(--radius-sm);font-size:14px;color:var(--text);background:#fff;font-family:inherit;}
+.form-control:focus{outline:none;border-color:var(--primary-light);box-shadow:0 0 0 3px rgba(42,82,152,0.1);}
+.toolbar{display:flex;gap:10px;align-items:center;margin-bottom:18px;flex-wrap:wrap;}
+.toolbar .grow{flex:1;min-width:180px;}
+.count-note{font-size:12px;color:var(--text-muted);margin-top:10px;}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:20px;}
+.grid-4{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:18px;}
+.prog{height:8px;border-radius:6px;background:#e8eef5;overflow:hidden;margin-top:10px;}
+.prog i{display:block;height:100%;background:linear-gradient(90deg,var(--primary-light),var(--primary));border-radius:6px;}
+.sch-card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:18px 20px;box-shadow:var(--shadow);}
+.sch-card h3{font-family:'Sora',sans-serif;font-size:14px;color:var(--primary);display:flex;align-items:center;gap:8px;}
+.sch-card .meta{font-size:12px;color:var(--text-muted);margin-top:4px;}
+.sch-card .row{display:flex;justify-content:space-between;align-items:center;margin-top:12px;font-size:12px;color:var(--text-muted);}
+.bars{display:flex;align-items:flex-end;gap:14px;height:160px;padding:10px 6px 0;}
+.bars .bar{flex:1;background:linear-gradient(180deg,var(--primary-light),var(--primary));border-radius:6px 6px 0 0;position:relative;}
+.bars .bar span{position:absolute;bottom:-22px;left:0;right:0;text-align:center;font-size:10px;color:var(--text-muted);}
+.chart-wrap{padding-bottom:26px;}
+
+/* empty state */
+.empty-state{height:100%;overflow-y:auto;padding:40px 28px;display:flex;justify-content:center;}
+.empty-hero{max-width:680px;background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);padding:36px 40px;text-align:center;height:fit-content;margin-top:10px;}
+.empty-hero .brand-icon{margin:0 auto 16px;width:56px;height:56px;font-size:24px;}
+.empty-hero h2{font-family:'Sora',sans-serif;font-size:20px;color:var(--primary);margin-bottom:8px;}
+.empty-hero p{color:var(--text-muted);font-size:14px;margin-bottom:14px;}
+.try-list{text-align:left;margin:18px 0 6px;padding-left:0;list-style:none;}
+.try-list li{font-size:14px;color:var(--text);padding:7px 0 7px 30px;position:relative;border-bottom:1px dashed var(--border);}
+.try-list li:last-child{border-bottom:none;}
+.try-list li::before{content:'\f138';font-family:'Font Awesome 6 Free';font-weight:900;position:absolute;left:4px;top:8px;color:var(--accent);font-size:14px;}
+code{font-family:'JetBrains Mono',monospace;background:#eef1f5;padding:1px 6px;border-radius:5px;font-size:12px;}
+
+/* toast */
+.toast{position:fixed;bottom:70px;right:24px;background:var(--primary);color:#fff;padding:13px 20px;border-radius:var(--radius-sm);font-size:13.5px;box-shadow:0 10px 30px rgba(0,0,0,0.25);opacity:0;transform:translateY(14px);transition:all .3s;z-index:300;display:flex;gap:9px;align-items:center;max-width:380px;}
+.toast.show{opacity:1;transform:translateY(0);}
+.toast i{color:var(--accent);}
+.live-dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--success);margin-right:7px;animation:pulse 1.6s infinite;}
+@keyframes pulse{0%,100%{opacity:1;}50%{opacity:.3;}}
+</style>
+</head>
+<body>
+
+<!-- PJAX-style top progress bar -->
+<div id="pbar"></div>
+
+<!-- SIDEBAR -->
+<aside class="sidebar" id="sidebar">
+    <div class="sidebar-brand">
+        <div class="brand-logo">
+            <div class="brand-icon"><i class="fas fa-graduation-cap"></i></div>
+            <div class="brand-text">
+                <div class="name">ISAMS</div>
+                <div class="sub">Student Affairs &middot; MDI demo v2</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="sidebar-section">
+        <div class="sidebar-section-label">Main</div>
+        <a class="nav-item" data-module="dashboard"><i class="fas fa-th-large"></i> Dashboard</a>
+    </div>
+    <div class="sidebar-section">
+        <div class="sidebar-section-label">Records</div>
+        <a class="nav-item" data-module="students"><i class="fas fa-user-graduate"></i> Students</a>
+        <a class="nav-item" data-module="organizations"><i class="fas fa-users"></i> Organizations</a>
+        <a class="nav-item" data-module="scholarships"><i class="fas fa-award"></i> Scholarships</a>
+    </div>
+    <div class="sidebar-section">
+        <div class="sidebar-section-label">Services</div>
+        <a class="nav-item" data-module="counseling"><i class="fas fa-heart"></i> Counseling</a>
+        <a class="nav-item" data-module="discipline"><i class="fas fa-gavel"></i> Discipline</a>
+        <a class="nav-item" data-module="events"><i class="fas fa-calendar-alt"></i> Events</a>
+    </div>
+    <div class="sidebar-section">
+        <div class="sidebar-section-label">System</div>
+        <a class="nav-item" data-module="reports"><i class="fas fa-chart-bar"></i> Reports</a>
+        <a class="nav-item" data-module="settings"><i class="fas fa-cog"></i> Settings</a>
+    </div>
+
+    <div class="sidebar-footer">
+        <div class="user-card">
+            <div class="user-avatar">A</div>
+            <div class="user-info">
+                <div class="uname">Admin User</div>
+                <div class="urole">Administrator</div>
+            </div>
+            <i class="fas fa-sign-out-alt" style="margin-left:auto;color:var(--sidebar-text);"></i>
+        </div>
+    </div>
+</aside>
+
+<!-- MAIN -->
+<div class="main">
+    <header class="topbar">
+        <div>
+            <div class="topbar-title" id="tbTitle">MDI without the tab strip</div>
+            <div class="topbar-subtitle" id="tbSub">Switch pages from the Window menu (or re-click a sidebar module) — list rows open a peek panel</div>
+        </div>
+        <div class="topbar-right">
+            <button class="topbar-btn" id="dockToggle" title="Show the bottom dock"><i class="fas fa-table-columns"></i></button>
+            <div class="win-wrap">
+                <button class="topbar-btn" id="winBtn" title="Open pages (Window menu)"><i class="fas fa-layer-group"></i></button>
+                <span class="win-count" id="winCount"></span>
+                <div class="win-menu" id="winMenu"></div>
+            </div>
+            <span class="school-badge" id="tbSchool"><i class="fas fa-university" style="margin-right:6px;"></i>Main Campus</span>
+            <span class="topbar-btn"><i class="fas fa-bell"></i></span>
+            <span class="topbar-btn"><i class="fas fa-cog"></i></span>
+        </div>
+    </header>
+
+    <!-- WORKSPACE: pages on the left, optional docked detail pane on the right -->
+    <div class="workspace" id="workspace">
+        <div class="pages" id="pages">
+            <div class="empty-state" id="emptyState">
+                <div class="empty-hero">
+                    <div class="brand-icon"><i class="fas fa-layer-group"></i></div>
+                    <h2>MDI without the tab strip — dock, window menu, peek &amp; split</h2>
+                    <p>Click a module in the sidebar. Each one opens as its <b>own page</b> kept alive in the DOM — like MDI child windows — but with <b>no top strip and no permanent dock</b>: switching happens in the topbar <b>Window menu</b> or by re-clicking a sidebar module. Standalone file; just open it in a browser.</p>
+                    <ul class="try-list">
+                        <li><b>Open a module</b> — the <i class="fas fa-layer-group"></i> button in the topbar opens the Window menu (checkmark = active, badges = pending counts, &times; = close); re-clicking the sidebar module just focuses its open page.</li>
+                        <li><b>Want the dock back?</b> The <i class="fas fa-table-columns"></i> button shows open pages as cards at the bottom — hidden by default for a cleaner look, choice remembered.</li>
+                        <li><b>Students, Counseling, Discipline</b> — click any row: a <b>peek panel</b> slides in from the right without leaving the list. Dismiss with Esc, &times;, or a click outside.</li>
+                        <li><b>Pin the peek</b> (<i class="fas fa-thumbtack"></i>) — it docks beside the list as a <b>split view</b>; while docked, clicking other rows reuses the pane. Unpin returns it to the overlay.</li>
+                        <li><b>State survives switching</b> — type in the Students search, scroll, switch modules, come back: everything is exactly where you left it.</li>
+                        <li><b>Refresh the page</b> — your open set of pages is restored from localStorage (session restore).</li>
+                        <li><b>Keep opening modules</b> — at 8 pages the oldest closes automatically with a toast (memory bound). Close any page with &times; or middle-click; reopening re-fetches like a normal PJAX load.</li>
+                    </ul>
+                    <p style="margin:14px 0 0;">In the real system this is the same per-page engine as the reverted tab patch inside <code>public/js/pjax.js</code> — only the switcher and panel presentation change. No top strip anywhere.</p>
+                </div>
+            </div>
+        </div>
+        <div class="dock-pane" id="dockPane">
+            <div class="peek-head">
+                <div style="flex:1;min-width:0;">
+                    <h3 id="dockTitle">—</h3>
+                    <div class="sub" id="dockSub"></div>
+                </div>
+                <button class="icon-btn" id="dockUnpin" title="Unpin — back to peek overlay"><i class="fas fa-window-restore"></i></button>
+                <button class="icon-btn" id="dockClose" title="Close pane"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="peek-body" id="dockBody"></div>
+        </div>
+    </div>
+
+    <!-- BOTTOM DOCK (the switcher) -->
+    <div class="dock" id="dock"><span class="dock-caption">Open pages</span></div>
+</div>
+
+<!-- PEEK PANEL (overlay) -->
+<div class="peek" id="peek">
+    <div class="peek-head">
+        <div style="flex:1;min-width:0;">
+            <h3 id="peekTitle">—</h3>
+            <div class="sub" id="peekSub"></div>
+        </div>
+        <button class="icon-btn pin" id="peekPin" title="Pin — keep docked beside the list (split view)"><i class="fas fa-thumbtack"></i></button>
+        <button class="icon-btn" id="peekClose" title="Close (Esc)"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="peek-body" id="peekBody"></div>
+</div>
+
+<script>
+(function () {
+'use strict';
+
+/* ════════════════════════════════════════════════════════════════
+   PAGE ENGINE — same idea as the reverted tab patch, minus the strip.
+
+   Real PJAX today:  fetch page → container.innerHTML = body
+                     (one document at a time; going elsewhere throws it away)
+
+   This engine:      fetch page → pageEl.innerHTML = body
+                     where pageEl is a per-page <div class="page"> that
+                     STAYS in the DOM. Switching is display:none toggling,
+                     so inputs, filters and scroll positions survive.
+
+   Switchers (no top strip):
+     • topbar “Window menu”   — always available (count bubble, badges, close per item)
+     • sidebar re-click       — focuses the already-open page (single instance)
+     • bottom dock cards      — optional, hidden by default; the columns button
+                                in the topbar toggles it (remembered)
+   Plus:
+     • peek panel             — row → slide-in detail overlay (Esc / outside click)
+     • pin                    — peek docks beside the list = split view
+   ════════════════════════════════════════════════════════════════ */
+
+var MAX_PAGES = 8;
+var pages = [];           // [{id, pageEl, dockEl, timers:[], loadTimer}]
+var activeId = null;
+
+var pagesEl   = document.getElementById('pages');
+var emptyEl   = document.getElementById('emptyState');
+var workspace = document.getElementById('workspace');
+var dock      = document.getElementById('dock');
+var pbar      = document.getElementById('pbar');
+var winBtn    = document.getElementById('winBtn');
+var winMenu   = document.getElementById('winMenu');
+var winCount  = document.getElementById('winCount');
+var peekEl    = document.getElementById('peek');
+var peekBody  = document.getElementById('peekBody');
+var dockBody  = document.getElementById('dockBody');
+
+/* ── fake "server pages" (in the real system these come from Laravel) ── */
+var PAGES = {
+    dashboard:     { title:'Dashboard',    sub:'Integrated Student Affairs Management System', icon:'fa-th-large',      render: renderDashboard },
+    students:      { title:'Students',     sub:'Student records — 1,248 enrolled',             icon:'fa-user-graduate', render: renderStudents },
+    organizations: { title:'Organizations',sub:'Accredited student organizations',             icon:'fa-users',         render: renderTablePage('Organizations', orgRows, ['Organization','Adviser','Members','Status'], null) },
+    scholarships:  { title:'Scholarships', sub:'Scholarship programs and slot usage',          icon:'fa-award',         render: renderScholarships },
+    counseling:    { title:'Counseling',   sub:'Guidance and counseling sessions',             icon:'fa-heart',         render: renderTablePage('Counseling sessions', counRows, ['Student','Type','Counselor','Date','Status'], peekSession) },
+    discipline:    { title:'Discipline',   sub:'Disciplinary cases',                           icon:'fa-gavel',         render: renderTablePage('Discipline cases', discRows, ['Case #','Student','Offense','Status'], peekCase) },
+    events:        { title:'Events',       sub:'Student activities calendar',                  icon:'fa-calendar-alt',  render: renderTablePage('Upcoming events', eventRows, ['Event','Date','Venue','Status'], null) },
+    reports:       { title:'Reports',      sub:'Analytics and exports',                        icon:'fa-chart-bar',     render: renderReports },
+    settings:      { title:'Settings',     sub:'System configuration',                         icon:'fa-cog',           render: renderSettings }
+};
+
+/* pending-count badges shown on dock cards and in the Window menu */
+var BADGES = { discipline:'3', counseling:'2' };
+
+/* ── open / activate / close ───────────────────────────────────── */
+
+function openPage(id) {
+    var existing = page(id);
+    if (existing) { activatePage(id); return; }       // second click on same module = just focus it, no duplicate
+
+    if (pages.length >= MAX_PAGES) {                  // memory guard: close least-recently-opened
+        var victim = pages[0];
+        closePage(victim.id, true);
+        toast('Page limit reached — closed oldest page \u201C' + PAGES[victim.id].title + '\u201D');
+    }
+
+    var p = { id:id, timers:[], loadTimer:null };
+    p.dockEl = document.createElement('button');
+    p.dockEl.className = 'dock-item';
+    p.dockEl.innerHTML = '<i class="fas ' + PAGES[id].icon + ' dock-ic loading"></i>' +
+                         '<span class="dlabel">' + PAGES[id].title + '</span>' +
+                         (BADGES[id] ? '<span class="dbadge" title="Pending items">' + BADGES[id] + '</span>' : '') +
+                         '<span class="dx" title="Close">&times;</span>';
+    p.dockEl.addEventListener('click', function () { activatePage(id); });
+    p.dockEl.querySelector('.dx').addEventListener('click', function (e) { e.stopPropagation(); closePage(id); });
+    p.dockEl.addEventListener('auxclick', function (e) { if (e.button === 1) closePage(id); });   // middle-click closes
+    dock.appendChild(p.dockEl);
+    syncDock();
+
+    p.pageEl = document.createElement('div');
+    p.pageEl.className = 'page';
+    p.pageEl.innerHTML = '<div class="skeleton"><div class="sk-line h"></div><div class="sk-line" style="width:70%"></div><div class="sk-line" style="width:90%"></div><div class="sk-line" style="width:55%"></div><div class="sk-line" style="width:80%"></div></div>';
+    pagesEl.appendChild(p.pageEl);
+    pages.push(p);
+    emptyEl.style.display = 'none';
+
+    startBar();
+    p.loadTimer = setTimeout(function () {            // simulated network latency of a PJAX fetch
+        p.loadTimer = null;
+        stopBar();
+        p.dockEl.querySelector('.dock-ic').classList.remove('loading');
+        p.pageEl.innerHTML = '';
+        PAGES[id].render(p.pageEl, p);
+        activatePage(id);
+    }, 420 + Math.random() * 380);
+
+    activatePage(id);
+}
+
+function activatePage(id) {
+    activeId = id;
+    pages.forEach(function (p) {
+        p.pageEl.classList.toggle('active', p.id === id);
+        p.dockEl.classList.toggle('active', p.id === id);   // ← the entire "switch": CSS visibility.
+    });                                                      //   Inactive pages stay in the DOM with all state.
+    var cfg = PAGES[id];
+    document.getElementById('tbTitle').textContent = cfg.title;
+    document.getElementById('tbSub').textContent = cfg.sub;
+    document.querySelectorAll('.nav-item').forEach(function (n) {
+        n.classList.toggle('active', n.dataset.module === id);
+    });
+    var hash = '#/' + id;
+    if (location.hash !== hash) location.hash = hash;         // pushState equivalent; back button works
+    renderWinMenu();
+    updateWinCount();
+    saveSession();
+    if (page(id).dockEl.scrollIntoView) page(id).dockEl.scrollIntoView({ inline:'nearest' });
+}
+
+function closePage(id, silent) {
+    var i = pages.findIndex(function (p) { return p.id === id; });
+    if (i < 0) return;
+    var p = pages[i];
+    if (p.loadTimer) clearTimeout(p.loadTimer);               // cancel an in-flight "fetch"
+    p.timers.forEach(clearInterval);                          // per-page timer cleanup (the pjax.js refactor)
+    p.dockEl.remove();
+    p.pageEl.remove();
+    pages.splice(i, 1);
+
+    if (!pages.length) {
+        activeId = null;
+        emptyEl.style.display = 'flex';
+        document.getElementById('tbTitle').textContent = 'MDI without the tab strip';
+        document.getElementById('tbSub').textContent = 'Switch pages from the Window menu (or re-click a sidebar module) — list rows open a peek panel';
+        document.querySelectorAll('.nav-item').forEach(function (n) { n.classList.remove('active'); });
+    } else if (activeId === id) {
+        activatePage(pages[Math.min(i, pages.length - 1)].id);
+    }
+    renderWinMenu();
+    updateWinCount();
+    syncDock();
+    saveSession();
+    if (!silent) toast('Closed \u201C' + PAGES[id].title + '\u201D — its state was discarded; reopening re-fetches.');
+}
+
+function page(id) { return pages.find(function (p) { return p.id === id; }); }
+
+/* ── Window menu (topbar dropdown) ────────────────────────────── */
+
+function renderWinMenu() {
+    if (!pages.length) {
+        winMenu.innerHTML = '<div class="win-menu-empty">No open pages — click a module in the sidebar.</div>';
+        return;
+    }
+    winMenu.innerHTML = '<div class="win-menu-head">Open pages</div>' + pages.map(function (p) {
+        return '<div class="win-item' + (p.id === activeId ? ' active' : '') + '" data-win="' + p.id + '">' +
+               '<i class="fas fa-check check"></i>' +
+               '<i class="fas ' + PAGES[p.id].icon + '" style="width:16px;color:var(--text-muted);font-size:12px;"></i>' +
+               '<span class="wlabel">' + PAGES[p.id].title + '</span>' +
+               (BADGES[p.id] ? '<span class="wbadge">' + BADGES[p.id] + ' pending</span>' : '') +
+               '<span class="wx" title="Close">&times;</span></div>';
+    }).join('');
+}
+
+function updateWinCount() {
+    winCount.textContent = pages.length;
+    winCount.classList.toggle('show', pages.length > 0);
+    winBtn.classList.toggle('active', pages.length > 0);
+}
+
+winBtn.addEventListener('click', function () {
+    renderWinMenu();
+    winMenu.classList.toggle('open');
+});
+
+winMenu.addEventListener('click', function (e) {
+    var item = e.target.closest('.win-item');
+    if (!item) return;
+    var id = item.dataset.win;
+    if (e.target.closest('.wx')) closePage(id);
+    else activatePage(id);
+    winMenu.classList.remove('open');
+});
+
+/* ── bottom dock visibility (optional switcher) ─────────────────
+   Hidden by default for a cleaner look — the Window menu and sidebar
+   re-clicks switch pages regardless. The columns button in the topbar
+   toggles it; the choice is remembered in localStorage. */
+var dockHidden = true, dockToggle = document.getElementById('dockToggle');
+try { dockHidden = localStorage.getItem('isams-mdi-dock-hidden') !== 'shown'; } catch (e) {}
+
+function syncDock() {
+    var show = pages.length > 0 && !dockHidden;
+    dock.classList.toggle('show', pages.length > 0);
+    dock.classList.toggle('force-hidden', !show);
+    dockToggle.classList.toggle('active', show);
+    dockToggle.title = dockHidden ? 'Show the bottom dock' : 'Hide the bottom dock';
+}
+
+dockToggle.addEventListener('click', function () {
+    dockHidden = !dockHidden;
+    try { localStorage.setItem('isams-mdi-dock-hidden', dockHidden ? 'hidden' : 'shown'); } catch (e) {}
+    syncDock();
+    toast(dockHidden ? 'Dock hidden — the Window menu and sidebar still switch open pages'
+                      : 'Dock shown — open pages appear as cards at the bottom');
+});
+
+/* ── PEEK PANEL + split view ──────────────────────────────────── */
+
+var peekTimer = null, peekCfg = null, docked = false;
+
+function peekTarget() {
+    return docked
+        ? { body:dockBody, title:document.getElementById('dockTitle'), sub:document.getElementById('dockSub') }
+        : { body:peekBody, title:document.getElementById('peekTitle'), sub:document.getElementById('peekSub') };
+}
+
+function openPeek(cfg) {
+    peekCfg = cfg;
+    var t = peekTarget();
+    t.title.textContent = cfg.title;
+    t.sub.textContent = cfg.sub || '';
+    t.body.innerHTML = '<div class="skeleton"><div class="sk-line h"></div><div class="sk-line" style="width:75%"></div><div class="sk-line" style="width:90%"></div><div class="sk-line" style="width:60%"></div></div>';
+    clearTimeout(peekTimer);
+    peekTimer = setTimeout(function () {              // simulated fetch for the detail fragment
+        if (peekCfg === cfg) cfg.render(t.body);
+    }, 380 + Math.random() * 320);
+    if (!docked) peekEl.classList.add('open');
+}
+
+function closePeek() {
+    peekEl.classList.remove('open');
+    clearTimeout(peekTimer);
+    peekCfg = null;
+}
+
+function pinPeek() {
+    if (!peekCfg || docked) return;
+    while (peekBody.firstChild) dockBody.appendChild(peekBody.firstChild);   // move the rendered content into the docked pane
+    document.getElementById('dockTitle').textContent = peekCfg.title;
+    document.getElementById('dockSub').textContent = peekCfg.sub || '';
+    docked = true;
+    workspace.classList.add('split');
+    peekEl.classList.remove('open');
+    clearTimeout(peekTimer);
+    toast('Pinned — list and detail now sit side by side. Other rows you click reuse this pane.');
+}
+
+function unpinPeek() {
+    if (!docked) return;
+    while (dockBody.firstChild) peekBody.appendChild(dockBody.firstChild);   // move content back to the overlay
+    docked = false;
+    workspace.classList.remove('split');
+    if (peekCfg) {
+        document.getElementById('peekTitle').textContent = peekCfg.title;
+        document.getElementById('peekSub').textContent = peekCfg.sub || '';
+        peekEl.classList.add('open');
+    }
+}
+
+function closeDockPane() {
+    docked = false;
+    workspace.classList.remove('split');
+    dockBody.innerHTML = '';
+    peekCfg = null;
+}
+
+document.getElementById('peekPin').addEventListener('click', pinPeek);
+document.getElementById('peekClose').addEventListener('click', closePeek);
+document.getElementById('dockUnpin').addEventListener('click', unpinPeek);
+document.getElementById('dockClose').addEventListener('click', closeDockPane);
+
+/* ── PJAX-style progress bar + toast ──────────────────────────── */
+function startBar() { pbar.style.opacity = 1; pbar.style.transform = 'scaleX(0.25)'; setTimeout(function () { pbar.style.transform = 'scaleX(0.65)'; }, 120); }
+function stopBar()  { pbar.style.transform = 'scaleX(1)'; setTimeout(function () { pbar.style.opacity = 0; setTimeout(function () { pbar.style.transform = 'scaleX(0)'; }, 260); }, 220); }
+function toast(msg) {
+    var el = document.createElement('div');
+    el.className = 'toast';
+    el.innerHTML = '<i class="fas fa-info-circle"></i> ' + msg;
+    document.body.appendChild(el);
+    requestAnimationFrame(function () { el.classList.add('show'); });
+    setTimeout(function () { el.classList.remove('show'); setTimeout(function () { el.remove(); }, 320); }, 3400);
+}
+
+/* ── session restore: reopen the last open set on load ────────── */
+var SESSION_KEY = 'isams-mdi-dock-session';
+function saveSession() {
+    try { localStorage.setItem(SESSION_KEY, JSON.stringify({ ids:pages.map(function (p) { return p.id; }), active:activeId })); } catch (e) {}
+}
+
+/* ── wiring ───────────────────────────────────────────────────── */
+document.querySelectorAll('.nav-item').forEach(function (n) {
+    n.addEventListener('click', function () { openPage(n.dataset.module); });
+});
+window.addEventListener('hashchange', function () {           // back/forward buttons switch pages
+    var m = location.hash.match(/^#\/(\w+)$/);
+    if (m && PAGES[m[1]]) openPage(m[1]);
+});
+
+document.addEventListener('keydown', function (e) {           // Esc closes the peek overlay, then the menu
+    if (e.key === 'Escape') {
+        if (peekEl.classList.contains('open')) closePeek();
+        else if (winMenu.classList.contains('open')) winMenu.classList.remove('open');
+    }
+});
+document.addEventListener('click', function (e) {             // outside-click dismisses menu + peek overlay
+    if (winMenu.classList.contains('open') && !e.target.closest('.win-wrap')) winMenu.classList.remove('open');
+    if (peekEl.classList.contains('open') && !e.target.closest('#peek') && !e.target.closest('#dockPane') && !e.target.closest('.rowlink')) closePeek();
+});
+document.addEventListener('click', function (e) {             // demo buttons
+    var b = e.target.closest('[data-demo]');
+    if (b) toast('Demo only — in the real app this would POST to Laravel.');
+});
+
+/* initial load: deep link (#/students) wins, else restore last session */
+var initial = location.hash.match(/^#\/(\w+)$/);
+if (initial && PAGES[initial[1]]) {
+    openPage(initial[1]);
+} else {
+    try {
+        var saved = JSON.parse(localStorage.getItem(SESSION_KEY) || 'null');
+        if (saved && saved.ids && saved.ids.length) {
+            saved.ids.forEach(function (id) { if (PAGES[id]) openPage(id); });
+            if (saved.active && page(saved.active)) activatePage(saved.active);
+        }
+    } catch (e) {}
+}
+updateWinCount();
+syncDock();
+
+/* ════════ mock page renderers (these would be Blade views) ════════ */
+
+function renderDashboard(el, p) {
+    el.innerHTML =
+        '<div class="stats-grid">' +
+          stat('blue','fa-user-graduate','Total Students','1,248') +
+          stat('gold','fa-award','Active Scholarships','312') +
+          stat('green','fa-heart','Counseling This Month','34') +
+          stat('red','fa-gavel','Open Discipline Cases','7') +
+        '</div>' +
+        '<div class="grid-2">' +
+          '<div class="card"><div class="card-header"><h2><span class="live-dot"></span>Server time (per-page timer)</h2></div><div class="card-body">' +
+            '<div style="font-family:Sora;font-size:30px;font-weight:800;color:var(--primary)" class="js-clock">—</div>' +
+            '<p class="count-note">This clock is a setInterval owned by <b>this page</b>. It is cleared when you close the page — the per-page timer scoping that the real implementation adds to pjax.js so auto-refresh timers never pile up.</p>' +
+          '</div></div>' +
+          '<div class="card"><div class="card-header"><h2>Recent activity</h2></div><div class="card-body">' +
+            activity('New scholar recorded — Dela Cruz, M.','2 min ago') +
+            activity('Counseling session completed — R. Santos','26 min ago') +
+            activity('Discipline case #2026-114 updated','1 hr ago') +
+            activity('Scholarship slots updated — SCC-FULL','3 hrs ago') +
+          '</div></div>' +
+        '</div>';
+    tick(el.querySelector('.js-clock'));
+    p.timers.push(setInterval(function () { tick(el.querySelector('.js-clock')); }, 1000));
+}
+function tick(out) { if (out) out.textContent = new Date().toLocaleTimeString(); }
+function stat(color, ic, label, val) {
+    return '<div class="stat-card"><div class="stat-icon ' + color + '"><i class="fas ' + ic + '"></i></div>' +
+           '<div class="stat-info"><div class="label">' + label + '</div><div class="value">' + val + '</div></div></div>';
+}
+function activity(txt, when) {
+    return '<div style="display:flex;justify-content:space-between;padding:9px 0;border-bottom:1px dashed var(--border);font-size:13.5px;"><span>' + txt + '</span><span style="color:var(--text-muted);font-size:12px;">' + when + '</span></div>';
+}
+
+var STUDENTS = [
+    ['SCC-2024-194333','Jefferson Libradilla','BSIT','4','Active'],['SCC-2024-201844','Maria Santos','BSED','2','Active'],
+    ['SCC-2024-198710','Ana Dela Cruz','BSBA','3','Active'],['SCC-2023-188821','Joshua Ramos','BSCrim','4','Active'],
+    ['SCC-2024-205511','Karla Mendoza','BSIT','1','Probation'],['SCC-2024-199240','Paolo Reyes','BSBA','2','Active'],
+    ['SCC-2022-175004','Grace Alcantara','BSED','4','Active'],['SCC-2024-207799','Miguel Torres','BSCrim','1','Active'],
+    ['SCC-2024-193558','Nicole Bautista','BSIT','3','Active'],['SCC-2023-182013','Daniel Garcia','BSBA','3','Suspended'],
+    ['SCC-2024-210032','Sophia Villanueva','BSED','1','Active'],['SCC-2024-196774','Andre Aquino','BSIT','2','Active'],
+    ['SCC-2023-190112','Bianca Flores','BSCrim','3','Active'],['SCC-2024-203490','Rafael Lim','BSBA','1','Active'],
+    ['SCC-2024-199876','Camille Navarro','BSED','2','Graduating'],['SCC-2022-170433','Enrique Castro','BSIT','4','Active'],
+    ['SCC-2024-208845','Isabella Dizon','BSCrim','1','Active'],['SCC-2024-195521','Gabriel Mercado','BSBA','3','Active']
+];
+function renderStudents(el) {
+    var rows = STUDENTS.map(function (s, i) {
+        var badge = s[4] === 'Active' ? 'badge-success' : s[4] === 'Suspended' ? 'badge-danger' : s[4] === 'Graduating' ? 'badge-info' : 'badge-warning';
+        return '<tr class="rowlink" data-i="' + i + '" title="Click to peek details"><td class="font-mono" style="font-size:12.5px">' + s[0] + '</td><td>' + s[1] + '</td><td>' + s[2] + '</td><td>' + s[3] + '</td><td><span class="badge ' + badge + '">' + s[4] + '</span></td></tr>';
+    }).join('');
+    el.innerHTML =
+        '<div class="toolbar">' +
+          '<div class="grow"><input class="form-control js-stu-search" style="width:100%" placeholder="Search name, ID or course… (type here, then switch pages — it stays)"></div>' +
+          '<select class="form-control js-stu-year"><option value="all">All year levels</option><option value="1">Year 1</option><option value="2">Year 2</option><option value="3">Year 3</option><option value="4">Year 4</option></select>' +
+          '<button class="btn btn-accent" data-demo><i class="fas fa-plus"></i> Add Student</button>' +
+        '</div>' +
+        '<div class="card"><div class="card-header"><h2>Student records</h2><span class="count-note" style="margin:0;">Click any row to peek — pin it to keep it beside the list</span></div>' +
+          '<div class="table-wrap table-scroll"><table><thead><tr><th>School ID</th><th>Name</th><th>Course</th><th>Yr</th><th>Status</th></tr></thead><tbody>' + rows + '</tbody></table></div>' +
+        '</div><div class="count-note js-stu-count"></div>';
+
+    var q = el.querySelector('.js-stu-search'), yr = el.querySelector('.js-stu-year'), note = el.querySelector('.js-stu-count');
+    function applyFilter() {
+        var term = q.value.trim().toLowerCase(), y = yr.value, n = 0;
+        el.querySelectorAll('tbody tr').forEach(function (tr) {
+            var hit = tr.textContent.toLowerCase().indexOf(term) >= 0 && (y === 'all' || tr.dataset.year === y);
+            tr.style.display = hit ? '' : 'none'; if (hit) n++;
+        });
+        note.textContent = 'Showing ' + n + ' of ' + STUDENTS.length + ' students';
+    }
+    q.addEventListener('input', applyFilter);
+    yr.addEventListener('change', applyFilter);
+    el.querySelectorAll('tbody tr').forEach(function (tr) {
+        tr.addEventListener('click', function () { peekStudent(parseInt(tr.dataset.i, 10)); });
+    });
+    applyFilter();
+}
+
+/* ── peek detail builders (these would be Blade partials) ─────── */
+
+function peekStudent(i) {
+    var s = STUDENTS[i];
+    var sch = s[4] === 'Active' ? 'SCC Academic Excellence <span class="badge badge-success">Active</span>'
+            : s[4] === 'Probation' ? 'SGA Leadership Fund <span class="badge badge-warning">Probationary</span>'
+            : s[4] === 'Graduating' ? 'SCC-FULL Grant <span class="badge badge-info">Cleared</span>'
+            : '<span style="color:var(--text-muted);">None</span>';
+    var visits = (s[1].length % 4) + 1;
+    openPeek({
+        title: s[1],
+        sub: s[0] + ' · ' + s[2] + ' Year ' + s[3],
+        render: function (b) {
+            b.innerHTML =
+                hero(s[1], s[0] + ' · ' + s[2] + ' · Year ' + s[3],
+                     '<span class="badge ' + (s[4] === 'Active' ? 'badge-success' : s[4] === 'Suspended' ? 'badge-danger' : s[4] === 'Graduating' ? 'badge-info' : 'badge-warning') + '">' + s[4] + '</span>') +
+                '<dl class="kv">' +
+                  '<dt>School ID</dt><dd>' + s[0] + '</dd>' +
+                  '<dt>Email</dt><dd style="font-weight:400;">' + s[0].toLowerCase() + '@sccpag.edu.ph</dd>' +
+                  '<dt>Scholarship</dt><dd>' + sch + '</dd>' +
+                  '<dt>Counseling visits</dt><dd>' + visits + ' this semester</dd>' +
+                  '<dt>Discipline record</dt><dd>' + (s[4] === 'Suspended' ? '1 case — 2026-114' : 'Clean') + '</dd>' +
+                  '<dt>Enrolled</dt><dd>AY 2026–2027 · 1st Sem</dd>' +
+                '</dl>' +
+                '<div class="card"><div class="card-header"><h2>Recent activity</h2></div><div class="card-body" style="padding-top:10px;padding-bottom:10px;">' +
+                  activity('Enrollment confirmed — AY 2026–2027','Aug 12, 2026') +
+                  activity('Scholarship grant disbursed','Sep 05, 2026') +
+                  activity('Counseling follow-up completed','Oct 02, 2026') +
+                '</div></div>' +
+                '<div style="margin-top:16px;display:flex;gap:8px;">' +
+                  '<button class="btn btn-primary btn-sm" data-demo><i class="fas fa-user"></i> View full profile</button>' +
+                  '<button class="btn btn-accent btn-sm" data-demo><i class="fas fa-pen"></i> Edit record</button>' +
+                '</div>';
+        }
+    });
+}
+
+function peekCase(r) {
+    openPeek({
+        title: 'Case ' + r[0],
+        sub: r[1],
+        render: function (b) {
+            b.innerHTML =
+                hero('Case ' + r[0], r[1],
+                     '<span class="badge ' + badgeFor(r[3]) + '">' + r[3] + '</span>') +
+                '<dl class="kv">' +
+                  '<dt>Student</dt><dd>' + r[1] + '</dd>' +
+                  '<dt>Offense</dt><dd>' + r[2] + '</dd>' +
+                  '<dt>Status</dt><dd><span class="badge ' + badgeFor(r[3]) + '">' + r[3] + '</span></dd>' +
+                  '<dt>Filed</dt><dd>Oct 06, 2026 · Guidance Office</dd>' +
+                  '<dt>Handled by</dt><dd>Mr. R. Fernandez — Discipline Officer</dd>' +
+                  '<dt>Next hearing</dt><dd>' + (r[3] === 'Resolved' ? '—' : 'Oct 15, 2026 · 10:00 AM · Discipline Office') + '</dd>' +
+                '</dl>' +
+                '<div class="card"><div class="card-header"><h2>Timeline</h2></div><div class="card-body" style="padding-top:10px;padding-bottom:10px;">' +
+                  activity('Case filed and acknowledged','Oct 06, 2026') +
+                  activity('Student summoned for conference','Oct 08, 2026') +
+                  activity(r[3] === 'Resolved' ? 'Decision released — case closed' : 'Hearing scheduled','Oct 09, 2026') +
+                '</div></div>' +
+                '<div style="margin-top:16px;display:flex;gap:8px;">' +
+                  '<button class="btn btn-primary btn-sm" data-demo><i class="fas fa-gavel"></i> Update case</button>' +
+                  '<button class="btn btn-accent btn-sm" data-demo><i class="fas fa-file-alt"></i> Add remarks</button>' +
+                '</div>';
+        }
+    });
+}
+
+function peekSession(r) {
+    openPeek({
+        title: r[0],
+        sub: r[1] + ' session · ' + r[3],
+        render: function (b) {
+            b.innerHTML =
+                hero(r[0], r[1] + ' counseling · ' + r[3],
+                     '<span class="badge ' + badgeFor(r[4]) + '">' + r[4] + '</span>') +
+                '<dl class="kv">' +
+                  '<dt>Student</dt><dd>' + r[0] + '</dd>' +
+                  '<dt>Type</dt><dd>' + r[1] + '</dd>' +
+                  '<dt>Counselor</dt><dd>' + r[2] + '</dd>' +
+                  '<dt>Schedule</dt><dd>' + r[3] + ' · 1:00 PM · Guidance Office</dd>' +
+                  '<dt>Status</dt><dd><span class="badge ' + badgeFor(r[4]) + '">' + r[4] + '</span></dd>' +
+                '</dl>' +
+                '<div class="card"><div class="card-header"><h2>Session notes</h2></div><div class="card-body">' +
+                  '<p style="font-size:13.5px;line-height:1.6;color:var(--text);">Initial interview conducted. Student is cooperative and receptive to guidance. Follow-up session recommended to monitor academic progress and peer relations. Referred to the scholarship office for grant status verification.</p>' +
+                '</div></div>' +
+                '<div style="margin-top:16px;display:flex;gap:8px;">' +
+                  '<button class="btn btn-primary btn-sm" data-demo><i class="fas fa-heart"></i> Update session</button>' +
+                '</div>';
+        }
+    });
+}
+
+function hero(title, sub, badgeHtml) {
+    var initials = title.split(' ').map(function (w) { return w[0]; }).slice(0, 2).join('').toUpperCase();
+    return '<div class="dv-hero"><div class="dv-avatar">' + initials + '</div>' +
+           '<div style="flex:1;min-width:0;"><h4>' + title + '</h4><div class="dsub">' + sub + '</div></div>' +
+           (badgeHtml || '') + '</div>';
+}
+
+var SCHOLS = [
+    ['SCC Academic Excellence','Academic','fa-award','28 / 30 slots filled','88%','badge-success','Open'],
+    ['SCC-FULL Grant','Financial','fa-hand-holding-heart','40 / 40 slots filled','100%','badge-danger','Full'],
+    ['SGA Leadership Fund','Leadership','fa-flag','12 / 25 slots filled','48%','badge-primary','Open'],
+    ['Athletic Scholarship','Sports','fa-basketball-ball','9 / 20 slots filled','45%','badge-warning','Open']
+];
+function renderScholarships(el) {
+    el.innerHTML = '<div class="toolbar"><div class="grow"></div><button class="btn btn-accent" data-demo><i class="fas fa-plus"></i> New Scholarship</button></div>' +
+        '<div class="grid-4">' + SCHOLS.map(function (s) {
+            return '<div class="sch-card"><h3><i class="fas ' + s[2] + '" style="color:var(--accent)"></i> ' + s[0] + '</h3>' +
+                   '<div class="meta">' + s[1] + ' scholarship</div>' +
+                   '<div class="prog"><i style="width:' + s[4] + '"></i></div>' +
+                   '<div class="row"><span>' + s[3] + '</span><span class="badge ' + s[5] + '">' + s[6] + '</span></div></div>';
+        }).join('') + '</div>' +
+        '<p class="count-note">Scroll or resize this page, switch elsewhere and come back — cards stay exactly as they are.</p>';
+}
+
+function renderReports(el) {
+    function bars(vals, labels) {
+        var max = Math.max.apply(null, vals);
+        return '<div class="bars chart-wrap">' + vals.map(function (v, i) {
+            return '<div class="bar" style="height:' + Math.round(v / max * 100) + '%"><span>' + labels[i] + '</span></div>';
+        }).join('') + '</div>';
+    }
+    el.innerHTML =
+        '<div class="grid-2">' +
+          '<div class="card"><div class="card-header"><h2>Counseling sessions — last 6 months</h2></div><div class="card-body">' + bars([14,22,18,31,27,34], ['May','Jun','Jul','Aug','Sep','Oct']) + '</div></div>' +
+          '<div class="card"><div class="card-header"><h2>Discipline cases by status</h2></div><div class="card-body">' + bars([7,4,9], ['Open','Resolved','Escalated']) + '</div></div>' +
+        '</div>' +
+        '<div class="card mt-2" style="margin-top:20px"><div class="card-header"><h2>Exports</h2></div><div class="card-body">' +
+          '<button class="btn btn-primary btn-sm" data-demo><i class="fas fa-file-pdf"></i> PDF</button> ' +
+          '<button class="btn btn-primary btn-sm" data-demo><i class="fas fa-file-word"></i> Word</button> ' +
+          '<button class="btn btn-primary btn-sm" data-demo><i class="fas fa-copy"></i> Copy</button>' +
+        '</div></div>';
+}
+
+function renderSettings(el) {
+    el.innerHTML =
+        '<div class="card" style="max-width:560px"><div class="card-header"><h2>System settings</h2></div><div class="card-body">' +
+          '<div style="margin-bottom:16px"><label style="display:block;font-size:13px;font-weight:600;margin-bottom:6px">School name</label>' +
+          '<input class="form-control" style="width:100%" value="SCC — Main Campus"></div>' +
+          '<div style="margin-bottom:16px"><label style="display:block;font-size:13px;font-weight:600;margin-bottom:6px">Academic year</label>' +
+          '<select class="form-control" style="width:100%"><option>2026–2027</option><option>2027–2028</option></select></div>' +
+          '<div style="margin-bottom:16px"><label style="display:block;font-size:13px;font-weight:600;margin-bottom:6px">Edit anything here, switch pages, come back</label>' +
+          '<input class="form-control" style="width:100%" placeholder="Unsaved edits survive page switches…"></div>' +
+          '<button class="btn btn-primary" data-demo>Save changes</button>' +
+        '</div></div>';
+}
+
+function renderTablePage(title, rows, cols, peekFn) {
+    return function (el) {
+        el.innerHTML =
+            '<div class="toolbar"><div class="grow"></div><button class="btn btn-accent btn-sm" data-demo><i class="fas fa-download"></i> Export</button></div>' +
+            '<div class="card"><div class="card-header"><h2>' + title + '</h2>' +
+            (peekFn ? '<span class="count-note" style="margin:0;">Click any row to peek</span>' : '') + '</div>' +
+            '<div class="table-wrap table-scroll"><table><thead><tr>' + cols.map(function (c) { return '<th>' + c + '</th>'; }).join('') + '</tr></thead><tbody>' +
+            rows.map(function (r, i) {
+                return '<tr' + (peekFn ? ' class="rowlink" title="Click to peek details"' : '') + '>' + r.map(function (c, j) {
+                    return j === r.length - 1 && /^(Active|Open|Full|Upcoming|Ongoing|Closed|Resolved|Pending|Scheduled|Suspended|Completed)$/.test(c)
+                        ? '<td><span class="badge ' + badgeFor(c) + '">' + c + '</span></td>' : '<td>' + c + '</td>';
+                }).join('') + '</tr>';
+            }).join('') + '</tbody></table></div></div>';
+        if (peekFn) {
+            el.querySelectorAll('tbody tr').forEach(function (tr, i) {
+                tr.addEventListener('click', function () { peekFn(rows[i]); });
+            });
+        }
+    };
+}
+function badgeFor(v) {
+    return { 'Active':'badge-success','Open':'badge-warning','Upcoming':'badge-primary','Ongoing':'badge-info','Completed':'badge-gray','Resolved':'badge-success','Scheduled':'badge-primary','Pending':'badge-warning','Closed':'badge-gray','Suspended':'badge-danger','Full':'badge-danger' }[v] || 'badge-gray';
+}
+
+var orgRows = [
+    ['Student Council','Mr. R. Fernandez','42','Active'],['Red Cross Youth','Ms. L. Garcia','68','Active'],
+    ['Peer Facilitators Club','Ms. A. Torres','25','Active'],['Campus Journalism Guild','Mr. J. Basmayor','18','Active'],
+    ['Environmental Society','Dr. C. Ramos','31','Active'],['Rotaract Club','Ms. P. Lim','22','Pending']
+];
+var counRows = [
+    ['M. Santos','Academic','Dr. E. Ramos','Oct 10, 2026','Completed'],['J. Ramos','Personal','Ms. L. Garcia','Oct 10, 2026','Scheduled'],
+    ['K. Mendoza','Career','Dr. E. Ramos','Oct 11, 2026','Pending'],['P. Reyes','Personal','Ms. A. Torres','Oct 09, 2026','Completed'],
+    ['N. Bautista','Academic','Ms. L. Garcia','Oct 12, 2026','Scheduled'],['D. Garcia','Disciplinary follow-up','Mr. R. Fernandez','Oct 08, 2026','Completed']
+];
+var discRows = [
+    ['2026-114','D. Garcia','Minor — cutting classes','Open'],['2026-113','Anonymous','Major — dishonesty','Pending'],
+    ['2026-112','K. Mendoza','Minor — late tardiness','Resolved'],['2026-111','J. Ramos','Minor — dress code','Resolved'],
+    ['2026-110','R. Lim','Major — disrespect','Open']
+];
+var eventRows = [
+    ['Intramurals 2026','Oct 20–22','Main Gym','Upcoming'],['Foundation Week','Nov 09–14','Campus-wide','Upcoming'],
+    ['Leadership Training','Oct 16','AVR','Ongoing'],['Blood Letting Drive','Oct 18','Red Cross Room','Upcoming'],
+    ['Career Fair','Nov 03','Main Gym','Upcoming'],['Faculty Conference','Oct 14','Function Hall','Closed']
+];
+})();
+</script>
+</body>
+</html>

@@ -284,7 +284,7 @@
 .sch-card:hover{box-shadow:0 8px 24px rgba(26,107,47,.16);border-color:var(--gm);transform:translateY(-2px);}
 
 .detail-overlay{
-    position:fixed;inset:0;background:rgba(13,30,18,.6);backdrop-filter:blur(3px);
+    position:fixed;inset:0;background:rgba(13,30,18,.3);
     z-index:998;display:none;opacity:0;transition:opacity .25s ease;
 }
 .detail-overlay.open{display:block;opacity:1;}

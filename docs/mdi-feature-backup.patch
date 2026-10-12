@@ -1,0 +1,772 @@
+diff --git a/public/js/pjax.js b/public/js/pjax.js
+index c8ac434..932a95a 100644
+--- a/public/js/pjax.js
++++ b/public/js/pjax.js
+@@ -1,37 +1,51 @@
+ /*!
+- * ISAMS PJAX — pushState + AJAX navigation.
++ * ISAMS PJAX — pushState + AJAX navigation with a tabbed (MDI-style) workspace.
+  *
+  * Menu/link clicks no longer reload the whole page: the layout shell
+- * (sidebar, topbar frame, theme, chatbot, loaded CSS/JS) stays alive and only
+- * the data area is swapped in from the fetched page. On slow connections a
+- * prefetch starts while the user is still hovering the menu item, so the next
+- * page can render instantly.
++ * (sidebar, topbar frame, theme, chatbot, loaded CSS/JS) stays alive and page
++ * data is swapped in from the fetched page. Every top-level module (sidebar
++ * entries, topbar links) opens into its own persistent tab; links inside the
++ * content area navigate the active tab, keeping that tab's DOM, form inputs,
++ * filters and scroll position alive across tab switches. The strip auto-hides
++ * while only one tab is open, and a topbar button toggles it manually
++ * (remembered in localStorage). On slow connections a prefetch starts while
++ * the user is still hovering the menu item.
+  *
+  * Pages opt in by having <body data-pjax-layout="..."> and a
+  * <div id="pjax-container"> around the yielded content. A layout fingerprint
+  * mismatch (e.g. session expired, portal change) falls back to a full load.
++ * The auth layout keeps single-document behaviour — tabs make no sense
++ * before login.
+  */
+ (function () {
+     'use strict';
+ 
+     var CACHE_TTL = 10000;   // ms a prefetched page is considered fresh
+     var CACHE_MAX = 10;      // max parsed pages kept in memory
++    var MAX_TABS = 8;        // tab cap; the oldest tab closes when exceeded
++    var STRIP_KEY = 'isams-mdi-strip';
++
+     var cache = new Map();   // url (no hash) -> { doc, at }
+     var inflight = new Map();
+     var current = null;      // AbortController of the active navigation
+     var bar = null;
+ 
++    var TABS = false;        // false on the auth layout → legacy single-document mode
++    var tabs = [];           // [{ id, key, label, url, el, pageEl, timers, listeners, loaded, loading, scrollY, titleHTML, badgeHTML, sidebarHTML, docTitle, ctrl }]
++    var activeTab = null;
++    var strip = null, stripBtn = null, stripHidden = false;
++    var tabSeq = 0;
++
+     /* ── Scoped timers & listeners ────────────────────────────────────────
+-       Scripts inside the swapped container re-execute on every visit. While
+-       they run we record the setTimeout/setInterval ids and the
+-       document/window listeners they register, so the NEXT navigation can
+-       clear them (otherwise auto-refresh timers and handlers would pile up).
+-       Listeners/timers registered outside a swap (layout scripts, chatbot)
+-       are never touched. DOMContentLoaded handlers registered by swapped
+-       scripts fire immediately instead of never. */
+-    var scopedTimers = [];
+-    var scopedListeners = [];
+-    var tracking = false;
++       Scripts executed for a tab re-execute only when that tab re-renders
++       (in-tab navigation). While they run, curScope points at the tab and we
++       record the setTimeout/setInterval ids and document/window listeners
++       they register, so closing or re-rendering that tab can clear them
++       (otherwise auto-refresh timers and handlers would pile up).
++       Registrations made outside a swap (layout scripts, chatbot) are never
++       touched. DOMContentLoaded handlers registered during a swap fire
++       immediately instead of never. */
++    var curScope = null;
+     var origST, origSI, origCT, origCI, origDocAdd, origWinAdd;
+ 
+     function enableScoping() {
+@@ -43,47 +57,51 @@
+ 
+         window.setTimeout = function () {
+             var id = origST.apply(window, arguments);
+-            if (tracking) scopedTimers.push({ id: id, i: false });
++            if (curScope) curScope.timers.push({ id: id, i: false });
+             return id;
+         };
+         window.setInterval = function () {
+             var id = origSI.apply(window, arguments);
+-            if (tracking) scopedTimers.push({ id: id, i: true });
++            if (curScope) curScope.timers.push({ id: id, i: true });
+             return id;
+         };
+         window.clearTimeout = function (id) {
+-            scopedTimers = scopedTimers.filter(function (t) { return t.id !== id; });
++            dropTimer(id);
+             return origCT(id);
+         };
+         window.clearInterval = function (id) {
+-            scopedTimers = scopedTimers.filter(function (t) { return t.id !== id; });
++            dropTimer(id);
+             return origCI(id);
+         };
+         document.addEventListener = function (type, fn, opts) {
+-            if (tracking && type === 'DOMContentLoaded') {
++            if (curScope && type === 'DOMContentLoaded') {
+                 if (document.readyState === 'loading') origDocAdd.call(document, type, fn, opts);
+                 else origST(function () { fn.call(document); }, 0);
+                 return;
+             }
+-            if (tracking) scopedListeners.push([document, type, fn, captureOf(opts)]);
++            if (curScope) curScope.listeners.push([document, type, fn, captureOf(opts)]);
+             return origDocAdd.call(document, type, fn, opts);
+         };
+         window.addEventListener = function (type, fn, opts) {
+-            if (tracking) scopedListeners.push([window, type, fn, captureOf(opts)]);
++            if (curScope) curScope.listeners.push([window, type, fn, captureOf(opts)]);
+             return origWinAdd.call(window, type, fn, opts);
+         };
+     }
+ 
++    function dropTimer(id) {
++        tabs.forEach(function (t) { t.timers = t.timers.filter(function (tm) { return tm.id !== id; }); });
++    }
++
+     function captureOf(opts) {
+         if (typeof opts === 'boolean') return opts;
+         return !!(opts && opts.capture);
+     }
+ 
+-    function releaseScope() {
+-        scopedTimers.forEach(function (t) { t.i ? origCI(t.id) : origCT(t.id); });
+-        scopedTimers = [];
+-        scopedListeners.forEach(function (l) { l[0].removeEventListener(l[1], l[2], l[3]); });
+-        scopedListeners = [];
++    function releaseScope(tab) {
++        tab.timers.forEach(function (t) { t.i ? origCI(t.id) : origCT(t.id); });
++        tab.timers.length = 0;
++        tab.listeners.forEach(function (l) { l[0].removeEventListener(l[1], l[2], l[3]); });
++        tab.listeners.length = 0;
+     }
+ 
+     /* ── Progress bar ── */
+@@ -134,6 +152,14 @@
+         }
+     }
+ 
++    /* Tab identity for shell links: the link's own path (query/hash ignored),
++       so every sidebar/topbar entry is its own persistent tab. Links inside
++       the content area never use this — they navigate the active tab. */
++    function moduleKey(url) {
++        var p = new URL(url, location.href).pathname.replace(/\/+$/, '');
++        return p === '' ? 'home' : p.toLowerCase();
++    }
++
+     function interceptableLink(a) {
+         if (!a || a.target === '_blank' || a.hasAttribute('download')) return false;
+         if (a.getAttribute('data-pjax') === '0' || a.hasAttribute('data-no-pjax')) return false;
+@@ -147,20 +173,241 @@
+         return url;
+     }
+ 
++    /* ── Tab strip UI (injected once per layout; styles are self-contained) ── */
++    function injectUI(container) {
++        if (document.getElementById('mdi-css')) return;
++        var css = document.createElement('style');
++        css.id = 'mdi-css';
++        css.textContent =
++            '#mdi-strip{background:#0d2137;display:flex;align-items:flex-end;gap:4px;padding:8px 12px 0;' +
++            'overflow-x:auto;scrollbar-width:none;max-height:64px;transition:max-height .28s ease,padding .28s ease,opacity .22s ease;}' +
++            '#mdi-strip::-webkit-scrollbar{display:none;}' +
++            '#mdi-strip.mdi-collapsed{max-height:0;padding-top:0;padding-bottom:0;opacity:0;overflow:hidden;}' +
++            '.mdi-tab{display:flex;align-items:center;gap:8px;padding:9px 10px 9px 14px;max-width:220px;border-radius:10px 10px 0 0;' +
++            'background:rgba(255,255,255,0.06);color:#a8c0d6;border:none;cursor:pointer;font-family:inherit;font-size:13px;' +
++            'font-weight:500;white-space:nowrap;position:relative;flex-shrink:0;transition:background .15s,color .15s;}' +
++            '.mdi-tab:hover{background:rgba(255,255,255,0.12);color:#fff;}' +
++            '.mdi-tab.mdi-on{background:#f0f4f8;color:#1c2b3a;}' +
++            '.mdi-tab.mdi-on::after{content:"";position:absolute;left:0;right:0;top:0;height:3px;border-radius:10px 10px 0 0;background:#e8b84b;}' +
++            '.mdi-tab .mdi-ic{font-size:12px;width:15px;text-align:center;}' +
++            '.mdi-tab.mdi-loading .mdi-ic{animation:mdi-spin 1s linear infinite;}' +
++            '.mdi-tab .mdi-label{overflow:hidden;text-overflow:ellipsis;}' +
++            '.mdi-tab .mdi-x{width:18px;height:18px;border-radius:5px;display:flex;align-items:center;justify-content:center;' +
++            'font-size:12px;flex-shrink:0;opacity:.55;}' +
++            '.mdi-tab .mdi-x:hover{background:#c0392b;color:#fff;opacity:1;}' +
++            '@keyframes mdi-spin{to{transform:rotate(360deg);}}' +
++            '.mdi-page{display:none;}' +
++            '.mdi-page.mdi-on{display:contents;}' +
++            '.mdi-page .mdi-wait{padding:60px 0;text-align:center;color:var(--tm,#5a7a94);font-size:13px;}' +
++            '.mdi-page .mdi-wait i{display:block;font-size:22px;margin-bottom:10px;animation:mdi-spin 1s linear infinite;}' +
++            '.mdi-toast{position:fixed;bottom:24px;right:24px;background:#1a3a5c;color:#fff;padding:13px 20px;border-radius:10px;' +
++            'font-size:13.5px;box-shadow:0 10px 30px rgba(0,0,0,0.25);opacity:0;transform:translateY(14px);transition:all .3s;' +
++            'z-index:9998;display:flex;gap:9px;align-items:center;max-width:380px;font-family:DM Sans,sans-serif;}' +
++            '.mdi-toast i{color:#e8b84b;}' +
++            '#mdi-toggle{width:36px;height:36px;background:var(--bg,#f0f4f8);border:1.5px solid var(--bd,#d0dce8);border-radius:8px;' +
++            'display:flex;align-items:center;justify-content:center;color:var(--tm,#5a7a94);cursor:pointer;font-size:13px;transition:all .2s;}' +
++            '#mdi-toggle.mdi-on{background:#1a3a5c;color:#fff;border-color:#1a3a5c;}';
++        document.head.appendChild(css);
++
++        strip = document.createElement('div');
++        strip.id = 'mdi-strip';
++        strip.className = 'mdi-collapsed';
++        container.parentNode.insertBefore(strip, container);
++
++        stripBtn = document.createElement('button');
++        stripBtn.id = 'mdi-toggle';
++        stripBtn.type = 'button';
++        stripBtn.innerHTML = '<i class="fas fa-layer-group"></i>';
++        stripBtn.addEventListener('click', function () {
++            stripHidden = !stripHidden;
++            try { localStorage.setItem(STRIP_KEY, stripHidden ? 'hidden' : 'auto'); } catch (e) {}
++            syncStrip();
++            toast(stripHidden ? 'Tab strip hidden — sidebar clicks still switch open tabs'
++                              : 'Tab strip back on — it auto-hides while only one tab is open');
++        });
++        var host = document.querySelector('.tp-right, .topbar-right');
++        if (host) host.insertBefore(stripBtn, host.firstChild);
++        else if (stripBtn) {
++            var tb = document.querySelector('header.topbar, .topbar');
++            if (tb) tb.appendChild(stripBtn);
++        }
++
++        try { stripHidden = localStorage.getItem(STRIP_KEY) === 'hidden'; } catch (e) {}
++    }
++
++    function syncStrip() {
++        if (!strip) return;
++        var show = !stripHidden && tabs.length > 1;
++        strip.classList.toggle('mdi-collapsed', !show);
++        if (stripBtn) {
++            stripBtn.title = show ? 'Hide open tabs' : 'Show open tabs';
++            stripBtn.classList.toggle('mdi-on', show);
++        }
++    }
++
++    function toast(msg) {
++        var el = document.createElement('div');
++        el.className = 'mdi-toast';
++        el.innerHTML = '<i class="fas fa-info-circle"></i> ' + msg;
++        document.body.appendChild(el);
++        requestAnimationFrame(function () { el.classList.add('mdi-show'); el.style.opacity = '1'; el.style.transform = 'translateY(0)'; });
++        setTimeout(function () {
++            el.style.opacity = '0'; el.style.transform = 'translateY(14px)';
++            setTimeout(function () { el.remove(); }, 320);
++        }, 3400);
++    }
++
++    /* ── Tab engine ── */
++    function makeTabEl(tab, iconHTML) {
++        var el = document.createElement('button');
++        el.type = 'button';
++        el.className = 'mdi-tab';
++        el.innerHTML = '<i class="' + (iconHTML || 'fas fa-window-maximize') + ' mdi-ic"></i>' +
++            '<span class="mdi-label">' + escapeHTML(tab.label) + '</span>' +
++            '<span class="mdi-x" title="Close tab">&times;</span>';
++        el.addEventListener('click', function () { activateTab(tab); });
++        el.querySelector('.mdi-x').addEventListener('click', function (e) { e.stopPropagation(); closeTab(tab); });
++        el.addEventListener('auxclick', function (e) { if (e.button === 1) closeTab(tab); });
++        return el;
++    }
++
++    function escapeHTML(s) {
++        return String(s).replace(/[&<>"']/g, function (c) {
++            return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
++        });
++    }
++
++    function createTab(key, url, anchor) {
++        if (tabs.length >= MAX_TABS) {
++            var victim = tabs[0];
++            closeTab(victim, true);
++            toast('Tab limit reached — closed oldest tab \u201C' + victim.label + '\u201D');
++        }
++        var icon = anchor ? (anchor.querySelector('i') ? anchor.querySelector('i').className : '') : '';
++        var label = 'Page';
++        if (anchor) {
++            var clone = anchor.cloneNode(true);   // strip badges (LIVE, counts) from the label
++            var badges = clone.querySelectorAll('.badge');
++            for (var b = 0; b < badges.length; b++) badges[b].remove();
++            label = (clone.textContent || '').replace(/\s+/g, ' ').trim() || 'Page';
++        }
++        var tab = {
++            id: ++tabSeq,
++            key: key,
++            label: label,
++            url: cacheKey(url),
++            timers: [], listeners: [],
++            loaded: false, loading: true, scrollY: 0
++        };
++        tab.el = makeTabEl(tab, icon);
++        tab.el.classList.add('mdi-loading');
++        strip.appendChild(tab.el);
++
++        tab.pageEl = document.createElement('div');
++        tab.pageEl.className = 'mdi-page';
++        tab.pageEl.innerHTML = '<div class="mdi-wait"><i class="fas fa-circle-notch"></i>Loading\u2026</div>';
++        document.getElementById('pjax-container').appendChild(tab.pageEl);
++        tabs.push(tab);
++        syncStrip();
++        return tab;
++    }
++
++    /* Sidebar/topbar click: focus the module's tab, or open a new one. */
++    function openOrActivate(key, url, anchor, push) {
++        var tab = null;
++        for (var i = 0; i < tabs.length; i++) if (tabs[i].key === key) { tab = tabs[i]; break; }
++        if (!tab) {
++            tab = createTab(key, url, anchor);
++            activateTab(tab);
++            renderTab(tab, url.href, push !== false);
++            return;
++        }
++        if (cacheKey(tab.url) !== cacheKey(url.href)) {
++            if (tab !== activeTab) activateTab(tab);
++            renderTab(tab, url.href, push !== false);   // sidebar link = module index
++        } else if (tab === activeTab) {
++            renderTab(tab, url.href, false);            // re-click on the active module = refresh
++        } else {
++            activateTab(tab);
++        }
++    }
++
++    function activateTab(tab, fromPop) {
++        if (!~tabs.indexOf(tab)) return;
++        var changed = activeTab !== tab;
++        if (activeTab && activeTab !== tab) {
++            activeTab.scrollY = window.scrollY;
++            activeTab.pageEl.classList.remove('mdi-on');
++            activeTab.el.classList.remove('mdi-on');
++        }
++        activeTab = tab;
++        tab.pageEl.classList.add('mdi-on');
++        tab.el.classList.add('mdi-on');
++        if (tab.el.scrollIntoView) tab.el.scrollIntoView({ inline: 'nearest' });
++        if (changed) {
++            applyChrome(tab);
++            window.scrollTo(0, tab.scrollY || 0);
++            syncStrip();
++        }
++        if (!fromPop) {
++            try { history.replaceState(mdiState(tab), '', tab.url); } catch (e) {}
++        }
++    }
++
++    function applyChrome(tab) {
++        if (tab.docTitle) document.title = tab.docTitle;
++        var t = document.querySelector('[data-pjax="title"]');
++        if (t && tab.titleHTML != null) t.innerHTML = tab.titleHTML;
++        var b = document.querySelector('[data-pjax="badge"]');
++        if (b && tab.badgeHTML != null) b.innerHTML = tab.badgeHTML;
++        var sb = document.querySelector('aside.sidebar, #sidebar');
++        if (sb && tab.sidebarHTML != null) sb.innerHTML = tab.sidebarHTML;
++    }
++
++    function mdiState(tab) {
++        return { pjax: 1, mdi: 1, tab: tab.id };
++    }
++
++    function closeTab(tab, force) {
++        var i = tabs.indexOf(tab);
++        if (i < 0) return;
++        if (!force && tabs.length === 1) {
++            toast('Keep at least one tab open — switch modules from the sidebar.');
++            return;
++        }
++        if (tab.ctrl) tab.ctrl.abort();
++        releaseScope(tab);
++        tab.el.remove();
++        tab.pageEl.remove();
++        tabs.splice(i, 1);
++        if (activeTab === tab) {
++            activeTab = null;
++            if (tabs.length) activateTab(tabs[Math.min(i, tabs.length - 1)]);
++        }
++        syncStrip();
++    }
++
++    function updateTabEl(tab) {
++        tab.el.querySelector('.mdi-label').textContent = tab.label;
++        tab.el.classList.remove('mdi-loading');
++    }
++
+     /* ── Navigation ── */
+-    function navigate(url, push) {
+-        var key = cacheKey(url);
+-        if (current) { current.abort(); current = null; }
++    function renderTab(tab, url, push) {
++        if (!~tabs.indexOf(tab)) return;
++        if (tab.ctrl) tab.ctrl.abort();
+ 
++        var key = cacheKey(url);
+         var cached = cache.get(key);
+         if (cached && Date.now() - cached.at < CACHE_TTL) {
+-            applyPage(cached.doc, key, push);
++            applyPage(cached.doc, key, tab, push);
+             return;
+         }
+ 
+         barStart();
++        tab.el.classList.add('mdi-loading');
+         var ctrl = new AbortController();
+-        current = ctrl;
++        tab.ctrl = ctrl;
+         fetch(key, {
+             headers: { 'X-PJAX': '1' },
+             signal: ctrl.signal,
+@@ -174,12 +421,13 @@
+         }).then(function (res) {
+             var doc = new DOMParser().parseFromString(res.text, 'text/html');
+             cacheSet(res.url, doc);
+-            applyPage(doc, res.url, push);
++            applyPage(doc, res.url, tab, push);
+         }).catch(function (err) {
+             if (err && err.name === 'AbortError') return;
+             hardNavigate(url);
+         }).then(function () {
+-            if (current === ctrl) { current = null; barDone(); }
++            tab.el.classList.remove('mdi-loading');
++            if (tab.ctrl === ctrl) { tab.ctrl = null; barDone(); }
+         });
+     }
+ 
+@@ -190,7 +438,8 @@
+ 
+     /* Fallback to a full load when the fetched page is not the same layout
+        (session expired -> login page, portal switch, pjax disabled). */
+-    function applyPage(doc, url, push) {
++    function applyPage(doc, url, tab, push) {
++        if (!~tabs.indexOf(tab)) return;   // tab closed while loading
+         var newLayout = doc.body ? doc.body.getAttribute('data-pjax-layout') : null;
+         var curC = document.getElementById('pjax-container');
+         var newC = doc.getElementById('pjax-container');
+@@ -199,33 +448,62 @@
+             return;
+         }
+ 
+-        releaseScope();
++        if (tab.loaded) releaseScope(tab);   // drop the previous content's timers/listeners
+ 
+-        tracking = true;
++        curScope = tab;
+         try {
+-            document.title = doc.title || document.title;
++            tab.docTitle = doc.title || document.title;
++            document.title = tab.docTitle;
+ 
+             swapHeadStyles(doc);
+ 
+-            curC.innerHTML = newC.innerHTML;
+-            runScripts(curC);
++            var target = tab.pageEl || curC;   // auth mode swaps the container itself
++            target.innerHTML = newC.innerHTML;
++            runScripts(target);
+ 
+-            copySwap(doc, '[data-pjax="title"]');
+-            copySwap(doc, '[data-pjax="badge"]');
+-            swapScriptStack(doc);
++            tab.titleHTML = innerOf(doc, '[data-pjax="title"]');
++            tab.badgeHTML = innerOf(doc, '[data-pjax="badge"]');
++            tab.label = pageTitle(doc) || tab.label;
++            var sb = doc.querySelector('aside.sidebar, #sidebar');
++            if (sb) tab.sidebarHTML = sb.innerHTML;
++            tab.url = url;
++            applyChrome(tab);
++            updateTabEl(tab);
+ 
+-            updateSidebarActive(doc);
++            swapScriptStack(doc);
+         } finally {
+-            tracking = false;
++            curScope = null;
+         }
+ 
+-        if (push) {
+-            try { history.pushState({ pjax: 1 }, '', url); } catch (e) {}
+-        }
++        tab.loaded = true;
++        tab.loading = false;
++        var wait = tab.pageEl && tab.pageEl.querySelector('.mdi-wait');
++        if (wait) wait.remove();
++
++        try {
++            if (push) history.pushState(mdiState(tab), '', url);
++            else history.replaceState(mdiState(tab), '', url);
++        } catch (e) {}
+ 
+         window.scrollTo(0, 0);
++        tab.scrollY = 0;
+         closeMobileSidebar();
+-        document.dispatchEvent(new CustomEvent('pjax:navigated', { detail: { url: url } }));
++        document.dispatchEvent(new CustomEvent('pjax:navigated', { detail: { url: url, tab: tab.key } }));
++    }
++
++    function innerOf(doc, sel) {
++        var n = doc.querySelector(sel);
++        return n ? n.innerHTML : null;
++    }
++
++    function pageTitle(doc) {
++        var t = doc.querySelector('[data-pjax="title"] > *');
++        if (t) {
++            var s = (t.textContent || '').trim();
++            if (s) return s;
++        }
++        var dt = (doc.title || '').split('\u2014')[0].trim();
++        return dt || null;
+     }
+ 
+     function copySwap(doc, sel) {
+@@ -271,7 +549,9 @@
+     /* Per-page scripts live in <div id="pjax-scripts">. Fresh script
+        elements are created directly from the parsed doc — appending them
+        executes them (imported scripts execute too, but creating fresh ones
+-       keeps external-script ordering and avoids double execution). */
++       keeps external-script ordering and avoids double execution).
++       This stack is layout-level and shared: a tab's runtime effects survive
++       tab switches, only the script elements are replaced on navigation. */
+     function swapScriptStack(doc) {
+         var curW = document.getElementById('pjax-scripts');
+         var newW = doc.getElementById('pjax-scripts');
+@@ -311,16 +591,8 @@
+         });
+     }
+ 
+-    /* The sidebar is part of the persistent shell. Refresh its contents
+-       (active state, badges) from the fetched page. The <aside> element
+-       itself stays, so references held by layout scripts remain valid. */
+-    function updateSidebarActive(doc) {
+-        var curNav = document.querySelector('aside.sidebar, #sidebar');
+-        var newNav = doc.querySelector('aside.sidebar, #sidebar');
+-        if (!curNav || !newNav) return;
+-        curNav.innerHTML = newNav.innerHTML;
+-    }
+-
++    /* The sidebar is part of the persistent shell. Its contents are captured
++       per tab (active state + badges) and restored when that tab activates. */
+     function closeMobileSidebar() {
+         var sb = document.getElementById('sidebar');
+         if (sb) sb.classList.remove('open');
+@@ -357,28 +629,87 @@
+             .then(function () { inflight.delete(key); });
+     }
+ 
++    /* ── Initial tab: adopt the server-rendered page as tab #1 ── */
++    function adoptInitialTab(container) {
++        var layout = document.body.getAttribute('data-pjax-layout');
++        var key = moduleKey(location.href);
++        var titleNode = document.querySelector('[data-pjax="title"] > *');
++        var label = (titleNode && titleNode.textContent.trim()) ||
++                    document.title.split('\u2014')[0].trim() || 'Dashboard';
++        var tab = {
++            id: ++tabSeq, key: key, label: label, url: cacheKey(location.href),
++            timers: [], listeners: [],
++            loaded: true, loading: false, scrollY: 0,
++            titleHTML: innerOf(document, '[data-pjax="title"]'),
++            badgeHTML: innerOf(document, '[data-pjax="badge"]'),
++            docTitle: document.title,
++            sidebarHTML: (document.querySelector('aside.sidebar, #sidebar') || {}).innerHTML || null
++        };
++        tab.pageEl = document.createElement('div');
++        tab.pageEl.className = 'mdi-page mdi-on';
++        while (container.firstChild) tab.pageEl.appendChild(container.firstChild);
++        container.appendChild(tab.pageEl);
++        tab.el = makeTabEl(tab, 'fas fa-th-large');
++        strip.appendChild(tab.el);
++        tabs.push(tab);
++        activeTab = tab;
++        syncStrip();
++    }
++
+     /* ── Wiring ── */
+     function init() {
+-        if (!document.getElementById('pjax-container')) return;   // not a pjax page
++        var container = document.getElementById('pjax-container');
++        if (!container) return;   // not a pjax page
+         enableScoping();
+ 
++        var layout = document.body.getAttribute('data-pjax-layout') || '';
++        TABS = layout !== 'auth';
++        if (TABS) {
++            injectUI(container);
++            adoptInitialTab(container);
++        } else {
++            ensureLegacyTab();
++        }
++
+         document.addEventListener('click', function (e) {
+             if (e.defaultPrevented || e.button !== 0 ||
+                 e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+             var a = e.target && e.target.closest ? e.target.closest('a') : null;
+             var url = interceptableLink(a);
+             if (!url) return;
+-            if (url.pathname === location.pathname && url.search === location.search) {
++            var samePath = url.pathname === location.pathname && url.search === location.search;
++
++            if (!TABS) {   // auth layout: single-document behaviour
++                if (samePath) {
++                    if (url.hash && url.hash !== location.hash) location.hash = url.hash;
++                    else navigateLegacy(url.href, false);   // re-fetch current page as a refresh
++                    return;
++                }
++                e.preventDefault();
++                navigateLegacy(url.href, true);
++                return;
++            }
++
++            if (!container.contains(a)) {
++                // shell link (sidebar / topbar): open or focus that module's tab
++                e.preventDefault();
++                closeMobileSidebar();
++                openOrActivate(moduleKey(url), url, a, true);
++                return;
++            }
++
++            // link inside the content area: navigate the active tab
++            if (samePath) {
+                 if (url.hash && url.hash !== location.hash) {
+                     location.hash = url.hash;
+                 } else {
+-                    navigate(url.href, false);   // re-fetch current page as a refresh
++                    e.preventDefault();
++                    renderTab(activeTab, url.href, false);   // re-fetch current page as a refresh
+                 }
+                 return;
+             }
+             e.preventDefault();
+-            closeMobileSidebar();
+-            navigate(url.href, true);
++            renderTab(activeTab, url.href, true);
+         });
+ 
+         document.addEventListener('mouseover', function (e) {
+@@ -409,7 +740,6 @@
+             if (form.hasAttribute('data-no-pjax') || form.getAttribute('target')) return;
+             if (form.hasAttribute('data-ajax')) return;
+             if (form.querySelector('input[type="file"]')) return;
+-            if (!document.getElementById('pjax-container')) return;
+ 
+             var action;
+             try { action = new URL(form.getAttribute('action') || location.href, location.href); }
+@@ -418,15 +748,53 @@
+ 
+             e.preventDefault();
+             var qs = new URLSearchParams(new FormData(form)).toString();
+-            navigate(action.pathname + (qs ? '?' + qs : ''), true);
++            var target = action.pathname + (qs ? '?' + qs : '');
++            if (TABS && container.contains(form)) renderTab(activeTab, target, true);
++            else if (TABS) openOrActivate(moduleKey(action.href), action, null, true);
++            else navigateLegacy(target, true);
+         });
+ 
+-        window.addEventListener('popstate', function () {
++        window.addEventListener('popstate', function (e) {
+             if (!document.getElementById('pjax-container')) return;
+-            navigate(location.href, false);
++            if (!TABS) { navigateLegacy(location.href, false); return; }
++            var st = e.state;
++            if (st && st.mdi && st.tab) {
++                var tab = null;
++                for (var i = 0; i < tabs.length; i++) if (tabs[i].id === st.tab) { tab = tabs[i]; break; }
++                if (tab) {
++                    activateTab(tab, true);
++                    if (cacheKey(tab.url) !== cacheKey(location.href)) renderTab(tab, location.href, false);
++                    return;
++                }
++            }
++            if (activeTab) renderTab(activeTab, location.href, false);
+         });
+     }
+ 
++    /* Legacy single-document path (auth layout): one hidden singleton tab
++       swaps the container itself, so scope release and the pjax guards work
++       unchanged. Its element is detached — no strip in this mode. */
++    var legacyTab = null;
++
++    function ensureLegacyTab() {
++        if (legacyTab) return legacyTab;
++        legacyTab = {
++            id: ++tabSeq, key: 'legacy', label: 'Page', url: '',
++            timers: [], listeners: [],
++            loaded: true, loading: false, scrollY: 0, pageEl: null
++        };
++        legacyTab.el = document.createElement('button');
++        legacyTab.el.className = 'mdi-tab';
++        legacyTab.el.innerHTML = '<span class="mdi-label">Page</span>';
++        tabs.push(legacyTab);
++        activeTab = legacyTab;
++        return legacyTab;
++    }
++
++    function navigateLegacy(url, push) {
++        renderTab(ensureLegacyTab(), url, push);
++    }
++
+     if (document.readyState === 'loading') {
+         document.addEventListener('DOMContentLoaded', init);
+     } else {
+diff --git a/resources/views/admin/layouts/app.blade.php b/resources/views/admin/layouts/app.blade.php
+index 5bfc802..25aa9b4 100644
+--- a/resources/views/admin/layouts/app.blade.php
++++ b/resources/views/admin/layouts/app.blade.php
+@@ -1,4 +1,4 @@
+-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><script src="{{ asset('js/pjax.js?v=1') }}"></script>
++<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><script src="{{ asset('js/pjax.js?v=2') }}"></script>
+ <link rel="icon" type="image/x-icon" href="{{ asset('favicon.ico') }}">
+ <link rel="icon" type="image/png" sizes="32x32" href="{{ asset('favicon-32x32.png') }}">
+ <link rel="icon" type="image/png" sizes="16x16" href="{{ asset('favicon-16x16.png') }}">
+diff --git a/resources/views/auth/forgot-password.blade.php b/resources/views/auth/forgot-password.blade.php
+index 7b7b881..1f9c4c0 100644
+--- a/resources/views/auth/forgot-password.blade.php
++++ b/resources/views/auth/forgot-password.blade.php
+@@ -1,4 +1,4 @@
+-<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>ISAMS — Forgot Password</title><script src="{{ asset('js/pjax.js?v=1') }}"></script>
++<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>ISAMS — Forgot Password</title><script src="{{ asset('js/pjax.js?v=2') }}"></script>
+ <link href="https://fonts.googleapis.com/css2?family=Sora:wght@700;800&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+ <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+ <!--pjax-styles-start--><style>*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}body{font-family:'DM Sans',sans-serif;min-height:100vh;display:flex;align-items:center;justify-content:center;background:linear-gradient(145deg,#0d3318,#1a6b2f,#2d9e4f);padding:20px;}.card{background:#fff;border-radius:18px;width:100%;max-width:420px;padding:36px;box-shadow:0 24px 64px rgba(0,0,0,.25);}.logo{display:flex;align-items:center;gap:9px;margin-bottom:20px;}.logo-icon{width:36px;height:36px;background:linear-gradient(135deg,#f0c020,#c9a010);border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:15px;color:#0d3318;}.logo-name{font-family:'Sora',sans-serif;font-size:17px;font-weight:800;color:#1a6b2f;}h2{font-family:'Sora',sans-serif;font-size:20px;font-weight:700;color:#1a6b2f;margin-bottom:4px;}p{font-size:13px;color:#5a7a60;margin-bottom:20px;line-height:1.5;}.fg{margin-bottom:14px;}.fl{display:block;font-size:13px;font-weight:600;color:#1a2e1a;margin-bottom:5px;}.iw{position:relative;}.iw i{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:#8ab898;font-size:13px;}.fc{width:100%;padding:10px 12px 10px 37px;border:1.5px solid #cde0d0;border-radius:9px;font-size:14px;font-family:inherit;}.fc:focus{outline:none;border-color:#2d9e4f;}.btn{width:100%;padding:12px;background:linear-gradient(135deg,#1a6b2f,#2d9e4f);color:#fff;border:none;border-radius:9px;font-size:15px;font-weight:700;cursor:pointer;font-family:'Sora',sans-serif;}.al-s{padding:11px 14px;background:#d0f0d8;border-left:4px solid #1a7a4a;border-radius:8px;color:#0d4a1e;font-size:13px;margin-bottom:14px;}.back{display:block;text-align:center;margin-top:16px;font-size:13px;color:#2d9e4f;text-decoration:none;}</style><!--pjax-styles-end--></head>
+diff --git a/resources/views/auth/login.blade.php b/resources/views/auth/login.blade.php
+index 64fc895..705d8f6 100644
+--- a/resources/views/auth/login.blade.php
++++ b/resources/views/auth/login.blade.php
+@@ -1,5 +1,5 @@
+ <!DOCTYPE html><html lang="en">
+-    <head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><script src="{{ asset('js/pjax.js?v=1') }}"></script>
++    <head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><script src="{{ asset('js/pjax.js?v=2') }}"></script>
+     <link rel="icon" type="image/x-icon" href="{{ asset('favicon.ico') }}">
+ <link rel="icon" type="image/png" sizes="32x32" href="{{ asset('favicon-32x32.png') }}">
+ <link rel="icon" type="image/png" sizes="16x16" href="{{ asset('favicon-16x16.png') }}">
+diff --git a/resources/views/counselor/layouts/app.blade.php b/resources/views/counselor/layouts/app.blade.php
+index 1860dda..32d3ef9 100644
+--- a/resources/views/counselor/layouts/app.blade.php
++++ b/resources/views/counselor/layouts/app.blade.php
+@@ -1,4 +1,4 @@
+-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><script src="{{ asset('js/pjax.js?v=1') }}"></script>
++<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><script src="{{ asset('js/pjax.js?v=2') }}"></script>
+ <link rel="icon" type="image/x-icon" href="{{ asset('favicon.ico') }}">
+ <link rel="icon" type="image/png" sizes="32x32" href="{{ asset('favicon-32x32.png') }}">
+ <link rel="icon" type="image/png" sizes="16x16" href="{{ asset('favicon-16x16.png') }}">
+diff --git a/resources/views/layouts/app.blade.php b/resources/views/layouts/app.blade.php
+index 95c1804..aded4eb 100644
+--- a/resources/views/layouts/app.blade.php
++++ b/resources/views/layouts/app.blade.php
+@@ -5,7 +5,7 @@
+     <meta name="viewport" content="width=device-width, initial-scale=1">
+     <meta name="csrf-token" content="{{ csrf_token() }}">
+     <title>{{ config('app.name', 'ISAMS') }} — @yield('title', 'Dashboard')</title>
+-    <script src="{{ asset('js/pjax.js?v=1') }}"></script>
++    <script src="{{ asset('js/pjax.js?v=2') }}"></script>
+ 
+     <link rel="preconnect" href="https://fonts.googleapis.com">
+     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+diff --git a/resources/views/scholarship/layouts/app.blade.php b/resources/views/scholarship/layouts/app.blade.php
+index c820af2..844c7b8 100644
+--- a/resources/views/scholarship/layouts/app.blade.php
++++ b/resources/views/scholarship/layouts/app.blade.php
+@@ -1,4 +1,4 @@
+-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><script src="{{ asset('js/pjax.js?v=1') }}"></script>
++<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><script src="{{ asset('js/pjax.js?v=2') }}"></script>
+ <link rel="icon" type="image/x-icon" href="{{ asset('favicon.ico') }}">
+ <link rel="icon" type="image/png" sizes="32x32" href="{{ asset('favicon-32x32.png') }}">
+ <link rel="icon" type="image/png" sizes="16x16" href="{{ asset('favicon-16x16.png') }}">
+diff --git a/resources/views/student/layouts/app.blade.php b/resources/views/student/layouts/app.blade.php
+index a530f8a..6ac1eb7 100644
+--- a/resources/views/student/layouts/app.blade.php
++++ b/resources/views/student/layouts/app.blade.php
+@@ -1,4 +1,4 @@
+-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><script src="{{ asset('js/pjax.js?v=1') }}"></script>
++<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><script src="{{ asset('js/pjax.js?v=2') }}"></script>
+ <link rel="icon" type="image/x-icon" href="{{ asset('favicon.ico') }}">
+ <link rel="icon" type="image/png" sizes="32x32" href="{{ asset('favicon-32x32.png') }}">
+ <link rel="icon" type="image/png" sizes="16x16" href="{{ asset('favicon-16x16.png') }}">
+diff --git a/resources/views/superadmin/layouts/app.blade.php b/resources/views/superadmin/layouts/app.blade.php
+index e90365d..5282fb6 100644
+--- a/resources/views/superadmin/layouts/app.blade.php
++++ b/resources/views/superadmin/layouts/app.blade.php
+@@ -1,4 +1,4 @@
+-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><script src="{{ asset('js/pjax.js?v=1') }}"></script>
++<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><script src="{{ asset('js/pjax.js?v=2') }}"></script>
+ <link rel="icon" type="image/x-icon" href="{{ asset('favicon.ico') }}">
+ <link rel="icon" type="image/png" sizes="32x32" href="{{ asset('favicon-32x32.png') }}">
+ <link rel="icon" type="image/png" sizes="16x16" href="{{ asset('favicon-16x16.png') }}">

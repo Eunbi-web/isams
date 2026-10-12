@@ -528,7 +528,7 @@
                 <div class="uname">{{ auth()->user()->name ?? 'Admin' }}</div>
                 <div class="urole">{{ auth()->user()->role ?? 'Administrator' }}</div>
             </div>
-            <a href="{{ route('logout') }}" class="user-logout"
+            <a href="{{ route('logout') }}" class="user-logout" data-no-pjax
                onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
                 <i class="fas fa-sign-out-alt"></i>
             </a>

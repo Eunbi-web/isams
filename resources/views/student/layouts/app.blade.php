@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><script src="{{ asset('js/pjax.js?v=1') }}"></script>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><script src="{{ asset('js/pjax.js?v=1') }}"></script><script src="{{ asset('js/mdi.js?v=6') }}"></script>
 <link rel="icon" type="image/x-icon" href="{{ asset('favicon.ico') }}">
 <link rel="icon" type="image/png" sizes="32x32" href="{{ asset('favicon-32x32.png') }}">
 <link rel="icon" type="image/png" sizes="16x16" href="{{ asset('favicon-16x16.png') }}">
@@ -188,7 +188,7 @@ body[data-theme="dark"] ::-webkit-scrollbar-thumb{background:#28405e;}
 @php $unreadMsgs = auth()->user()->student ? \App\Models\AdminMessage::where('student_id', auth()->user()->student->id)->where('is_read', false)->count() : 0; @endphp
 <a href="{{ route('student.messages') }}" class="nav-a {{ request()->routeIs('student.messages*')?'active':'' }}"><i class="fas fa-envelope"></i> Messages @if($unreadMsgs > 0)<span class="nav-badge">{{ $unreadMsgs }}</span>@endif</a>
 <a href="{{ route('student.profile') }}" class="nav-a {{ request()->routeIs('student.profile*')?'active':'' }}"><i class="fas fa-user-circle"></i> My Profile</a></div>
-<div class="sb-footer"><div class="user-card"><div class="u-av">{{ strtoupper(substr(auth()->user()->name??'S',0,1)) }}</div><div><div class="u-name">{{ explode(' ',auth()->user()->name??'Student')[0] }}</div><div class="u-role">Student</div></div><a href="{{ route('logout') }}" class="u-out" onclick="event.preventDefault();document.getElementById('slf').submit();" title="Logout"><i class="fas fa-sign-out-alt"></i></a></div><form id="slf" action="{{ route('logout') }}" method="POST" style="display:none;">@csrf</form></div>
+<div class="sb-footer"><div class="user-card"><div class="u-av">{{ strtoupper(substr(auth()->user()->name??'S',0,1)) }}</div><div><div class="u-name">{{ explode(' ',auth()->user()->name??'Student')[0] }}</div><div class="u-role">Student</div></div><a href="{{ route('logout') }}" class="u-out" data-no-pjax onclick="event.preventDefault();document.getElementById('slf').submit();" title="Logout"><i class="fas fa-sign-out-alt"></i></a></div><form id="slf" action="{{ route('logout') }}" method="POST" style="display:none;">@csrf</form></div>
 </aside>
 <div class="sb-backdrop" id="sbBackdrop"></div>
 <div class="main">

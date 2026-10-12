@@ -33,3 +33,6 @@ yarn-error.log
 /ai-filter-update.zip
 /scholarship-portal.zip
 /isams-updates.zip
+
+# PlantUML renderer used only for docs/std diagrams
+docs/std/plantuml.jar
