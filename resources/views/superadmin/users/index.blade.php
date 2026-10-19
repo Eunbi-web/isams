@@ -8,7 +8,10 @@
 <div style="position:relative;"><i class="fas fa-search" style="position:absolute;left:11px;top:50%;transform:translateY(-50%);color:var(--tm);font-size:12px;pointer-events:none;"></i><input type="text" id="uSearch" class="fc" placeholder="Search name or email..." style="padding-left:32px;width:220px;"></div>
 <select class="fc" style="width:150px;" id="rFilter"><option value="">All Roles</option><option value="superadmin">Super Admin</option><option value="admin">Admin</option><option value="officer">Officer</option><option value="counselor">Counselor</option><option value="scholarship">Scholarship</option><option value="student">Student</option></select>
 </div>
-<a href="{{ route('superadmin.users.create') }}" class="btn btn-ac"><i class="fas fa-user-plus"></i> Create User & Assign Role</a>
+<div style="display:flex;gap:9px;flex-wrap:wrap;">
+<a href="{{ route('superadmin.users.import-form') }}" class="btn btn-o"><i class="fas fa-file-import"></i> Import Students CSV</a>
+<a href="{{ route('superadmin.users.create') }}" class="btn btn-ac"><i class="fas fa-user-plus"></i> Create User &amp; Assign Role</a>
+</div>
 </div>
 <div style="font-size:12px;color:var(--tm);margin:-8px 0 14px;"><i class="fas fa-info-circle" style="color:var(--gm);margin-right:5px;"></i>User roles determine portal access — Counselor accounts access the Guidance Counseling Portal at <span class="mono">/counselor/dashboard</span>.</div>
 <div class="card an"><div class="ch"><i class="fas fa-users" style="color:var(--y);"></i><h2>All System Users</h2><span class="badge b-y" style="margin-left:6px;">{{ $users->total() }} total</span></div>

@@ -58,6 +58,8 @@ Route::middleware(['auth','role:superadmin'])->prefix('superadmin')->name('super
     Route::get('logs', [SALog::class,'index'])->name('logs');
     Route::get('users', [SAUser::class,'index'])->name('users.index');
     Route::get('users/create', [SAUser::class,'create'])->name('users.create');
+    Route::get('users/import', [SAUser::class,'importForm'])->name('users.import-form');
+    Route::post('users/import', [SAUser::class,'import'])->name('users.import');
     Route::post('users', [SAUser::class,'store'])->name('users.store');
     Route::get('users/{user}/edit', [SAUser::class,'edit'])->name('users.edit');
     Route::match(['put','patch'], 'users/{user}', [SAUser::class,'update'])->name('users.update');
